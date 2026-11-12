@@ -298,9 +298,18 @@ function drawList(){
   const q = S.q.trim().toLowerCase();
   let rows = all.filter(r=>!q || [r.owner_name,r.street_address,r.suburb].join(" ").toLowerCase().includes(q));
   rows.sort((a,b)=>(!!a.today_outcome - !!b.today_outcome) || a.rank-b.rank);
-  const per=50, pages=Math.max(1,Math.ceil(rows.length/per)), pg=Math.min(S.page,pages-1), slice=rows.slice(pg*per,pg*per+per);
+  // Continuous scroll: 50 cards at a time, more load as you near the bottom. S.page counts loaded chunks.
+  const per=50, shown=Math.min(rows.length, (S.page+1)*per);
   $("#list").innerHTML = `<input placeholder="Search name, street or suburb" value="${esc(S.q)}" oninput="S.q=this.value;S.page=0;drawList();setTimeout(()=>{const i=document.querySelector('#list input');i.focus();i.setSelectionRange(i.value.length,i.value.length)},0)" style="margin-bottom:10px">`
-    + slice.map(cardHTML).join("") + (pages>1?`<div class="pager"><button ${pg===0?"disabled":""} onclick="S.page--;drawList();scrollTo(0,0)"><i class="ti ti-chevron-left"></i></button><span class="muted" style="align-self:center">Page ${pg+1} of ${pages}</span><button ${pg>=pages-1?"disabled":""} onclick="S.page++;drawList();scrollTo(0,0)"><i class="ti ti-chevron-right"></i></button></div>`:"");
+    + rows.slice(0,shown).map(cardHTML).join("") + (shown<rows.length?`<div id="more" class="muted" style="text-align:center;padding:16px">Loading more…</div>`:"");
+  S._rest = rows; if (S._io) S._io.disconnect();
+  const m=$("#more"); if (!m) return;
+  S._io = new IntersectionObserver(es=>{ if(!es[0].isIntersecting) return;
+    const from=(S.page+1)*per; S.page++; const next=S._rest.slice(from, from+per);
+    m.insertAdjacentHTML("beforebegin", next.map(cardHTML).join(""));
+    if (from+per >= S._rest.length) { S._io.disconnect(); m.remove(); }
+  }, {rootMargin:"800px"});
+  S._io.observe(m);
 }
 function whyLine(r){
   const bits = [...(r.reasons||[]).filter(x=>!x.startsWith("Probate notice"))];
