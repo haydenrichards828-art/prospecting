@@ -124,6 +124,8 @@ details.sec{background:var(--card);border:1px solid var(--line);border-radius:va
 .dmap{height:56vh;min-height:300px;border-radius:12px;border:1px solid var(--line);overflow:hidden;margin-bottom:10px;background:var(--card)}
 .leaflet-popup-content{font:14px/1.4 system-ui,sans-serif}.leaflet-popup-content button{min-height:36px}
 .brow{cursor:pointer}
+.chips{display:flex;align-items:center;gap:4px;margin:0 0 8px;overflow-x:auto;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chips .muted{font-size:13px;margin-right:2px}
+.chips button{min-height:32px;padding:4px 11px;border-radius:999px;font-size:13px;flex:none}.chips button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 @media print{.dmap,#best{display:none}}
 .pager{display:flex;justify-content:center;gap:8px;margin:16px 0}
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
@@ -523,14 +525,18 @@ function loadLeaflet(){
     .catch(e=>{ S._leaf=null; throw e; });
   return S._leaf;
 }
+function dropRows(){ const all=S.drops||[]; if (!S.dtop) return all;
+  return all.filter(x=>!isDropped(x)).sort((a,b)=>(Number(b.score)||0)-(Number(a.score)||0)).slice(0,S.dtop); }
+function setTop(n){ S.dtop=n; try{localStorage.setItem("dp_dtop",String(n))}catch{} drawDrops(); }
 function dropGroups(by){
   const g=new Map();
-  for (const x of S.drops||[]) { if (isDropped(x)) continue;
+  for (const x of dropRows()) { if (isDropped(x)) continue;
     const k = by==="suburb" ? (x.suburb||"Unknown") : `${x.street||"Unknown"}, ${x.suburb||""}`;
     const o=g.get(k)||{k,n:0,total:0,ids:[],pts:[]}; o.n++; o.total+=Number(x.score)||0; o.ids.push(x.id); if(x.lat!=null) o.pts.push([x.lat,x.lng]); g.set(k,o); }
   return [...g.values()].sort((a,b)=>b.total-a.total);
 }
 async function viewDrops(){
+  if (S.dtop===undefined) { try{ S.dtop=+localStorage.getItem("dp_dtop")||0 }catch{ S.dtop=0 } }
   S.dview=S.dview||"map"; S.dlayer=S.dlayer||"pins"; S.dgroup=S.dgroup||"street";
   const r=await api("drops"); S.drops=r.rows||[];
   drawDrops();
@@ -540,7 +546,8 @@ function drawDrops(){
   const seg=(key,opts,fn)=>`<div class="seg">${opts.map(([v,l])=>`<button class="${S[key]===v?"on":""}" onclick="S.${key}='${v}';${fn}">${l}</button>`).join("")}</div>`;
   if (!all.length) { $("#main").innerHTML=`<div class="empty"><i class="ti ti-mailbox"></i>No houses without a phone number yet.<br>They appear here once properties are imported.</div>`; return; }
   const head=`<div class="top">${seg("dview",[["map","Map"],["list","List"]],"drawDrops()")}${S.dview==="map"?seg("dlayer",[["pins","Pins"],["heat","Heat"]],"drawDropLayer()"):`<button class="iconbtn" onclick="window.print()" title="Print" aria-label="Print"><i class="ti ti-printer"></i></button><button class="iconbtn" onclick="downloadDrops()" title="Download" aria-label="Download"><i class="ti ti-download"></i></button>`}</div>
-    <p class="muted" style="margin:0 0 8px;font-size:13px">${left.length} houses to drop · ${all.length-left.length} dropped in the last ${DROP_DAYS} days${onMap<all.length?` · ${all.length-onMap} not on the map yet`:""}</p>`;
+    <div class="chips"><span class="muted">Top</span>${[[0,"All"],[1000,"1000"],[500,"500"],[250,"250"],[100,"100"],[50,"50"]].map(([n,l])=>`<button class="${S.dtop===n?"on":""}" onclick="setTop(${n})">${l}</button>`).join("")}</div>
+    <p class="muted" style="margin:0 0 8px;font-size:13px">${S.dtop?`Showing the top ${Math.min(S.dtop,left.length)} of ${left.length} houses to drop`:`${left.length} houses to drop · ${all.length-left.length} dropped in the last ${DROP_DAYS} days`}${onMap<all.length?` · ${all.length-onMap} not on the map yet`:""}</p>`;
   if (S.dview==="list") { $("#main").innerHTML=head+dropListHTML(); return; }
   $("#main").innerHTML = head + `<div id="dmap" class="dmap"><div class="empty" style="padding:40px 0"><i class="ti ti-loader-2"></i>Loading map</div></div>
     <div class="top" style="margin-top:4px"><b style="font-size:15px;margin-right:auto">Best places to drop</b>${seg("dgroup",[["street","Streets"],["suburb","Suburbs"]],"drawBest()")}</div><div id="best"></div>`;
@@ -550,7 +557,7 @@ function drawDrops(){
     $("#dmap").innerHTML="";
     S.map=L.map("dmap",{zoomControl:false,attributionControl:true}).setView([-34.36,150.91],12);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(S.map);
-    const pts=all.filter(x=>x.lat!=null).map(x=>[x.lat,x.lng]); if (pts.length) S.map.fitBounds(pts,{padding:[20,20]});
+    const pts=dropRows().filter(x=>x.lat!=null).map(x=>[x.lat,x.lng]); if (pts.length) S.map.fitBounds(pts,{padding:[20,20]});
     drawDropLayer();
   }).catch(e=>{ const m=$("#dmap"); if(m) m.innerHTML=`<div class="empty" style="padding:40px 0"><i class="ti ti-wifi-off"></i>${esc(e.message)}</div>`; });
 }
@@ -558,7 +565,7 @@ function drawDropLayer(){
   document.querySelectorAll(".top .seg").forEach(g=>{ const b=g.querySelectorAll("button"); if(b.length===2&&b[0].textContent==="Pins"){ b[0].classList.toggle("on",S.dlayer==="pins"); b[1].classList.toggle("on",S.dlayer==="heat"); } });
   if (!S.map) return;
   if (S.dlay) { S.map.removeLayer(S.dlay); S.dlay=null; }
-  const rows=(S.drops||[]).filter(x=>x.lat!=null), max=Math.max(1,...rows.map(x=>Number(x.score)||0));
+  const rows=dropRows().filter(x=>x.lat!=null), max=Math.max(1,...rows.map(x=>Number(x.score)||0));
   if (S.dlayer==="heat") {
     S.dlay=L.heatLayer(rows.filter(x=>!isDropped(x)).map(x=>[x.lat,x.lng,Math.max(0.15,(Number(x.score)||0)/max)]),{radius:28,blur:22,maxZoom:16,minOpacity:0.3}).addTo(S.map);
     return;
@@ -582,7 +589,7 @@ function drawBest(){
 function zoomBest(i){ const g=S._best[i]; if(!S.map||!g||!g.pts.length) return; S.map.fitBounds(g.pts,{padding:[30,30],maxZoom:17}); scrollTo({top:0,behavior:"smooth"}); }
 function dropListHTML(){
   const bySub=new Map();
-  for (const x of S.drops||[]) { const s=x.suburb||"Unknown", st=x.street||"Unknown"; if(!bySub.has(s)) bySub.set(s,new Map()); const m=bySub.get(s); if(!m.has(st)) m.set(st,[]); m.get(st).push(x); }
+  for (const x of dropRows()) { const s=x.suburb||"Unknown", st=x.street||"Unknown"; if(!bySub.has(s)) bySub.set(s,new Map()); const m=bySub.get(s); if(!m.has(st)) m.set(st,[]); m.get(st).push(x); }
   const num=x=>parseInt(String(x.house_number||"").replace(/^.*\//,""))||0;
   return [...bySub.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([sub,m])=>`<h3 style="margin:16px 0 6px">${esc(sub)}</h3>`+
     [...m.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([st,xs])=>{ xs.sort((a,b)=>num(a)-num(b)); const ids=xs.filter(x=>!isDropped(x)).map(x=>x.id);
@@ -600,7 +607,7 @@ async function toggleDrop(ids,undo){
 }
 function downloadDrops(){
   const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
-  const rows=(S.drops||[]).filter(x=>!isDropped(x));
+  const rows=dropRows().filter(x=>!isDropped(x));
   const csv=["Unit,Number,Street,Suburb,Score,Reasons",...rows.map(x=>[x.unit,x.house_number,x.street,x.suburb,Math.round(x.score),(x.reasons||[]).join("; ")].map(q).join(","))].join("\n");
   const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download=`card-drops-${new Date().toISOString().slice(0,10)}.csv`; a.click();
 }
