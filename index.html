@@ -31,12 +31,17 @@ label{display:block;font-size:13px;color:var(--muted);margin:14px 0 6px}
 .wrap{max-width:760px;margin:0 auto;padding:0 16px 120px}
 header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .bar{max-width:760px;margin:0 auto;padding:8px 10px 8px 14px;display:flex;align-items:center;gap:8px}.bar .brand{font-size:15px;gap:6px;white-space:nowrap}.bar .brand i{font-size:18px}
+.hsearch{flex:1 1 60px;min-width:0;max-width:260px;height:34px;padding:4px 10px;font-size:15px;border-radius:999px}
 .brand{font-weight:600;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
 .brand i{font-size:20px;color:var(--accent)}
 .grow{flex:1}
 nav{display:flex;gap:2px;margin-left:auto;overflow-x:auto;scrollbar-width:none}nav::-webkit-scrollbar{display:none}@media (max-width:380px){.bar{padding:8px 4px 8px 10px;gap:2px}.bar .brand{font-size:14px;gap:4px}nav{gap:0}nav button{padding:6px 6px;font-size:13.5px}}
 nav button{min-height:36px;padding:6px 10px;border-radius:999px;font-size:14px;border-color:transparent;background:transparent;color:var(--muted);white-space:nowrap}
 nav button.on{background:var(--card);border-color:var(--line);color:var(--ink);font-weight:500}
+.hsearch{background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238a94a3' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='10' cy='10' r='7'/%3E%3Cpath d='M21 21l-6-6'/%3E%3C/svg%3E") no-repeat 9px center/16px;padding-left:30px!important;-webkit-appearance:none;appearance:none}
+@media (max-width:440px){.bar .bname{display:none}.bar{gap:4px;padding-left:10px}nav{gap:0}nav button{padding:6px 6px;font-size:14px}.hsearch{font-size:14px}}
+@media (max-width:380px){nav button{padding:6px 4px;font-size:13px}}
+
 .badge{font-size:11px;background:var(--bad);color:#fff;border-radius:999px;padding:0 6px;line-height:18px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px}
@@ -213,11 +218,12 @@ function toast(msg, undo) {
 async function render() {
   if (!S.token) return renderLogin();
   $("#app").innerHTML = `
-  <header><div class="bar"><div class="brand"><i class="ti ti-phone-call"></i>Prospect</div><nav>${[["calls","Calls"],["pipeline","Pipeline"],["insights","Stats"],["settings","Settings"]].map(([k,l])=>`<button class="${S.tab===k||(k==="settings"&&S.tab==="messages")?"on":""}" onclick="go('${k}')">${l}</button>`).join("")}</nav></div></header>
+  <header><div class="bar"><div class="brand"><i class="ti ti-phone-call"></i><span class="bname">Prospect</span></div><input id="hq" class="hsearch" type="search" placeholder="" value="${esc(S.q)}" oninput="hSearch(this.value)" aria-label="Search name, street or suburb"><nav>${[["calls","Calls"],["pipeline","Pipeline"],["insights","Stats"],["settings","Settings"]].map(([k,l])=>`<button class="${S.tab===k||(k==="settings"&&S.tab==="messages")?"on":""}" onclick="go('${k}')">${l}</button>`).join("")}</nav></div></header>
   <div class="wrap" id="main"><div class="empty"><i class="ti ti-loader-2"></i>Loading</div></div>`;
   try { await ({calls:viewCalls,pipeline:viewPipeline,messages:viewMessages,insights:viewInsights,settings:viewSettings})[S.tab](); }
   catch(e){ if (S.token) $("#main").innerHTML = `<div class="empty"><i class="ti ti-wifi-off"></i>${esc(e.message)}<br><button class="primary" style="margin-top:14px" onclick="render()"><i class="ti ti-refresh"></i>Try again</button></div>`; }
 }
+function hSearch(v){ S.q=v; S.page=0; if (S.tab!=="calls") { go("calls"); const i=$("#hq"); if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);} } else { drawList(); scrollTo(0,0); } }
 function go(t){ S.tab=t; S.page=0; render(); }
 
 async function renderLogin(){
@@ -288,7 +294,7 @@ function queue(){
 function drawList(){
   const all = queue();
   if (!S.rows.length && !all.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-list-search"></i>No list yet for today.<br><span class="muted">It builds itself at 4:30am. To build it now, go to Settings.</span></div>`; return; }
-  if (S.dialer) {
+  if (S.dialer && !S.q.trim()) {
     const left = all.filter(r=>!r.today_outcome && !S.skipped.has(r.property_id));
     if (!left.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-confetti"></i>That's everyone for today.${S.skipped.size?`<br><button style="margin-top:10px" onclick="S.skipped.clear();drawList()">Go back to ${S.skipped.size} skipped</button>`:""}</div>`; return; }
     $("#list").innerHTML = `<div class="dialer">${cardHTML(left[0])}
@@ -300,7 +306,7 @@ function drawList(){
   rows.sort((a,b)=>(!!a.today_outcome - !!b.today_outcome) || a.rank-b.rank);
   // Continuous scroll: 50 cards at a time, more load as you near the bottom. S.page counts loaded chunks.
   const per=50, shown=Math.min(rows.length, (S.page+1)*per);
-  $("#list").innerHTML = `<input placeholder="Search name, street or suburb" value="${esc(S.q)}" oninput="S.q=this.value;S.page=0;drawList();setTimeout(()=>{const i=document.querySelector('#list input');i.focus();i.setSelectionRange(i.value.length,i.value.length)},0)" style="margin-bottom:10px">`
+  $("#list").innerHTML = ``
     + rows.slice(0,shown).map(cardHTML).join("") + (shown<rows.length?`<div id="more" class="muted" style="text-align:center;padding:16px">Loading more…</div>`:"");
   S._rest = rows; if (S._io) S._io.disconnect();
   const m=$("#more"); if (!m) return;
