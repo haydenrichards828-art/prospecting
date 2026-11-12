@@ -124,6 +124,7 @@ details.sec{background:var(--card);border:1px solid var(--line);border-radius:va
 .dmap{height:56vh;min-height:300px;border-radius:12px;border:1px solid var(--line);overflow:hidden;margin-bottom:10px;background:var(--card)}
 .leaflet-popup-content{font:14px/1.4 system-ui,sans-serif}.leaflet-popup-content button{min-height:36px}
 .brow{cursor:pointer}
+.dleg{background:var(--card);color:var(--ink);border-radius:8px;padding:5px 8px;font:12px system-ui,sans-serif;display:flex;gap:8px;box-shadow:0 1px 4px rgba(0,0,0,.25)}.dleg span{display:flex;align-items:center;gap:4px}.dleg i{width:14px;height:4px;border-radius:2px;display:inline-block}
 .chips{display:flex;align-items:center;gap:4px;margin:0 0 8px;overflow-x:auto;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chips .muted{font-size:13px;margin-right:2px}
 .chips button{min-height:32px;padding:4px 11px;border-radius:999px;font-size:13px;flex:none}.chips button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 @media print{.dmap,#best{display:none}}
@@ -183,7 +184,9 @@ function demoApi(action, body){
     case "drops": { if(!D.drops){ const C={Austinmer:[-34.3065,150.9300],Thirroul:[-34.3170,150.9215],Bulli:[-34.3350,150.9150],Woonona:[-34.3480,150.9080],Corrimal:[-34.3720,150.8990],"Fairy Meadow":[-34.3920,150.8920],Wollongong:[-34.4250,150.8930]};
         D.drops=Array.from({length:140},(_,i)=>{ const st=[["Lawrence Hargrave Dr","Austinmer"],["Moore St","Austinmer"],["Station St","Thirroul"],["Raymond Rd","Thirroul"],["Park Rd","Bulli"],["Hobart St","Bulli"],["Ocean St","Woonona"],["Railway St","Corrimal"],["Princes Hwy","Fairy Meadow"],["Smith St","Wollongong"]][i%10], c=C[st[1]], k=(i*37)%100/100, along=(i%10)*0.0011;
           return {id:5000+i,unit:null,house_number:String((i*7)%120+1),street:st[0],suburb:st[1],lat:c[0]+(k-0.5)*0.008+along*0.3,lng:c[1]+((i*53)%100/100-0.5)*0.008,score:Math.round(20+((i*29)%70)),reasons:[`Owned ${6+(i%25)} yrs (area avg 10)`],dropped_at:i%9===0?new Date().toISOString():null}; }); }
-      return {rows:D.drops}; }
+      if(!D.streets){ const by={}; D.drops.forEach(x=>{ const k=x.street+"|"+x.suburb; (by[k]=by[k]||[]).push(x); });
+        D.streets=Object.entries(by).map(([k,xs],i)=>{ const pts=[...xs].sort((a,b)=>a.lat-b.lat).map(x=>[+x.lng.toFixed(5),+x.lat.toFixed(5)]); return {sk:k,street:xs[0].street,suburb:xs[0].suburb,avg:Math.round(xs.reduce((a,x)=>a+x.score,0)/xs.length*10)/10+((i*13)%25)-8,n:xs.length+((i*7)%20),ids:xs.map(x=>x.id),paths:[pts]}; }); }
+      return {rows:D.drops,streets:D.streets}; }
     case "mark_dropped": { (D.drops||[]).forEach(r=>{ if((body.ids||[]).includes(r.id)) r.dropped_at=body.undo?null:new Date().toISOString(); }); return {ok:true}; }
     case "letterbox": return {rows:D.rows.filter(r=>!r.phone).map(r=>({unit:null,house_number:r.street_address.split(" ")[0],street:r.street_address.split(" ").slice(1).join(" "),suburb:r.suburb,postcode:r.postcode,score:r.score,reasons:r.reasons}))};
     case "settings": Object.assign(D.settings, body.values||{}); return {ok:true};
@@ -538,14 +541,14 @@ function dropGroups(by){
 async function viewDrops(){
   if (S.dtop===undefined) { try{ S.dtop=+localStorage.getItem("dp_dtop")||0 }catch{ S.dtop=0 } }
   S.dview=S.dview||"map"; S.dlayer=S.dlayer||"pins"; S.dgroup=S.dgroup||"street";
-  const r=await api("drops"); S.drops=r.rows||[];
+  const r=await api("drops"); S.drops=r.rows||[]; S.streets=r.streets||[];
   drawDrops();
 }
 function drawDrops(){
   const all=S.drops||[], left=all.filter(x=>!isDropped(x)), onMap=all.filter(x=>x.lat!=null).length;
   const seg=(key,opts,fn)=>`<div class="seg">${opts.map(([v,l])=>`<button class="${S[key]===v?"on":""}" onclick="S.${key}='${v}';${fn}">${l}</button>`).join("")}</div>`;
   if (!all.length) { $("#main").innerHTML=`<div class="empty"><i class="ti ti-mailbox"></i>No houses without a phone number yet.<br>They appear here once properties are imported.</div>`; return; }
-  const head=`<div class="top">${seg("dview",[["map","Map"],["list","List"]],"drawDrops()")}${S.dview==="map"?seg("dlayer",[["pins","Pins"],["heat","Heat"]],"drawDropLayer()"):`<button class="iconbtn" onclick="window.print()" title="Print" aria-label="Print"><i class="ti ti-printer"></i></button><button class="iconbtn" onclick="downloadDrops()" title="Download" aria-label="Download"><i class="ti ti-download"></i></button>`}</div>
+  const head=`<div class="top">${seg("dview",[["map","Map"],["list","List"]],"drawDrops()")}${S.dview==="map"?seg("dlayer",[["pins","Pins"],["heat","Heat"],["streets","Streets"]],"drawDropLayer()"):`<button class="iconbtn" onclick="window.print()" title="Print" aria-label="Print"><i class="ti ti-printer"></i></button><button class="iconbtn" onclick="downloadDrops()" title="Download" aria-label="Download"><i class="ti ti-download"></i></button>`}</div>
     <div class="chips"><span class="muted">Top</span>${[[0,"All"],[1000,"1000"],[500,"500"],[250,"250"],[100,"100"],[50,"50"]].map(([n,l])=>`<button class="${S.dtop===n?"on":""}" onclick="setTop(${n})">${l}</button>`).join("")}</div>
     <p class="muted" style="margin:0 0 8px;font-size:13px">${S.dtop?`Showing the top ${Math.min(S.dtop,left.length)} of ${left.length} houses to drop`:`${left.length} houses to drop · ${all.length-left.length} dropped in the last ${DROP_DAYS} days`}${onMap<all.length?` · ${all.length-onMap} not on the map yet`:""}</p>`;
   if (S.dview==="list") { $("#main").innerHTML=head+dropListHTML(); return; }
@@ -562,9 +565,11 @@ function drawDrops(){
   }).catch(e=>{ const m=$("#dmap"); if(m) m.innerHTML=`<div class="empty" style="padding:40px 0"><i class="ti ti-wifi-off"></i>${esc(e.message)}</div>`; });
 }
 function drawDropLayer(){
-  document.querySelectorAll(".top .seg").forEach(g=>{ const b=g.querySelectorAll("button"); if(b.length===2&&b[0].textContent==="Pins"){ b[0].classList.toggle("on",S.dlayer==="pins"); b[1].classList.toggle("on",S.dlayer==="heat"); } });
+  document.querySelectorAll(".top .seg").forEach(g=>{ const b=[...g.querySelectorAll("button")]; if(b[0]&&b[0].textContent==="Pins") ["pins","heat","streets"].forEach((v,i)=>b[i]&&b[i].classList.toggle("on",S.dlayer===v)); });
   if (!S.map) return;
   if (S.dlay) { S.map.removeLayer(S.dlay); S.dlay=null; }
+  if (S.dleg) { S.dleg.remove(); S.dleg=null; }
+  if (S.dlayer==="streets") return drawStreetLayer();
   const rows=dropRows().filter(x=>x.lat!=null), max=Math.max(1,...rows.map(x=>Number(x.score)||0));
   if (S.dlayer==="heat") {
     S.dlay=L.heatLayer(rows.filter(x=>!isDropped(x)).map(x=>[x.lat,x.lng,Math.max(0.15,(Number(x.score)||0)/max)]),{radius:28,blur:22,maxZoom:16,minOpacity:0.3}).addTo(S.map);
@@ -574,6 +579,26 @@ function drawDropLayer(){
   S.dlay=L.layerGroup(rows.map(x=>{ const d=isDropped(x), t=(Number(x.score)||0)/max;
     return L.circleMarker([x.lat,x.lng],{radius:d?5:6+t*4,weight:1.5,color:d?"#9aa3ad":accent,fillColor:d?"#c9ced4":accent,fillOpacity:d?0.5:0.35+t*0.55})
       .bindPopup(()=>`<b>${esc(dropAddr(x))}</b><br>${esc(x.suburb||"")}<br><span style="color:#667">${esc((x.reasons||[])[0]||"")}</span><br><button style="margin-top:8px;width:100%" onclick="toggleDrop([${x.id}],${d})">${d?"Undo dropped":"Mark dropped"}</button>`); })).addTo(S.map);
+}
+
+// Streets coloured like traffic: the average score of every house on the street decides the colour
+const STREET_TIERS=[["Top",0.15,"#c5221f",7],["High",0.35,"#f29900",6],["Good",0.6,"#f6c026",5]];
+function streetTier(st,ranked){ if (st.n<3) return null; const i=ranked.indexOf(st); if (i<0) return null; const q=i/ranked.length; return STREET_TIERS.find(t=>q<t[1])||null; }
+function drawStreetLayer(){
+  const ranked=(S.streets||[]).filter(x=>x.n>=3).sort((a,b)=>b.avg-a.avg);
+  const byId=new Map((S.drops||[]).map(x=>[x.id,x]));
+  const lines=[];
+  const order=[...(S.streets||[])].sort((a,b)=>a.avg-b.avg); // draw best last so it sits on top
+  for (const st of order) {
+    const t=streetTier(st,ranked), left=(st.ids||[]).filter(id=>byId.has(id)&&!isDropped(byId.get(id)));
+    const done=(st.ids||[]).length>0 && !left.length;
+    const style=done?{color:"#9aa3ad",weight:4,opacity:.8,dashArray:"6 6"}:t?{color:t[2],weight:t[3],opacity:.9}:{color:"#8a94a3",weight:2.5,opacity:.45};
+    for (const path of st.paths||[]) lines.push(L.polyline(path.map(([x,y])=>[y,x]),{...style,lineCap:"round"}).bindPopup(()=>`<b>${esc(st.street)}</b>, ${esc(st.suburb)}<br>${t?`<span style="color:${t[2]};font-weight:600">${t[0]} value street</span><br>`:""}Average score ${Math.round(st.avg)} across ${st.n} house${st.n===1?"":"s"}<br>${left.length} without a number to drop${left.length?`<br><button style="margin-top:8px;width:100%" onclick="toggleDrop([${left}],false)">Mark street dropped</button>`:done?"<br>Dropped":""}`));
+  }
+  S.dlay=L.layerGroup(lines).addTo(S.map);
+  const leg=L.control({position:"bottomleft"});
+  leg.onAdd=()=>{ const d=L.DomUtil.create("div","dleg"); d.innerHTML=STREET_TIERS.map(t=>`<span><i style="background:${t[2]}"></i>${t[0]}</span>`).join("")+`<span><i style="background:#9aa3ad"></i>Done</span>`; return d; };
+  leg.addTo(S.map); S.dleg=leg;
 }
 function drawBest(){
   document.querySelectorAll(".top .seg").forEach(g=>{ const b=g.querySelectorAll("button"); if(b.length===2&&b[0].textContent==="Streets"){ b[0].classList.toggle("on",S.dgroup==="street"); b[1].classList.toggle("on",S.dgroup==="suburb"); } });
