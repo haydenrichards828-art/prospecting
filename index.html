@@ -482,6 +482,68 @@ function sydToISO(v){ const [d,t]=v.split("T"), [y,m,dd]=d.split("-").map(Number
 let notes = {};
 async function addNote(id){ const n = await uiAsk("Note for this call (saved with the next outcome you tap)", {input: notes[id]||"", ok:"Save note"}); if (n!==null) { if (n.trim()) notes[id]=n.trim(); else delete notes[id]; if (S.tab==="calls") drawList(); toast(n.trim()?"Note added":"Note removed"); } }
 function dialTo(phone){ const cur=queue().find(r=>r.phone===phone); if(cur){ markDial(cur.property_id); if(!S.tm.shown) S.tm.shown=S.tm.dial; } window.location.href = "tel:" + phone; }
+// Silent workflow tracking, used to find wasted time and make the app faster. Nothing shows on screen.
+// It keeps what was clicked (by its label), how long since the last click, how far the mouse travelled,
+// what the mouse paused over first, screen changes and typing time. It never keeps what was typed.
+const UX={sid:Math.random().toString(36).slice(2)+Date.now().toString(36),q:[],lastAct:Date.now(),lastMove:Date.now(),travel:0,mx:null,my:null,hov:null,hovAt:0,hovs:[],rage:[],focus:null,screen:null,screenAt:Date.now(),scroll:0,lastY:0};
+const UX_INTER='button,a,input,select,textarea,summary,label,[onclick]';
+function uxDevice(e){ return e&&e.pointerType?(e.pointerType==="mouse"?"mouse":"touch"):(matchMedia("(pointer:fine)").matches?"mouse":"touch"); }
+function uxScreen(){ let s=S.searching?"search":(S.token?S.tab:"login")||"?"; const ov=$("#ov");
+  if(ov&&ov.classList.contains("show")){ const sh=$("#sheet"), h=sh&&sh.querySelector("h3"), t=h?h.textContent.trim():"";
+    s+=">"+(sh.classList.contains("lsheet")?"lead":/\b[a-z]{3,}\b/.test(t.split(/\s+/).slice(0,4).join(" "))&&!/\d{3}/.test(t)?t.slice(0,40):"sheet"); }
+  if(S.tab==="calls"&&!ov?.classList.contains("show")) s+=S.dialer?"/dialer":"/list";
+  return s; }
+// A stable, privacy safe name for an element: never names or numbers off a card
+function uxLabel(el){ if(!el) return null; const tag=el.tagName.toLowerCase();
+  const ctx=el.closest("#sheet")?"sheet":el.closest(".dialer")?"dialer":el.closest("#list")?"list":el.closest("header")?"header":el.closest("#eff")?"stats":"main";
+  let n;
+  if(tag==="a"&&/^tel:/.test(el.getAttribute("href")||"")) n="call";
+  else if(tag==="a"&&/^sms:/.test(el.getAttribute("href")||"")) n="text";
+  else if(el.id&&!/^c\d+$/.test(el.id)) n="#"+el.id;
+  else if(el.matches(".card.lead,.srow")) n=el.classList.contains("srow")?"search-row":"lead-row";
+  else if(el.matches('.card[id^="c"]')) n="card";
+  else n=(el.getAttribute("aria-label")||el.getAttribute("title")||el.textContent||el.placeholder||tag).trim().replace(/\s+/g," ").replace(/\d{4,}/g,"#").slice(0,32)||tag;
+  return ctx+":"+n; }
+// Clicks on things that do nothing: name the spot by its type, never by its words
+function uxDeadLabel(el){ if(!el||!el.closest) return "main:?"; const ctx=el.closest("#sheet")?"sheet":el.closest(".dialer")?"dialer":el.closest("#list")?"list":el.closest("header")?"header":"main";
+  return ctx+":"+el.tagName.toLowerCase()+([...el.classList].slice(0,2).map(c=>"."+c).join("")||""); }
+function uxPid(el){ const c=el&&el.closest('.card[id^="c"]'); return c?+c.id.slice(1):null; }
+function uxPush(k,o={}){ if(UX.q.length>3000) UX.q.splice(0,500); UX.q.push({k,t:Date.now(),s:uxScreen(),...o}); }
+function uxNoteHover(now){ if(UX.hov&&now-UX.hovAt>=400) { UX.hovs.push([uxLabel(UX.hov),now-UX.hovAt]); if(UX.hovs.length>6) UX.hovs.shift(); } }
+document.addEventListener("pointermove",e=>{ if(e.pointerType!=="mouse") return; const now=Date.now();
+  if(UX.mx!=null) UX.travel+=Math.hypot(e.clientX-UX.mx,e.clientY-UX.my); UX.mx=e.clientX; UX.my=e.clientY; UX.lastMove=now; uxIdleCheck(now);
+  const el=e.target.closest&&e.target.closest(UX_INTER); if(el!==UX.hov){ uxNoteHover(now); UX.hov=el; UX.hovAt=now; } },{passive:true,capture:true});
+document.addEventListener("click",e=>{ const now=Date.now(), el=e.target.closest&&e.target.closest(UX_INTER), lbl=el?uxLabel(el):uxDeadLabel(e.target);
+  uxIdleCheck(now);
+  const m={}; if(UX.hovs.length) m.hov=UX.hovs.filter(h=>h[0]!==lbl);
+  if(UX.mx!=null&&uxDevice(e)==="mouse") m.still=now-UX.lastMove;
+  if(S.ol&&S.ol.id&&$("#sheet")?.classList.contains("lsheet")) m.lead=S.ol.id;
+  UX.rage=UX.rage.filter(r=>now-r[1]<900&&r[0]===lbl); UX.rage.push([lbl,now]);
+  uxPush(el?"click":"dead",{g:lbl,p:uxPid(e.target),dt:now-UX.lastAct,tr:Math.round(UX.travel),x:+(e.clientX/innerWidth).toFixed(3),y:+(e.clientY/innerHeight).toFixed(3),d:uxDevice(e),m:Object.keys(m).length?m:undefined});
+  if(UX.rage.length===3) uxPush("rage",{g:lbl,p:uxPid(e.target)});
+  UX.lastAct=now; UX.travel=0; UX.hovs=[]; },true);
+document.addEventListener("keydown",e=>{ const now=Date.now(); uxIdleCheck(now);
+  if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||"")){ UX.lastAct=now; return; }
+  const k=e.key.length===1?e.key.toLowerCase():e.key; if(!/^([1-5]|s|c|Enter|Escape|Tab|Arrow\w+)$/.test(k)) return;
+  uxPush("key",{g:"key:"+k,dt:now-UX.lastAct,d:"mouse"}); UX.lastAct=now; },true);
+document.addEventListener("focusin",e=>{ const el=e.target; if(/INPUT|TEXTAREA|SELECT/.test(el.tagName)) UX.focus={el,at:Date.now(),v:el.type==="checkbox"?el.checked:el.value}; },true);
+document.addEventListener("focusout",e=>{ const f=UX.focus; if(!f||f.el!==e.target) return; UX.focus=null; const el=f.el, now=Date.now();
+  const changed=(el.type==="checkbox"?el.checked:el.value)!==f.v; if(!changed&&now-f.at<1500) return;
+  uxPush("type",{g:uxLabel(el),p:uxPid(el),dt:now-f.at,m:{chars:el.tagName==="SELECT"?undefined:String(el.value||"").length,changed}}); UX.lastAct=now; },true);
+addEventListener("scroll",()=>{ const y=scrollY; UX.scroll+=Math.abs(y-UX.lastY); UX.lastY=y; },{passive:true});
+document.addEventListener("scroll",e=>{ if(e.target&&e.target.id==="sheet"){ const y=e.target.scrollTop, k="_sy"; UX.scroll+=Math.abs(y-(e.target[k]||0)); e.target[k]=y; } },{passive:true,capture:true});
+// No input for over a minute while the app is open counts as idle; logged when you come back
+function uxIdleCheck(now){ const gap=now-Math.max(UX.lastAct,UX.lastMove); if(gap>=60e3&&document.visibilityState==="visible") uxPush("idle",{dt:gap}); }
+// Screen changes, with time spent and scrolling on the one you left
+setInterval(()=>{ const s=uxScreen(); if(s===UX.screen) return; const now=Date.now();
+  if(UX.screen) uxPush("view",{g:s,dt:now-UX.screenAt,m:{from:UX.screen,scroll:Math.round(UX.scroll)}});
+  UX.screen=s; UX.screenAt=now; UX.scroll=0; },400);
+document.addEventListener("visibilitychange",()=>{ const now=Date.now(); uxPush(document.visibilityState==="hidden"?"hide":"show",{dt:now-UX.lastAct}); if(document.visibilityState==="visible") UX.lastAct=now; else uxFlush(); });
+async function uxFlush(){ if(!UX.q.length) return; const ev=UX.q.splice(0,400);
+  if(DEMO||!S.token){ if(DEMO) (window.__ux=window.__ux||[]).push(...ev); return; }
+  try{ const r=await fetch(API.replace(/\/api$/,"/ux"),{method:"POST",keepalive:true,headers:{"Content-Type":"application/json","x-session":S.token},body:JSON.stringify({sid:UX.sid,ev})}); if(!r.ok&&r.status!==401) throw 0; }
+  catch{ UX.q.unshift(...ev.slice(0,2000)); } }
+setInterval(uxFlush,15000);
 // Work timing: when each card came up, when you tapped call, when you came back to the app, when you logged it.
 // Nothing here slows the call down; it just stamps times and sends them with the outcome.
 function markShown(pid){ if(!S.tm||S.tm.pid!==pid) S.tm={pid,shown:Date.now()}; }
