@@ -237,6 +237,12 @@ function demoApi(action, body){
       return {leads:D.leads.filter(l=>hit(l.name,l.phone,l.address,l.suburb)).slice(0,20),
         props:D.rows.filter(r=>hit(r.owner_name,r.phone,r.street_address,r.suburb)).map(r=>({id:r.property_id+100000,owner_name:r.owner_name,phone:r.phone,street_address:r.street_address,suburb:r.suburb,is_lead:false})).slice(0,30),
         listings:D.listings.filter(t=>hit(t.address,t.suburb)).slice(0,10)}; }
+    case "work_event": return {ok:true};
+    case "work_stats": { const d=+body.days||7, k=d===1?1:d===7?5:20;
+      return {days_back:d,totals:{calls:62*k,answered:21*k,appraisals:Math.round(0.9*k),active_s:Math.round(2.4*3600*k),breaks:2*k,break_s:1700*k,days:k,timed:58*k,prep_s:19,ring_s:34,talk_s:96,wrap_s:11,cycle_s:139},
+        wrap_by_outcome:[{outcome:"no_answer",n:41*k,wrap_s:8},{outcome:"not_interested",n:12*k,wrap_s:6},{outcome:"call_back",n:6*k,wrap_s:31},{outcome:"lead",n:2*k,wrap_s:44},{outcome:"appraisal",n:1*k,wrap_s:52}],
+        by_hour:[[9,14,4],[10,16,5],[11,12,3],[16,9,4],[17,11,5]].map(([h,c,a])=>({h,calls:c*k,answered:a*k,appraisals:0,days:k})),
+        long_gaps:[{from_at:"Thu 12 Nov 10:42am",mins:24},{from_at:"Wed 11 Nov 11:15am",mins:16}],skips:{n:4*k,med_s:9}}; }
     case "make_lead": { demoLeads(D); const id=Date.now(); D.leads.unshift({id,name:"New lead",status:"Active",temperature:"Warm",follow_up:addDaysKey(3),buy:{},notes:[]}); return {lead_id:id}; }
     case "add_pipeline": D.pipe.unshift({property_id:Date.now(),stage:body.stage,source:body.source,updated_at:new Date().toISOString(),owner_name:body.owner_name||null,phone:body.phone||null,street_address:`${body.house_number} ${body.street}`.trim(),suburb:body.suburb,notes:body.notes||null}); return {ok:true};
     case "set_source": D.pipe=D.pipe.map(x=>x.property_id===body.property_id?{...x,source:body.source}:x); return {ok:true};
@@ -388,7 +394,8 @@ async function viewCalls(){
 function drawProg(){
   const el=$("#prog"), ov=S.ov; if(!el||!ov) return;
   const tg=ov.settings?.daily_target||100, pct=Math.min(100, ov.today_calls/tg*100);
-  el.innerHTML = `<b>${ov.today_calls}</b><span class="muted">/${tg}</span>${ov.today_appraisals?` <span style="color:var(--good);font-weight:600">· ${ov.today_appraisals} appr</span>`:""}<div class="bar2"><div style="width:${pct}%;${pct>=100?"background:var(--good)":""}"></div></div>`;
+  const pace=livePace();
+  el.innerHTML = `<b>${ov.today_calls}</b><span class="muted">/${tg}</span>${pace?` <span class="muted" title="Calls per hour over your current stretch">· ${pace}/hr</span>`:""}${ov.today_appraisals?` <span style="color:var(--good);font-weight:600">· ${ov.today_appraisals} appr</span>`:""}<div class="bar2"><div style="width:${pct}%;${pct>=100?"background:var(--good)":""}"></div></div>`;
 }
 // Keep the screen on while working the list (where the phone allows it)
 let wake=null;
@@ -396,6 +403,7 @@ async function keepAwake(){ try { if ("wakeLock" in navigator && S.tab==="calls"
 let hiddenAt=0;
 document.addEventListener("visibilitychange", ()=>{
   if (document.visibilityState==="hidden") { hiddenAt=Date.now(); return; }
+  if (S.tm && S.tm.dial && !S.tm.back && hiddenAt>=S.tm.dial-2000) S.tm.back=Date.now();
   if (S.tab==="calls") keepAwake();
   if (S.token && hiddenAt && Date.now()-hiddenAt > 30*60e3 && !$("#ov").classList.contains("show")) render(); // fresh list and counts after a long break
 });
@@ -420,7 +428,8 @@ function drawList(){
     const left = all.filter(r=>!r.today_outcome && !S.skipped.has(r.property_id));
     if (!left.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-confetti"></i>That's everyone for today.${S.skipped.size?`<br><button style="margin-top:10px" onclick="S.skipped.clear();drawList()">Go back to ${S.skipped.size} skipped</button>`:""}</div>`; return; }
     $("#list").innerHTML = `<div class="dialer">${cardHTML(left[0])}
-      <div class="skiprow"><span class="muted" style="font-size:13px">${left.length} to go</span><button onclick="S.skipped.add(${left[0].property_id});drawList();scrollTo(0,0)"><i class="ti ti-player-skip-forward"></i>Skip</button></div></div>`;
+      <div class="skiprow"><span class="muted" style="font-size:13px">${left.length} to go</span><button onclick="skipCard(${left[0].property_id})"><i class="ti ti-player-skip-forward"></i>Skip</button></div></div>`;
+    markShown(left[0].property_id);
     return;
   }
   const q = S.q.trim().toLowerCase();
@@ -472,7 +481,19 @@ function sydInput(d){ const p=Object.fromEntries(new Intl.DateTimeFormat("en-CA"
 function sydToISO(v){ const [d,t]=v.split("T"), [y,m,dd]=d.split("-").map(Number), [h,mi]=t.split(":").map(Number); let ts=Date.UTC(y,m-1,dd,h,mi); for(let i=0;i<2;i++){ const p=sydInput(new Date(ts)); const [d2,t2]=p.split("T"),[y2,m2,dd2]=d2.split("-").map(Number),[h2,mi2]=t2.split(":").map(Number); ts+=Date.UTC(y,m-1,dd,h,mi)-Date.UTC(y2,m2-1,dd2,h2,mi2);} return new Date(ts).toISOString(); }
 let notes = {};
 async function addNote(id){ const n = await uiAsk("Note for this call (saved with the next outcome you tap)", {input: notes[id]||"", ok:"Save note"}); if (n!==null) { if (n.trim()) notes[id]=n.trim(); else delete notes[id]; if (S.tab==="calls") drawList(); toast(n.trim()?"Note added":"Note removed"); } }
-function dialTo(phone){ window.location.href = "tel:" + phone; }
+function dialTo(phone){ const cur=queue().find(r=>r.phone===phone); if(cur){ markDial(cur.property_id); if(!S.tm.shown) S.tm.shown=S.tm.dial; } window.location.href = "tel:" + phone; }
+// Work timing: when each card came up, when you tapped call, when you came back to the app, when you logged it.
+// Nothing here slows the call down; it just stamps times and sends them with the outcome.
+function markShown(pid){ if(!S.tm||S.tm.pid!==pid) S.tm={pid,shown:Date.now()}; }
+function markDial(pid){ if(!S.tm||S.tm.pid!==pid) S.tm={pid,shown:null}; S.tm.dial=Date.now(); S.tm.back=null; }
+function skipCard(pid){ const ms=S.tm&&S.tm.pid===pid&&S.tm.shown?Date.now()-S.tm.shown:0; api("work_event",{kind:"skip",property_id:pid,ms}).catch(()=>{}); S.tm=null; S.skipped.add(pid); drawList(); scrollTo(0,0); }
+document.addEventListener("click", e=>{ const a=e.target.closest('a[href^="tel:"]'); const c=a&&a.closest('#list .card[id^="c"]'); if(c) markDial(+c.id.slice(1)); }, true);
+// Calls you log today, kept on the phone so the pace survives a refresh
+function paceLog(){ try{ const k="pace_"+todayKey(); return JSON.parse(localStorage.getItem(k)||"[]"); }catch{ return []; } }
+function pacePush(){ try{ const k="pace_"+todayKey(), a=paceLog(); a.push(Date.now()); localStorage.setItem(k,JSON.stringify(a.slice(-400))); }catch{} }
+function pacePop(){ try{ const k="pace_"+todayKey(), a=paceLog(); a.pop(); localStorage.setItem(k,JSON.stringify(a)); }catch{} }
+// Calls per hour over your last stretch of work (stops at any gap over 10 minutes)
+function livePace(){ const a=paceLog(); if(a.length<3) return null; let i=a.length-1; while(i>0 && a[i]-a[i-1]<=600e3 && a.length-1-i<30) i--; const n=a.length-1-i, span=(a[a.length-1]-a[i])/36e5; if(n<2||span<5/60) return null; if(Date.now()-a[a.length-1]>600e3) return null; return Math.round(n/span); }
 function nextDialable(currentId){
   return queue().filter(r=>!r.today_outcome && r.property_id!==currentId && !S.skipped.has(r.property_id) && r.phone && !(r.signals||[]).includes("probate"))
 [0];
@@ -480,6 +501,7 @@ function nextDialable(currentId){
 async function outcome(id, o){
   if (S.dialer && S.autodial && S.tab==="calls" && (o==="no_answer"||o==="not_interested")) {
     const nx = nextDialable(id);
+    if (S.tm&&S.tm.pid===id) S.tmDone=S.tm;   // keep this call's timing before auto dial starts the next one
     if (nx) dialTo(nx.phone); // must happen inside the tap, before any waiting, or the phone blocks it
     await record(id, o, null);
     return;
@@ -517,6 +539,7 @@ async function record(id, o, cb){
   S.saving.add(id);
   const row = S.rows.find(x=>x.property_id===id), cbr = (S.callbacks||[]).find(x=>x.property_id===id);
   const note = notes[id]||null;
+  const tm = S.tmDone&&S.tmDone.pid===id ? S.tmDone : S.tm&&S.tm.pid===id ? S.tm : {}; if (S.tm&&S.tm.pid===id) S.tm=null; S.tmDone=null;   // grab the timing before the next card replaces it
   // Update the screen straight away, save in the background
   const apply = (v)=>{ if(row) row.today_outcome=v; if(cbr){ cbr.today_outcome=v; cbr.done=!!v; }
     if(S.ov){ const d=v?1:-1; S.ov.today_calls+=d; if(o!=="no_answer") S.ov.today_connected+=d; if(o==="appraisal") S.ov.today_appraisals+=d; } };
@@ -525,13 +548,15 @@ async function record(id, o, cb){
   const redraw = ()=>{ if (S.tab==="calls") { drawList(); drawProg(); if (S.dialer) scrollTo(0,0); } else render(); };
   redraw();
   try {
-    const r = await api("outcome",{property_id:id,outcome:o,callback_at:cb,notes:note,list_type:S.type});
-    toast(`${LABEL[o]} saved`, async()=>{ await api("undo_outcome",{call_id:r.id}); apply(null); redraw(); });
+    const iso = v=>v?new Date(v).toISOString():null;
+    pacePush(); drawProg();
+    const r = await api("outcome",{property_id:id,outcome:o,callback_at:cb,notes:note,list_type:S.type,t_shown:iso(tm.shown),t_dial:iso(tm.dial),t_back:iso(tm.back),mode:S.dialer?"dialer":"list"});
+    toast(`${LABEL[o]} saved`, async()=>{ await api("undo_outcome",{call_id:r.id}); pacePop(); apply(null); redraw(); });
     if (o==="appraisal") setTimeout(()=>openMessage(id, o), 150);
     if (o==="lead" && r.lead_id) { await loadLeads(); openLead(r.lead_id,{fresh:true}); }
     return r;
   } catch(e){
-    apply(null); if (note) notes[id]=note; redraw();
+    apply(null); pacePop(); if (note) notes[id]=note; redraw();
     toast("Couldn't save that one. Check your signal and tap again.");
   } finally { S.saving.delete(id); }
 }
@@ -1153,6 +1178,7 @@ async function viewInsights(){
    <h2>Appraisals per 100 calls</h2><div class="card"><div style="display:flex;align-items:baseline;gap:8px"><b style="font-size:32px;letter-spacing:-.02em">${rate.toFixed(1)}</b><span class="muted">goal ${t} · last 30 days</span></div>
      <div style="height:8px;border-radius:999px;background:var(--bg);margin:10px 0 6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${rate>=t?"var(--good)":"var(--accent)"}"></div></div>
      <span class="muted">${c.connected<300?`${c.connected} answered calls so far. This settles after about 300.`:rate>=t?"On target.":`${(t-rate).toFixed(1)} below goal.`}</span></div>
+   <h2>Where your time goes</h2><div id="eff"><div class="card muted">Working it out…</div></div>
    ${scorecard(ov)}
    ${sourcesCard(ov)}
    ${heatMap(ov.times)}
@@ -1164,6 +1190,45 @@ async function viewInsights(){
    <details class="sec" ${ov.failed?"open":""}><summary>System</summary><div>
     <table>${(ov.last_runs||[]).map(r=>`<tr><td>${esc(r.job.replace(/_/g," "))}</td><td style="color:${r.ok?"inherit":"var(--bad)"}">${esc(r.detail)}</td><td class="muted">${fmt(r.created_at)}</td></tr>`).join("") || `<tr><td class="muted">Nothing has run yet.</td></tr>`}</table>
     <p class="muted" style="margin-bottom:0">${ov.properties.toLocaleString()} properties in the system.</p></div></details>`;
+  drawEff();
+}
+async function drawEff(days){ if(days) S.effDays=days; days=S.effDays||7; const el=$("#eff"); if(!el) return;
+  let w; try{ w=await api("work_stats",{days}); }catch(e){ el.innerHTML=`<div class="card muted">Couldn't load this right now.</div>`; return; }
+  if(!$("#eff")) return; el.innerHTML=effHTML(w,days);
+}
+const secs=v=>v==null?"–":v<90?`${Math.round(v)}s`:`${Math.round(v/60)} min`;
+const mins=v=>v<60?`${Math.round(v)} min`:`${(v/60).toFixed(1).replace(/\.0$/,"")} h`;
+const hr12=h=>`${(h%12)||12}${h<12?"am":"pm"}`;
+function effHTML(w,days){
+  const t=w.totals||{}, chips=[[1,"Today"],[7,"7 days"],[30,"30 days"]].map(([d,l])=>`<button class="${d===days?"on":""}" onclick="drawEff(${d})">${l}</button>`).join("");
+  const head=`<div class="chipgrid sm" style="margin:0 0 8px">${chips}</div>`;
+  if(!t.calls) return head+`<div class="card muted">No calls logged ${days===1?"today":"in this period"} yet. Make some calls and this fills in by itself.</div>`;
+  const activeH=(t.active_s||0)/3600, cph=activeH>0?t.calls/activeH:null, perDay=t.calls/Math.max(1,t.days);
+  const noans=t.calls-t.answered, onPhone=(t.ring_s!=null||t.talk_s!=null)?((t.ring_s||0)*noans+(t.talk_s||t.ring_s||0)*t.answered)/t.calls:null;
+  const parts=[["Before dialling",t.prep_s,"#7c93b5"],["On the phone",onPhone,"var(--accent)"],["Logging it",t.wrap_s,"#e0a040"]].filter(x=>x[1]!=null);
+  const tot=parts.reduce((a,x)=>a+x[1],0);
+  const bar=parts.length?`<div style="display:flex;height:14px;border-radius:999px;overflow:hidden;margin:10px 0 6px">${parts.map(([l,v,c])=>`<div style="width:${100*v/tot}%;background:${c}" title="${l}"></div>`).join("")}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px">${parts.map(([l,v,c])=>`<span><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${c};margin-right:5px"></span>${l} <b>${secs(v)}</b></span>`).join("")}</div>`
+    :`<p class="muted" style="font-size:13px;margin:8px 0 0">The split of each call (before dialling, on the phone, logging) starts from your next calls. It needs the new version of the app, so close and reopen it once.</p>`;
+  // What would each fix be worth: seconds saved per call, turned into extra calls a day at your current pace
+  const cyc=t.cycle_s||(cph?3600/cph:null), extra=s=>cyc&&s>0?Math.round(perDay*(cyc/Math.max(5,cyc-s)-1)):0;
+  const tips=[], wb=Object.fromEntries((w.wrap_by_outcome||[]).map(x=>[x.outcome,x]));
+  if(t.prep_s>12) tips.push([extra(t.prep_s-6),`You take <b>${secs(t.prep_s)}</b> to dial once a card comes up. Read the name, tap the number, read the reasons while it rings.`]);
+  if(t.ring_s>28) tips.push([extra((t.ring_s-25)*noans/t.calls),`Unanswered calls ring for <b>${secs(t.ring_s)}</b> before you hang up. Hang up at about 25 seconds (5 rings).`]);
+  if(wb.call_back&&wb.call_back.wrap_s>20) tips.push([extra((wb.call_back.wrap_s-8)*wb.call_back.n/t.calls),`Call backs take <b>${secs(wb.call_back.wrap_s)}</b> to log. Use the quick time buttons instead of Pick a time.`]);
+  if(wb.no_answer&&wb.no_answer.wrap_s>6) tips.push([extra((wb.no_answer.wrap_s-3)*wb.no_answer.n/t.calls),`No answers take <b>${secs(wb.no_answer.wrap_s)}</b> to log after you hang up. Tap No answer the moment you're back in the app.`]);
+  if(t.breaks) tips.push([0,`<b>${t.breaks}</b> break${t.breaks>1?"s":""} over 10 minutes, <b>${mins(t.break_s/60)}</b> in total. Work in 45 minute blocks with a set 5 minute break so breaks don't drift.`]);
+  if(w.skips&&w.skips.n>=3) tips.push([0,`You skipped <b>${w.skips.n}</b> cards, about <b>${secs(w.skips.med_s)}</b> each. If a card isn't worth calling, decide in the first few seconds.`]);
+  const hrs=(w.by_hour||[]).filter(h=>h.calls>=10).map(h=>({...h,rate:h.answered/h.calls})); const best=hrs.sort((a,b)=>b.rate-a.rate)[0];
+  if(best&&hrs.length>1) tips.push([0,`People pick up most at <b>${hr12(best.h)}</b> (${Math.round(100*best.rate)}% answer). Keep that hour for calls only.`]);
+  tips.sort((a,b)=>b[0]-a[0]);
+  const hoursRow=(w.by_hour||[]).length>1?(()=>{ const mx=Math.max(...w.by_hour.map(h=>h.calls/h.days)); return `<div style="display:flex;gap:3px;align-items:flex-end;height:60px;margin-top:10px">${w.by_hour.map(h=>{ const v=h.calls/h.days, r=h.calls?h.answered/h.calls:0; return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px" title="${hr12(h.h)}: ${Math.round(v)} calls, ${Math.round(100*r)}% answered"><div style="width:100%;height:${Math.max(3,44*v/mx)}px;border-radius:4px 4px 0 0;background:var(--accent);opacity:${0.35+0.65*Math.min(1,r*3)}"></div><span style="font-size:10px;color:var(--muted)">${hr12(h.h).replace(/m$/,"")}</span></div>`; }).join("")}</div><p class="muted" style="font-size:12px;margin:4px 0 0">Calls by hour of day. Darker means more people answered.</p>`; })():"";
+  return head+`<div class="card">
+    <div style="display:flex;align-items:baseline;gap:8px"><b style="font-size:32px;letter-spacing:-.02em">${cph?Math.round(cph):"–"}</b><span class="muted">calls per working hour</span></div>
+    <div class="muted" style="font-size:13px">${t.calls} calls in ${mins((t.active_s||0)/60)} of calling${t.days>1?` over ${t.days} days`:""}${t.cycle_s?` · one every ${secs(t.cycle_s)}`:""}</div>
+    ${bar}${hoursRow}</div>
+   ${tips.length?`<div class="card"><b>Biggest time savers</b>${(()=>{ const sum=tips.slice(0,4).reduce((a,x)=>a+x[0],0); return sum>1?`<div class="muted" style="font-size:13px">Fix these and it's about <b style="color:var(--good)">${sum} more calls a day</b> in the same hours.</div>`:""; })()}${tips.slice(0,4).map(([x,txt])=>`<p style="margin:8px 0 0;font-size:14px;line-height:1.4">${txt}${x>0?` <span style="color:var(--good);font-weight:600;white-space:nowrap">≈ +${x} call${x===1?"":"s"} a day</span>`:""}</p>`).join("")}</div>`:""}
+   ${(w.long_gaps||[]).length?`<details class="sec"><summary>Longest gaps between calls</summary><div>${w.long_gaps.map(g=>`<p style="margin:4px 0">${esc(g.from_at)} · <b>${g.mins} min</b></p>`).join("")}<p class="muted" style="font-size:12px">Gaps between 10 minutes and 2 hours on the same day. Longer than that counts as finishing for the day.</p></div></details>`:""}`;
 }
 async function approve(v){ await api("approve_version",{version:v}); toast("Version "+v+" is live from tomorrow's list"); render(); }
 async function reject(v){ await api("reject_version",{version:v}); toast("Proposal rejected"); render(); }
