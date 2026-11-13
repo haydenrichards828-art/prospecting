@@ -742,6 +742,10 @@ const STAGE={appraisal:["Appraisal booked","warn"],listed:["Listed","good"],sold
 
 // ---------- Card drops: houses with no phone number, as a list, a pin map and a heat map ----------
 const DROP_DAYS=60;
+// Pins stay small when zoomed out so the streets underneath are visible, and grow as you zoom in
+function pinScale(){ const z=S.map?S.map.getZoom():13; return z<=12?0.55:z===13?0.7:z===14?0.85:z===15?1:z===16?1.3:1.6; }
+function pinR(base){ return Math.max(1.6,base*pinScale()); }
+function resizePins(){ if(!S.dlay||!S.dlay.eachLayer) return; S.dlay.eachLayer(m=>{ if(m.setRadius&&m.options.base!=null) m.setRadius(pinR(m.options.base)); }); }
 function dropAddr(x){ return `${[x.unit&&x.unit+"/",x.house_number].filter(Boolean).join("")} ${x.street||""}`.trim(); }
 function isDropped(x){ return x.dropped_at && Date.now()-new Date(x.dropped_at).getTime() < DROP_DAYS*864e5; }
 function loadLeaflet(){
@@ -797,6 +801,7 @@ function drawDrops(){
     if (S.map) { try{S.map.remove()}catch{} }
     $("#dmap").innerHTML="";
     S.map=L.map("dmap",{zoomControl:false,attributionControl:true}).setView([-34.36,150.91],12);
+    S.map.on("zoomend",resizePins);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(S.map);
     const pts=dropRows().filter(x=>x.lat!=null).map(x=>[x.lat,x.lng]); if (pts.length) S.map.fitBounds(pts,{padding:[20,20]});
     drawDropLayer();
@@ -821,7 +826,8 @@ function drawDropLayer(){
   S.canvas=S.canvas||L.canvas({padding:0.5});
   S.dlay=L.layerGroup(blds.map(b=>{ const d=!b.left.length, t=b.score/max, x=b.xs[0], many=b.xs.length>1;
     const label=many?`${esc([x.house_number].filter(Boolean).join(""))} ${esc(x.street||"")} · ${b.xs.length} units`:esc(dropAddr(x));
-    return L.circleMarker([b.lat,b.lng],{renderer:S.canvas,radius:d?5:6+t*4+(many?2:0),weight:many?3:1.5,color:d?"#9aa3ad":accent,fillColor:d?"#c9ced4":accent,fillOpacity:d?0.5:0.35+t*0.55})
+    const base=d?2.5:3+t*2.5+(many?1:0);
+    return L.circleMarker([b.lat,b.lng],{renderer:S.canvas,base,radius:pinR(base),weight:many?1.5:0.6,color:d?"#9aa3ad":accent,fillColor:d?"#c9ced4":accent,fillOpacity:d?0.5:0.35+t*0.55})
       .bindPopup(()=>`<b>${label}</b>${many?"":rpBtn(dropAddr(x),x.suburb,null,"rpb",x.postcode)}<br>${esc(x.suburb||"")}<br><span style="color:#667">${many?`${b.left.length} of ${b.xs.length} letterboxes to drop`:esc((x.reasons||[])[0]||"")}</span><br>${d?`<button style="margin-top:8px;width:100%" onclick="toggleDrop([${b.xs.map(y=>y.id)}],true)">Undo dropped</button>`:`<button style="margin-top:8px;width:100%" onclick="toggleDrop([${b.left.map(y=>y.id)}],false)">${many?"Mark building dropped":"Mark dropped"}</button>`}`); })).addTo(S.map);
 }
 
