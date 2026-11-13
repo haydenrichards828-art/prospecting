@@ -42,6 +42,7 @@ nav button.on{background:var(--card);border-color:var(--line);color:var(--ink);f
 @media (max-width:440px){.bar .bname{display:none}.bar{gap:4px;padding-left:10px}nav{gap:0}nav button{padding:6px 6px;font-size:14px}.hsearch{font-size:14px}}
 @media (max-width:380px){nav button{padding:6px 4px;font-size:13px}}
 
+.ndot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--bad);margin-left:5px;vertical-align:2px;flex:none}.newtag{font-size:11px;font-weight:700;color:#fff;background:var(--bad);border-radius:999px;padding:1px 7px;margin-right:5px;vertical-align:1px}
 .badge{font-size:11px;background:var(--bad);color:#fff;border-radius:999px;padding:0 6px;line-height:18px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px}
@@ -243,6 +244,7 @@ function demoApi(action, body){
         wrap_by_outcome:[{outcome:"no_answer",n:41*k,wrap_s:8},{outcome:"not_interested",n:12*k,wrap_s:6},{outcome:"call_back",n:6*k,wrap_s:31},{outcome:"lead",n:2*k,wrap_s:44},{outcome:"appraisal",n:1*k,wrap_s:52}],
         by_hour:[[9,14,4],[10,16,5],[11,12,3],[16,9,4],[17,11,5]].map(([h,c,a])=>({h,calls:c*k,answered:a*k,appraisals:0,days:k})),
         long_gaps:[{from_at:"Thu 12 Nov 10:42am",mins:24},{from_at:"Wed 11 Nov 11:15am",mins:16}],skips:{n:4*k,med_s:9}}; }
+    case "seen_matches": { demoLeads(D); const l=D.leads.find(x=>x.id===body.id); if(l) l.seen_listings=[...(l.seen_listings||[]),...body.ids]; return {ok:true}; }
     case "make_lead": { demoLeads(D); const id=Date.now(); D.leads.unshift({id,name:"New lead",status:"Active",temperature:"Warm",follow_up:addDaysKey(3),buy:{},notes:[]}); return {lead_id:id}; }
     case "add_pipeline": D.pipe.unshift({property_id:Date.now(),stage:body.stage,source:body.source,updated_at:new Date().toISOString(),owner_name:body.owner_name||null,phone:body.phone||null,street_address:`${body.house_number} ${body.street}`.trim(),suburb:body.suburb,notes:body.notes||null}); return {ok:true};
     case "set_source": D.pipe=D.pipe.map(x=>x.property_id===body.property_id?{...x,source:body.source}:x); return {ok:true};
@@ -298,8 +300,9 @@ function toast(msg, undo) {
 async function render() {
   if (!S.token) return renderLogin();
   $("#app").innerHTML = `
-  <header><div class="bar"><div class="brand"><i class="ti ti-phone-call"></i><span class="bname">Prospect</span></div><input id="hq" class="hsearch" type="search" placeholder="" value="${esc(S.sq||"")}" oninput="hSearch(this.value)" autocomplete="off" onfocus="document.body.classList.add('srch')" onblur="if(!this.value.trim())document.body.classList.remove('srch')" aria-label="Search name, street or suburb"><nav>${[["calls","Calls"],["leads","Leads"],["drops","Card drops"],["insights","Stats"],["settings",'<i class="ti ti-settings"></i>']].map(([k,l])=>`<button class="${S.tab===k||(k==="settings"&&S.tab==="messages")?"on":""}" onclick="go('${k}')"${k==="settings"?' aria-label="Settings" title="Settings"':""}>${l}</button>`).join("")}</nav></div></header>
+  <header><div class="bar"><div class="brand"><i class="ti ti-phone-call"></i><span class="bname">Prospect</span></div><input id="hq" class="hsearch" type="search" placeholder="" value="${esc(S.sq||"")}" oninput="hSearch(this.value)" autocomplete="off" onfocus="document.body.classList.add('srch')" onblur="if(!this.value.trim())document.body.classList.remove('srch')" aria-label="Search name, street or suburb"><nav>${[["calls","Calls"],["leads","Leads"],["drops","Card drops"],["insights","Stats"],["settings",'<i class="ti ti-settings"></i>']].map(([k,l])=>`<button id="nav_${k}" class="${S.tab===k||(k==="settings"&&S.tab==="messages")?"on":""}" onclick="go('${k}')"${k==="settings"?' aria-label="Settings" title="Settings"':""}>${l}</button>`).join("")}</nav></div></header>
   <div class="wrap" id="main"><div class="empty"><i class="ti ti-loader-2"></i>Loading</div></div>`;
+  updateLeadDot(); if (!S.leadsAt || Date.now()-S.leadsAt>10*60e3) { S.leadsAt=Date.now(); loadLeads().catch(()=>{ S.leadsAt=0; }); }
   try { await ({calls:viewCalls,leads:viewLeads,pipeline:viewPipeline,drops:viewDrops,messages:viewMessages,insights:viewInsights,settings:viewSettings})[S.tab](); }
   catch(e){ if (S.token) $("#main").innerHTML = `<div class="empty"><i class="ti ti-wifi-off"></i>${esc(e.message)}<br><button class="primary" style="margin-top:14px" onclick="render()"><i class="ti ti-refresh"></i>Try again</button></div>`; }
 }
@@ -930,7 +933,11 @@ function demoLeads(D){ if(D.leads) return;
   D.listings=[{id:11,address:"14 Hill View Cl",suburb:"Tarrawanna",price_text:"Guide $1.45M",price_min:1400000,price_max:1450000,beds:4,baths:2,cars:2,ptype:"House",land:620,description:"Family home with double lock up garage and level yard."},
     {id:12,address:"3 Ocean Pde",suburb:"Bulli",price_text:"$1.2M",price_min:1200000,price_max:1200000,beds:3,baths:2,cars:1,ptype:"Villa",description:"Single level villa, no stairs, close to the beach."},
     {id:13,address:"22 Ridge St",suburb:"Corrimal",price_text:"$1.39M",price_min:1390000,price_max:1390000,beds:3,baths:1,cars:2,ptype:"House",description:"Renovated three bedroom home with a double garage."}]; }
-async function loadLeads(){ const r=await api("leads"); S.leads=r.leads||[]; S.listings=r.listings||[]; S.leadsClosed=r.closed||0; }
+async function loadLeads(){ const r=await api("leads"); S.leads=r.leads||[]; S.listings=r.listings||[]; S.leadsClosed=r.closed||0; S.leadsAt=Date.now(); updateLeadDot(); }
+// Matching Dignam homes this lead hasn't been shown yet (the nightly website import adds new ones)
+function newMatches(l){ const seen=new Set((l.seen_listings||[]).map(Number)); return matchesFor(l).filter(x=>!seen.has(+x.t.id)); }
+function updateLeadDot(){ const b=$("#nav_leads"); if(!b) return; const n=(S.leads||[]).filter(l=>newMatches(l).length).length;
+  b.querySelector(".ndot")?.remove(); if(n) b.insertAdjacentHTML("beforeend",`<span class="ndot" title="${n} lead${n>1?"s have":" has"} new matching homes"></span>`); }
 async function viewLeads(){ await loadLeads(); drawLeads(); }
 function drawLeads(){
   S.lview=S.lview||"leads"; S.lf=S.lf||"all";
@@ -948,10 +955,10 @@ function drawLeads(){
    + (S.leadsClosed?`<p class="muted" style="text-align:center;font-size:12px;margin-top:16px">${S.leadsClosed} closed or do not contact leads hidden</p>`:"");
 }
 function leadRow(l){
-  const n=dueIn(l.follow_up), mt=matchesFor(l), top=mt.filter(x=>x.m.tier===1).length;
+  const n=dueIn(l.follow_up), mt=matchesFor(l), top=mt.filter(x=>x.m.tier===1).length, nw=newMatches(l).length;
   return `<div class="card lead" onclick="openLead(${l.id})">
     <div style="display:flex;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0">
-     <div class="lname">${esc(leadTitle(l))}</div>
+     <div class="lname" style="display:flex;align-items:center">${nw?`<span class="newtag">${nw} new</span>`:""}<span style="overflow:hidden;text-overflow:ellipsis">${esc(leadTitle(l))}</span></div>
      <div class="addr" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc([l.name?l.address:null,l.suburb].filter(Boolean).join(", ")||l.motivation||"")}</div>
      <div class="lmeta"><span style="${n!==null&&n<0?"color:var(--bad);font-weight:600":n===0?"color:var(--accent);font-weight:600":""}">${dueLabel(l.follow_up)}</span>${l.next_action?` · ${esc(l.next_action)}`:""}${l.status&&l.status!=="Active"?` · <b>${esc(l.status)}</b>`:""}${mt.length?` · <span style="color:var(--good);font-weight:600"><i class="ti ti-home-check"></i>${top?`${top} top match${top===1?"":"es"}`:`${mt.length} other area`}</span>`:""}</div>
     </div>${l.phone?`<a class="lcall" href="tel:${esc(l.phone.replace(/[^\d+]/g,""))}" onclick="event.stopPropagation()" aria-label="Call"><i class="ti ti-phone"></i></a>`:""}</div></div>`;
@@ -990,9 +997,11 @@ function openLead(id, opts={}){
   const opt=(arr,cur)=>`<option value="">None</option>`+arr.map(o=>`<option ${o===cur?"selected":""}>${esc(o)}</option>`).join("");
   const fu=[["Tmrw",1],["3 days",3],["1 wk",7],["2 wks",14],["1 mth",30],["3 mths",91]];
   const mt=id?matchesFor(l):[], m1=mt.filter(x=>x.m.tier===1), m2=mt.filter(x=>x.m.tier===2);
+  S.newShown=S.newShown||{}; const fresh=id?newMatches(l).map(x=>+x.t.id):[]; S.newShown[id]=[...new Set([...(S.newShown[id]||[]),...fresh])];
+  if(fresh.length){ l.seen_listings=[...(l.seen_listings||[]),...fresh]; api("seen_matches",{id,ids:fresh}).catch(()=>{}); setTimeout(updateLeadDot,0); }
   const tel=l.phone?l.phone.replace(/[^\d+]/g,""):"";
   const mcard=x=>{ const t=x.t;
-    return `<div class="mcard"><div style="flex:1;min-width:0"><b>${esc(t.address)}${t.suburb?`, ${esc(t.suburb)}`:""}</b><div class="muted" style="font-size:12px">${x.m.tier===2?"Other area · ":""}${esc(listingLine(t))}${x.m.unknown.length?` · check ${esc(x.m.unknown.join(", "))}`:""}</div></div>
+    return `<div class="mcard"><div style="flex:1;min-width:0"><b>${(S.newShown[l.id]||[]).includes(+t.id)?`<span class="newtag">New</span>`:""}${esc(t.address)}${t.suburb?`, ${esc(t.suburb)}`:""}</b><div class="muted" style="font-size:12px">${x.m.tier===2?"Other area · ":""}${esc(listingLine(t))}${x.m.unknown.length?` · check ${esc(x.m.unknown.join(", "))}`:""}</div></div>
       ${t.url?`<a class="iconbtn" href="${esc(t.url)}" target="_blank" rel="noopener" aria-label="Open listing"><i class="ti ti-external-link"></i></a>`:""}${l.phone?`<a class="iconbtn" href="${smsLink(l.phone,pitch(l,t))}" aria-label="Text them this home"><i class="ti ti-message"></i></a>`:""}</div>`; };
   const b=l.buy||{}, bs=buySummary(b), ds=[l.motivation,l.source,l.timeframe,l.lead_type].filter(Boolean).join(" · ");
   const notes=l.notes||[], fmtN=n=>`<p class="lnote"><span class="muted">${new Date(n.at).toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"2-digit",timeZone:"Australia/Sydney"})}</span> ${esc(n.body)}</p>`;
