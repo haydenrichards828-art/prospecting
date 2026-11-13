@@ -43,6 +43,8 @@ nav button.on{background:var(--card);border-color:var(--line);color:var(--ink);f
 @media (max-width:380px){nav button{padding:6px 4px;font-size:13px}}
 
 .ndot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--bad);margin-left:5px;vertical-align:2px;flex:none}.newtag{font-size:11px;font-weight:700;color:#fff;background:var(--bad);border-radius:999px;padding:1px 7px;margin-right:5px;vertical-align:1px}
+.rpb{display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;letter-spacing:.04em;color:#c8102e;background:#fdecee;border:1px solid #f5c2c9;border-radius:6px;padding:1px 6px;margin-left:6px;text-decoration:none;vertical-align:1px;line-height:16px}.rpb.exact{background:#c8102e;color:#fff;border-color:#c8102e}
+.rpb.big{width:42px;height:42px;border-radius:10px;font-size:13px;margin:0;flex:none}
 .badge{font-size:11px;background:var(--bad);color:#fff;border-radius:999px;padding:0 6px;line-height:18px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px}
@@ -347,7 +349,7 @@ function openSearchProp(pid, inList){
   const r=(S.sres?.calls||[]).find(x=>x.property_id===pid), p=(S.sres?.props||[]).find(x=>x.id===pid);
   const d=r?{name:r.owner_name,phone:r.phone,addr:r.street_address,suburb:r.suburb,lead:false,why:whyLine(r),out:r.today_outcome}:{name:p.owner_name,phone:p.phone,addr:p.street_address,suburb:p.suburb,lead:p.is_lead};
   const tel=d.phone?String(d.phone).replace(/[^\d+]/g,""):"";
-  $("#sheet").innerHTML=`<div class="lhead"><div style="flex:1;min-width:0"><h3>${esc(d.name||"Owner unknown")}</h3><div class="muted lsub">${esc([d.addr,d.suburb].filter(Boolean).join(", "))}</div></div><button class="lact ghost" onclick="closeOv()" aria-label="Close"><i class="ti ti-x"></i></button></div>
+  $("#sheet").innerHTML=`<div class="lhead"><div style="flex:1;min-width:0"><h3>${esc(d.name||"Owner unknown")}</h3><div class="muted lsub">${esc([d.addr,d.suburb].filter(Boolean).join(", "))}</div></div>${rpBtn(d.addr,d.suburb,null,"rpb big")}<button class="lact ghost" onclick="closeOv()" aria-label="Close"><i class="ti ti-x"></i></button></div>
    ${d.why?`<p class="muted" style="margin:6px 0 0;font-size:14px">${esc(d.why)}</p>`:""}${d.out?`<p style="margin:6px 0 0;color:var(--good)">Called today: ${esc(LABEL[d.out])}</p>`:""}
    ${tel?`<a class="phone" href="tel:${esc(tel)}"><i class="ti ti-phone"></i>${esc(String(d.phone).replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`:`<p class="muted">No phone number yet</p>`}
    <div style="display:grid;grid-template-columns:${tel?"1fr 1fr":"1fr"};gap:8px;margin-top:8px">${tel?`<a class="btnlike" href="${smsLink(d.phone,"")}"><i class="ti ti-message"></i>Text</a>`:""}<button class="primary" onclick="searchMakeLead(${pid})"><i class="ti ti-user-plus"></i>${d.lead?"Open lead":"Make lead"}</button></div>`;
@@ -463,7 +465,7 @@ function cardHTML(r){
   return `<div class="card ${r.today_outcome?"done":""}" id="c${id}">
    ${r.callback?`<span class="tag">Callback due ${fmt(r.callback_at)}</span>`:""}
    <div class="name">${esc(r.owner_name||"Owner unknown")}</div>
-   <div class="addr">${esc(r.street_address)}, ${esc(r.suburb)}${r.bedrooms?` · ${r.bedrooms} bed`:""}</div>
+   <div class="addr">${esc(r.street_address)}, ${esc(r.suburb)}${r.bedrooms?` · ${r.bedrooms} bed`:""}${rpBtn(r.street_address,r.suburb,r.rp_link)}</div>
    ${r.callback&&r.notes?`<div class="why">${esc(r.notes)}</div>`:`<div class="why">${esc(whyLine(r))}</div>`}
    ${probate?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> Don't call the family. Contact the solicitor${sol?" ("+esc(sol.slice(16,-1))+")":""} or write a letter.</div></div>`
      : r.phone?`<a class="phone" href="tel:${esc(r.phone)}"><i class="ti ti-phone"></i>${esc(r.phone.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`:`<div class="nophone">No phone number yet</div>`}
@@ -547,6 +549,29 @@ async function uxFlush(){ if(!UX.q.length) return; const ev=UX.q.splice(0,400);
   try{ const r=await fetch(API.replace(/\/api$/,"/ux"),{method:"POST",keepalive:true,headers:{"Content-Type":"application/json","x-session":S.token},body:JSON.stringify({sid:UX.sid,ev})}); if(!r.ok&&r.status!==401) throw 0; }
   catch{ UX.q.unshift(...ev.slice(0,2000)); } }
 setInterval(uxFlush,15000);
+// ---------- RP Data links for every property ----------
+// A saved RP Data link (with its property number) opens the exact page. Otherwise the link is built from
+// the address and opens RP Data's address search; the full address is also copied so it can be pasted straight in.
+const POSTCODES={"Wollongong":"2500","North Wollongong":"2500","West Wollongong":"2500","Keiraville":"2500","Gwynneville":"2500","Mangerton":"2500","Coniston":"2500","Mount Keira":"2500","Mount Saint Thomas":"2500","Spring Hill":"2500",
+  "Fairy Meadow":"2519","Balgownie":"2519","Mount Ousley":"2519","Mount Pleasant":"2519","Fernhill":"2519","Figtree":"2525",
+  "Corrimal":"2518","East Corrimal":"2518","Bellambi":"2518","Towradgi":"2518","Tarrawanna":"2518","Woonona":"2517","Russell Vale":"2517","Bulli":"2516",
+  "Thirroul":"2515","Austinmer":"2515","Coledale":"2515","Wombarra":"2515","Scarborough":"2515","Clifton":"2515"};
+const RP_TYPES={rd:"road",st:"street",ave:"avenue",av:"avenue",cres:"crescent",cr:"crescent",pde:"parade",pl:"place",dr:"drive",cl:"close",ct:"court",crt:"court",hwy:"highway",tce:"terrace",la:"lane",ln:"lane",gr:"grove",gv:"grove",bvd:"boulevard",blvd:"boulevard",cct:"circuit",esp:"esplanade",wy:"way",pkwy:"parkway",sq:"square",cir:"circle",rdge:"ridge",gdns:"gardens",hts:"heights",mews:"mews"};
+const RP_DIRS=/^(north|south|east|west|n|s|e|w)$/i;
+function titleCase(t){ return String(t||"").toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase()); }
+// "22 Cokeworks Rd" + "Coledale" -> "22 Cokeworks Road, Coledale NSW 2515"
+function rpAddress(addr,suburb,pc){ let w=String(addr||"").replace(/,.*$/,"").trim().split(/\s+/).filter(Boolean);
+  // expand the street type: the last word, or the one before a direction like "North"
+  let i=w.length-1; if(i>1&&RP_DIRS.test(w[i])) i--; if(i>0){ const k=w[i].toLowerCase().replace(/\.$/,""); if(RP_TYPES[k]) w[i]=RP_TYPES[k]; }
+  const sub=titleCase(suburb), code=pc||POSTCODES[sub]||"";
+  return `${titleCase(w.join(" "))}${sub?`, ${sub}`:""} NSW${code?" "+code:""}`.replace(/\s+/g," ").trim(); }
+function rpSlug(full){ return full.toLowerCase().replace(/[\/,]/g," ").replace(/[^a-z0-9 ]/g,"").trim().replace(/\s+/g,"-"); }
+function rpUrl(addr,suburb,saved,pc){ if(saved&&/rpp\.corelogic\.com\.au\/property\//.test(saved)) return saved;
+  return `https://rpp.corelogic.com.au/search/address/${rpSlug(rpAddress(addr,suburb,pc))}`; }
+// The RP button: works anywhere, never triggers the card or row it sits on
+function rpBtn(addr,suburb,saved,cls="rpb",pc){ if(!addr&&!suburb) return ""; const exact=saved&&/rpp\.corelogic\.com\.au\/property\//.test(saved);
+  return `<a class="${cls}${exact?" exact":""}" href="${esc(rpUrl(addr,suburb,saved,pc))}" target="_blank" rel="noopener" title="${exact?"Open in RP Data":"Search RP Data (address copied)"}" data-addr="${esc(rpAddress(addr,suburb,pc))}" onclick="event.stopPropagation();rpCopy(this)">RP</a>`; }
+function rpCopy(a){ if(a.classList.contains("exact")) return; try{ navigator.clipboard&&navigator.clipboard.writeText(a.dataset.addr); }catch{} }
 // Work timing: when each card came up, when you tapped call, when you came back to the app, when you logged it.
 // Nothing here slows the call down; it just stamps times and sends them with the outcome.
 function markShown(pid){ if(!S.tm||S.tm.pid!==pid) S.tm={pid,shown:Date.now()}; }
@@ -797,7 +822,7 @@ function drawDropLayer(){
   S.dlay=L.layerGroup(blds.map(b=>{ const d=!b.left.length, t=b.score/max, x=b.xs[0], many=b.xs.length>1;
     const label=many?`${esc([x.house_number].filter(Boolean).join(""))} ${esc(x.street||"")} · ${b.xs.length} units`:esc(dropAddr(x));
     return L.circleMarker([b.lat,b.lng],{renderer:S.canvas,radius:d?5:6+t*4+(many?2:0),weight:many?3:1.5,color:d?"#9aa3ad":accent,fillColor:d?"#c9ced4":accent,fillOpacity:d?0.5:0.35+t*0.55})
-      .bindPopup(()=>`<b>${label}</b><br>${esc(x.suburb||"")}<br><span style="color:#667">${many?`${b.left.length} of ${b.xs.length} letterboxes to drop`:esc((x.reasons||[])[0]||"")}</span><br>${d?`<button style="margin-top:8px;width:100%" onclick="toggleDrop([${b.xs.map(y=>y.id)}],true)">Undo dropped</button>`:`<button style="margin-top:8px;width:100%" onclick="toggleDrop([${b.left.map(y=>y.id)}],false)">${many?"Mark building dropped":"Mark dropped"}</button>`}`); })).addTo(S.map);
+      .bindPopup(()=>`<b>${label}</b>${many?"":rpBtn(dropAddr(x),x.suburb,null,"rpb",x.postcode)}<br>${esc(x.suburb||"")}<br><span style="color:#667">${many?`${b.left.length} of ${b.xs.length} letterboxes to drop`:esc((x.reasons||[])[0]||"")}</span><br>${d?`<button style="margin-top:8px;width:100%" onclick="toggleDrop([${b.xs.map(y=>y.id)}],true)">Undo dropped</button>`:`<button style="margin-top:8px;width:100%" onclick="toggleDrop([${b.left.map(y=>y.id)}],false)">${many?"Mark building dropped":"Mark dropped"}</button>`}`); })).addTo(S.map);
 }
 
 // Streets coloured like traffic: the average score of every house on the street decides the colour
@@ -855,7 +880,7 @@ function dropListHTML(){
   return [...bySub.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([sub,m])=>(big?`<details class="dsub"><summary><h3 style="display:inline;margin:0">${esc(sub)}</h3> <span class="muted">${[...m.values()].reduce((a,xs)=>a+xs.length,0)}</span></summary>`:`<h3 style="margin:16px 0 6px">${esc(sub)}</h3>`)+
     [...m.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([st,xs])=>{ xs.sort((a,b)=>num(a)-num(b)); const ids=xs.filter(x=>!isDropped(x)).map(x=>x.id);
       return `<div class="card" style="padding:10px 12px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><b style="flex:1">${esc(st)}</b><span class="muted" style="font-size:12px">${xs.length}</span>${ids.length?`<button class="noprint" style="min-height:34px;font-size:13px" onclick="toggleDrop([${ids}],false)"><i class="ti ti-check"></i>Street dropped</button>`:""}</div>`+
-      xs.map(x=>{ const d=isDropped(x); return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--line);${d?"opacity:.5":""}"><span style="flex:1;min-width:0"><span style="font-weight:500">${esc([x.unit&&x.unit+"/",x.house_number].filter(Boolean).join("")||"?")}</span> <span class="muted" style="font-size:12px">${esc((x.reasons||[])[0]||"")}</span></span><button class="noprint" style="min-height:34px;padding:4px 10px;font-size:13px${d?";color:var(--good)":""}" onclick="toggleDrop([${x.id}],${d})">${d?'<i class="ti ti-check"></i>Done':"Drop"}</button></div>`; }).join("")+`</div>`; }).join("")+(big?"</details>":"")).join("");
+      xs.map(x=>{ const d=isDropped(x); return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--line);${d?"opacity:.5":""}"><span style="flex:1;min-width:0"><span style="font-weight:500">${esc([x.unit&&x.unit+"/",x.house_number].filter(Boolean).join("")||"?")}</span>${rpBtn(dropAddr(x),x.suburb,null,"rpb noprint",x.postcode)} <span class="muted" style="font-size:12px">${esc((x.reasons||[])[0]||"")}</span></span><button class="noprint" style="min-height:34px;padding:4px 10px;font-size:13px${d?";color:var(--good)":""}" onclick="toggleDrop([${x.id}],${d})">${d?'<i class="ti ti-check"></i>Done':"Drop"}</button></div>`; }).join("")+`</div>`; }).join("")+(big?"</details>":"")).join("");
 }
 async function toggleDrop(ids,undo){
   const set=new Set(ids), now=new Date().toISOString(), prev=new Map();
@@ -921,7 +946,9 @@ function matchLead(l, t){
 function matchesFor(l){ if(!hasCriteria(l.buy)) return []; return (S.listings||[]).map(t=>({t,m:matchLead(l,t)})).filter(x=>x.m)
   .sort((a,b)=>a.m.tier-b.m.tier||a.m.unknown.length-b.m.unknown.length||(+a.t.price_min||9e9)-(+b.t.price_min||9e9)); }
 function buyersFor(t){ return (S.leads||[]).filter(l=>hasCriteria(l.buy)).map(l=>({l,m:matchLead(l,t)})).filter(x=>x.m).sort((a,b)=>a.m.tier-b.m.tier||a.m.unknown.length-b.m.unknown.length); }
-function listingLine(t){ return [t.price_text||money(t.price_min)||"Price not listed", t.beds!=null?`${t.beds} bed`:"", t.baths!=null?`${t.baths} bath`:"", t.cars!=null?`${t.cars} car`:"", ltype(t.ptype), t.land?`${Math.round(t.land)} m²`:""].filter(Boolean).join(" · "); }
+function hasPrice(t){ return t.price_min!=null||t.price_max!=null; }
+function priceShown(t){ return hasPrice(t)?(t.price_text||money(t.price_min)):`$ — no price${t.price_text?` (${t.price_text.replace(/^OFF MARKET OPPORTUNITY$/i,"Off market")})`:""}`; }
+function listingLine(t){ return [priceShown(t), t.beds!=null?`${t.beds} bed`:"", t.baths!=null?`${t.baths} bath`:"", t.cars!=null?`${t.cars} car`:"", ltype(t.ptype), t.land?`${Math.round(t.land)} m²`:""].filter(Boolean).join(" · "); }
 function smsLink(phone, body){ return `sms:${String(phone||"").replace(/[^\d+]/g,"")}${/iPhone|iPad/.test(navigator.userAgent)?"&":"?"}body=${encodeURIComponent(body)}`; }
 const pitch=(l,t)=>`Hi ${(l.name||"").split(/[ &]/)[0]||"there"}, a home I think suits you: ${t.address}${t.suburb?", "+t.suburb:""}. ${listingLine(t)}.${t.url?" "+t.url:""} Keen to take a look?`;
 
@@ -959,7 +986,7 @@ function leadRow(l){
   return `<div class="card lead" onclick="openLead(${l.id})">
     <div style="display:flex;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0">
      <div class="lname" style="display:flex;align-items:center">${nw?`<span class="newtag">${nw} new</span>`:""}<span style="overflow:hidden;text-overflow:ellipsis">${esc(leadTitle(l))}</span></div>
-     <div class="addr" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc([l.name?l.address:null,l.suburb].filter(Boolean).join(", ")||l.motivation||"")}</div>
+     <div class="addr" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc([l.name?l.address:null,l.suburb].filter(Boolean).join(", ")||l.motivation||"")}${l.address||l.rp_link?rpBtn(l.address,l.suburb,l.rp_link):""}</div>
      <div class="lmeta"><span style="${n!==null&&n<0?"color:var(--bad);font-weight:600":n===0?"color:var(--accent);font-weight:600":""}">${dueLabel(l.follow_up)}</span>${l.next_action?` · ${esc(l.next_action)}`:""}${l.status&&l.status!=="Active"?` · <b>${esc(l.status)}</b>`:""}${mt.length?` · <span style="color:var(--good);font-weight:600"><i class="ti ti-home-check"></i>${top?`${top} top match${top===1?"":"es"}`:`${mt.length} other area`}</span>`:""}</div>
     </div>${l.phone?`<a class="lcall" href="tel:${esc(l.phone.replace(/[^\d+]/g,""))}" onclick="event.stopPropagation()" aria-label="Call"><i class="ti ti-phone"></i></a>`:""}</div></div>`;
 }
@@ -1008,7 +1035,7 @@ function openLead(id, opts={}){
   $("#sheet").classList.add("lsheet");
   $("#sheet").innerHTML=`
    <div class="lhead"><div style="flex:1;min-width:0"><h3>${esc(id?leadTitle(l):"New lead")}</h3>${id?`<div class="muted lsub">${esc([l.name?l.address:null,l.suburb].filter(Boolean).join(", "))}</div>`:""}</div>
-    ${id&&tel?`<a class="lact" href="tel:${esc(tel)}" aria-label="Call"><i class="ti ti-phone"></i></a><a class="lact" href="${smsLink(l.phone,"")}" aria-label="Text"><i class="ti ti-message"></i></a>`:""}
+    ${id&&(l.address||l.rp_link)?rpBtn(l.address,l.suburb,l.rp_link,"rpb big"):""}${id&&tel?`<a class="lact" href="tel:${esc(tel)}" aria-label="Call"><i class="ti ti-phone"></i></a><a class="lact" href="${smsLink(l.phone,"")}" aria-label="Text"><i class="ti ti-message"></i></a>`:""}
     ${id?`<button class="lact ghost" onclick="editDetails()" aria-label="Edit name, phone and address"><i class="ti ti-pencil"></i></button>`:""}<button class="lact ghost" onclick="closeOv();$('#sheet').classList.remove('lsheet');if(S.tab==='leads')drawLeads()" aria-label="Close"><i class="ti ti-x"></i></button></div>
    ${id?`<div class="lfacts"><span style="${dueIn(l.follow_up)<0?"color:var(--bad);font-weight:600":""}">${dueLabel(l.follow_up)}</span>${l.status&&l.status!=="Active"?`<b>${esc(l.status)}</b>`:""}${l.phone?`<span>${esc(l.phone)}</span>`:""}</div>`:""}
    ${opts.fresh?`<div class="banner info" style="margin:8px 0 0;padding:8px 10px"><i class="ti ti-sparkles"></i><div>Added to Leads. Fill in what they want below, then Save.</div></div>`:""}
@@ -1097,7 +1124,7 @@ function listingsHTML(){
   const ts=S.listings||[];
   if(!ts.length) return `<div class="empty"><i class="ti ti-home-check"></i>No listings yet.<br><span class="muted">Tap + to add a Dignam home for sale. They'll load automatically once the Dignam website is connected.</span></div>`;
   return ts.map(t=>{ const by=buyersFor(t), top=by.filter(x=>x.m.tier===1).length;
-    return `<div class="card lead" onclick="openListingMatches(${t.id})"><div class="lname">${esc(t.address)}${t.suburb?`, ${esc(t.suburb)}`:""}</div><div class="addr">${esc(listingLine(t))}</div>
+    return `<div class="card lead" onclick="openListingMatches(${t.id})"><div class="lname">${esc(t.address)}${t.suburb?`, ${esc(t.suburb)}`:""}${rpBtn(t.address,t.suburb,null)}</div><div class="addr">${esc(listingLine(t))}</div>
      <div class="lmeta">${by.length?`<span style="color:var(--good);font-weight:600"><i class="ti ti-users"></i>${by.length} lead${by.length===1?"":"s"} match${by.length===1?"es":""}${top?` (${top} in their area)`:""}</span>`:`<span class="muted">No leads match yet</span>`}</div></div>`; }).join("");
 }
 function openListingMatches(lid){
