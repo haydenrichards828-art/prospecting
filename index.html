@@ -127,7 +127,7 @@ details.sec{background:var(--card);border:1px solid var(--line);border-radius:va
 .srcchip{min-height:28px;padding:2px 10px;margin-top:6px;border-radius:999px;font-size:12px;color:var(--muted);gap:4px}.srcchip .ti{font-size:13px}
 .chipgrid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.chipgrid button{min-height:38px;padding:6px 12px;border-radius:999px;font-size:14px}.chipgrid button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .scard table{width:100%}.scard td,.scard th{text-align:right;padding:6px 4px;font-variant-numeric:tabular-nums}.scard td:first-child,.scard th:first-child{text-align:left}
-.dleg{background:var(--card);color:var(--ink);border-radius:8px;padding:5px 8px;font:12px system-ui,sans-serif;display:flex;flex-wrap:wrap;max-width:230px;gap:3px 8px;box-shadow:0 1px 4px rgba(0,0,0,.25)}.dleg span{display:flex;align-items:center;gap:4px}.dleg i{width:14px;height:4px;border-radius:2px;display:inline-block}
+.dleg{background:var(--card);color:var(--ink);border-radius:10px;padding:7px 8px;font:12px system-ui,sans-serif;display:flex;flex-wrap:wrap;max-width:280px;gap:5px;box-shadow:0 1px 4px rgba(0,0,0,.25)}.dleg button{display:flex;align-items:center;gap:5px;min-height:32px;padding:4px 9px;border-radius:999px;font-size:13px;background:var(--bg);border:1px solid var(--line);color:var(--ink)}.dleg button.off{opacity:.4;text-decoration:line-through}.dleg button.all{color:var(--accent);font-weight:600}.dleg i{width:16px;height:5px;border-radius:3px;display:inline-block}
 .chips{display:flex;align-items:center;gap:4px;margin:0 0 8px;overflow-x:auto;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chips .muted{font-size:13px;margin-right:2px}
 .chips button{min-height:32px;padding:4px 11px;border-radius:999px;font-size:13px;flex:none}.chips button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 @media print{.dmap,#best{display:none}}
@@ -594,7 +594,12 @@ const STREET_TIERS=[["Most likely to sell",0.15,"#c5221f",7],["Likely",0.35,"#f2
 function streetTier(st,ranked){ if (st.n<3||!ranked.length) return null;
   for (const t of STREET_TIERS) { const cut=ranked[Math.min(ranked.length-1,Math.max(0,Math.ceil(t[1]*ranked.length)-1))].avg; if (st.avg>=cut) return t; }
   return null; }
+const STREET_KEYS=["most","likely","some","done","rest"], STREET_LABELS={most:"Most",likely:"Likely",some:"Some",done:"Done",rest:"Rest"};
+function streetShown(){ if(!S.stiers){ try{ const v=JSON.parse(localStorage.getItem("dp_stiers")||"null"); S.stiers=new Set(Array.isArray(v)?v:STREET_KEYS); }catch{ S.stiers=new Set(STREET_KEYS); } } return S.stiers; }
+function toggleTier(k){ const sh=streetShown(); sh.has(k)?sh.delete(k):sh.add(k); try{localStorage.setItem("dp_stiers",JSON.stringify([...sh]))}catch{} drawDropLayer(); }
+function showAllTiers(){ S.stiers=new Set(STREET_KEYS); try{localStorage.removeItem("dp_stiers")}catch{} drawDropLayer(); }
 function drawStreetLayer(){
+  const shown=streetShown();
   const ranked=(S.streets||[]).filter(x=>x.n>=3).sort((a,b)=>b.avg-a.avg);
   const byId=new Map((S.drops||[]).map(x=>[x.id,x]));
   const lines=[];
@@ -602,12 +607,19 @@ function drawStreetLayer(){
   for (const st of order) {
     const t=streetTier(st,ranked), left=(st.ids||[]).filter(id=>byId.has(id)&&!isDropped(byId.get(id)));
     const done=(st.ids||[]).length>0 && !left.length;
+    const key=done?"done":t?["most","likely","some"][STREET_TIERS.indexOf(t)]:"rest";
+    if (!shown.has(key)) continue;
     const style=done?{color:"#9aa3ad",weight:4,opacity:.8,dashArray:"6 6"}:t?{color:t[2],weight:t[3],opacity:.9}:{color:"#8a94a3",weight:2.5,opacity:.45};
     for (const path of st.paths||[]) lines.push(L.polyline(path.map(([x,y])=>[y,x]),{...style,lineCap:"round"}).bindPopup(()=>`<b>${esc(st.street)}</b>, ${esc(st.suburb)}<br>${t?`<span style="color:${t[2]};font-weight:600">${t[0]}</span><br>`:st.n<3?`<span style="color:#667">Too few houses known to rate</span><br>`:""}Average likely to sell score ${Math.round(st.avg)} across ${st.n} house${st.n===1?"":"s"}<br>${left.length} without a number to drop${left.length?`<br><button style="margin-top:8px;width:100%" onclick="toggleDrop([${left}],false)">Mark street dropped</button>`:done?"<br>Dropped":""}`));
   }
   S.dlay=L.layerGroup(lines).addTo(S.map);
   const leg=L.control({position:"bottomleft"});
-  leg.onAdd=()=>{ const d=L.DomUtil.create("div","dleg"); d.innerHTML=`<b style="width:100%">Streets most likely to sell</b>`+STREET_TIERS.map((t,i)=>`<span><i style="background:${t[2]}"></i>${["Most","Likely","Some"][i]}</span>`).join("")+`<span><i style="background:#9aa3ad"></i>Done</span>`; return d; };
+  const col={most:STREET_TIERS[0][2],likely:STREET_TIERS[1][2],some:STREET_TIERS[2][2],done:"#9aa3ad",rest:"#c9ced4"};
+  leg.onAdd=()=>{ const d=L.DomUtil.create("div","dleg"); L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
+    d.innerHTML=`<b style="width:100%">Streets most likely to sell</b>`
+      +STREET_KEYS.map(k=>`<button class="${shown.has(k)?"":"off"}" onclick="toggleTier('${k}')" aria-pressed="${shown.has(k)}"><i style="background:${col[k]}"></i>${STREET_LABELS[k]}</button>`).join("")
+      +(shown.size<STREET_KEYS.length?`<button class="all" onclick="showAllTiers()">Show all</button>`:"");
+    return d; };
   leg.addTo(S.map); S.dleg=leg;
 }
 function drawBest(){
