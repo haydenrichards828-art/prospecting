@@ -192,7 +192,7 @@ function demoApi(action, body){
         D.drops=Array.from({length:140},(_,i)=>{ const st=[["Lawrence Hargrave Dr","Austinmer"],["Moore St","Austinmer"],["Station St","Thirroul"],["Raymond Rd","Thirroul"],["Park Rd","Bulli"],["Hobart St","Bulli"],["Ocean St","Woonona"],["Railway St","Corrimal"],["Princes Hwy","Fairy Meadow"],["Smith St","Wollongong"]][i%10], c=C[st[1]], k=(i*37)%100/100, along=(i%10)*0.0011;
           return {id:5000+i,unit:null,house_number:String((i*7)%120+1),street:st[0],suburb:st[1],lat:c[0]+(k-0.5)*0.008+along*0.3,lng:c[1]+((i*53)%100/100-0.5)*0.008,score:Math.round(20+((i*29)%70)),reasons:[`Owned ${6+(i%25)} yrs (area avg 10)`],dropped_at:i%9===0?new Date().toISOString():null}; }); }
       if(!D.streets){ const by={}; D.drops.forEach(x=>{ const k=x.street+"|"+x.suburb; (by[k]=by[k]||[]).push(x); });
-        D.streets=Object.entries(by).map(([k,xs],i)=>{ const pts=[...xs].sort((a,b)=>a.lat-b.lat).map(x=>[+x.lng.toFixed(5),+x.lat.toFixed(5)]); return {sk:k,street:xs[0].street,suburb:xs[0].suburb,avg:Math.round(xs.reduce((a,x)=>a+x.score,0)/xs.length*10)/10+((i*13)%25)-8,n:xs.length+((i*7)%20),ids:xs.map(x=>x.id),paths:[pts]}; }); }
+        D.streets=Object.entries(by).map(([k,xs],i)=>{ const pts=[...xs].sort((a,b)=>a.lat-b.lat).map(x=>[+x.lng.toFixed(5),+x.lat.toFixed(5)]); return {sk:k,street:xs[0].street,suburb:xs[0].suburb,avg:Math.round(xs.reduce((a,x)=>a+x.score,0)/xs.length*10)/10+((i*13)%25)-8,adj:Math.round(xs.reduce((a,x)=>a+x.score,0)/xs.length*10)/10+((i*13)%25)-10,known:xs.length,n:xs.length+((i*7)%20),ids:xs.map(x=>x.id),paths:[pts]}; }); }
       return {rows:D.drops,streets:D.streets}; }
     case "mark_dropped": { (D.drops||[]).forEach(r=>{ if((body.ids||[]).includes(r.id)) r.dropped_at=body.undo?null:new Date().toISOString(); }); return {ok:true}; }
     case "letterbox": return {rows:D.rows.filter(r=>!r.phone).map(r=>({unit:null,house_number:r.street_address.split(" ")[0],street:r.street_address.split(" ").slice(1).join(" "),suburb:r.suburb,postcode:r.postcode,score:r.score,reasons:r.reasons}))};
@@ -539,11 +539,20 @@ function dropRows(){ const all=S.drops||[]; if (!S.dtop) return all;
   return all.filter(x=>!isDropped(x)).sort((a,b)=>(Number(b.score)||0)-(Number(a.score)||0)).slice(0,S.dtop); }
 function setTop(n){ S.dtop=n; try{localStorage.setItem("dp_dtop",String(n))}catch{} drawDrops(); }
 function dropGroups(by){
+  if ((S.streets||[]).length) {
+    const byId=new Map((S.drops||[]).map(x=>[x.id,x])), live=id=>byId.has(id)&&!isDropped(byId.get(id));
+    if (by!=="suburb") return S.streets.filter(st=>st.n>=3).map(st=>({k:`${st.street}, ${st.suburb}`,n:st.n,avg:sval(st),ids:(st.ids||[]).filter(live),pts:(st.paths||[]).flat().map(([x,y])=>[y,x])}))
+      .filter(g=>g.ids.length).sort((a,b)=>b.avg-a.avg);
+    const m=new Map();
+    for (const st of S.streets) { const o=m.get(st.suburb)||{k:st.suburb,n:0,tot:0,ids:[],pts:[]}; o.n+=st.n; o.tot+=(Number(st.avg)||0)*st.n; o.ids.push(...(st.ids||[]).filter(live)); m.set(st.suburb,o); }
+    for (const x of S.drops||[]) { const o=m.get(x.suburb); if (o&&x.lat!=null) o.pts.push([x.lat,x.lng]); }
+    return [...m.values()].filter(o=>o.n>=10&&o.ids.length).map(o=>({...o,avg:o.tot/o.n})).sort((a,b)=>b.avg-a.avg);
+  }
   const g=new Map();
   for (const x of dropRows()) { if (isDropped(x)) continue;
     const k = by==="suburb" ? (x.suburb||"Unknown") : `${x.street||"Unknown"}, ${x.suburb||""}`;
     const o=g.get(k)||{k,n:0,total:0,ids:[],pts:[]}; o.n++; o.total+=Number(x.score)||0; o.ids.push(x.id); if(x.lat!=null) o.pts.push([x.lat,x.lng]); g.set(k,o); }
-  return [...g.values()].sort((a,b)=>b.total-a.total);
+  return [...g.values()].filter(o=>o.n>=3).map(o=>({...o,avg:o.total/o.n})).sort((a,b)=>b.avg-a.avg);
 }
 async function viewDrops(){
   if (S.dtop===undefined) { try{ S.dtop=+localStorage.getItem("dp_dtop")||0 }catch{ S.dtop=0 } }
@@ -591,8 +600,9 @@ function drawDropLayer(){
 // Streets coloured like traffic: the average score of every house on the street decides the colour
 // Streets ranked by how likely their houses are to sell (the algorithm's average score). Equal scores always share a colour.
 const STREET_TIERS=[["Most likely to sell",0.15,"#c5221f",7],["Likely",0.35,"#f29900",6],["Some chance",0.6,"#f6c026",5]];
+const sval=st=>Number(st.adj ?? st.avg)||0;
 function streetTier(st,ranked){ if (st.n<3||!ranked.length) return null;
-  for (const t of STREET_TIERS) { const cut=ranked[Math.min(ranked.length-1,Math.max(0,Math.ceil(t[1]*ranked.length)-1))].avg; if (st.avg>=cut) return t; }
+  for (const t of STREET_TIERS) { const cut=sval(ranked[Math.min(ranked.length-1,Math.max(0,Math.ceil(t[1]*ranked.length)-1))]); if (sval(st)>=cut) return t; }
   return null; }
 const STREET_KEYS=["most","likely","some","done","rest"], STREET_LABELS={most:"Most",likely:"Likely",some:"Some",done:"Done",rest:"Rest"};
 function streetShown(){ if(!S.stiers){ try{ const v=JSON.parse(localStorage.getItem("dp_stiers")||"null"); S.stiers=new Set(Array.isArray(v)?v:STREET_KEYS); }catch{ S.stiers=new Set(STREET_KEYS); } } return S.stiers; }
@@ -600,17 +610,17 @@ function toggleTier(k){ const sh=streetShown(); sh.has(k)?sh.delete(k):sh.add(k)
 function showAllTiers(){ S.stiers=new Set(STREET_KEYS); try{localStorage.removeItem("dp_stiers")}catch{} drawDropLayer(); }
 function drawStreetLayer(){
   const shown=streetShown();
-  const ranked=(S.streets||[]).filter(x=>x.n>=3).sort((a,b)=>b.avg-a.avg);
+  const ranked=(S.streets||[]).filter(x=>x.n>=3).sort((a,b)=>sval(b)-sval(a));
   const byId=new Map((S.drops||[]).map(x=>[x.id,x]));
   const lines=[];
-  const order=[...(S.streets||[])].sort((a,b)=>a.avg-b.avg); // draw best last so it sits on top
+  const order=[...(S.streets||[])].sort((a,b)=>sval(a)-sval(b)); // draw best last so it sits on top
   for (const st of order) {
     const t=streetTier(st,ranked), left=(st.ids||[]).filter(id=>byId.has(id)&&!isDropped(byId.get(id)));
     const done=(st.ids||[]).length>0 && !left.length;
     const key=done?"done":t?["most","likely","some"][STREET_TIERS.indexOf(t)]:"rest";
     if (!shown.has(key)) continue;
     const style=done?{color:"#9aa3ad",weight:4,opacity:.8,dashArray:"6 6"}:t?{color:t[2],weight:t[3],opacity:.9}:{color:"#8a94a3",weight:2.5,opacity:.45};
-    for (const path of st.paths||[]) lines.push(L.polyline(path.map(([x,y])=>[y,x]),{...style,lineCap:"round"}).bindPopup(()=>`<b>${esc(st.street)}</b>, ${esc(st.suburb)}<br>${t?`<span style="color:${t[2]};font-weight:600">${t[0]}</span><br>`:st.n<3?`<span style="color:#667">Too few houses known to rate</span><br>`:""}Average likely to sell score ${Math.round(st.avg)} across ${st.n} house${st.n===1?"":"s"}<br>${left.length} without a number to drop${left.length?`<br><button style="margin-top:8px;width:100%" onclick="toggleDrop([${left}],false)">Mark street dropped</button>`:done?"<br>Dropped":""}`));
+    for (const path of st.paths||[]) lines.push(L.polyline(path.map(([x,y])=>[y,x]),{...style,lineCap:"round"}).bindPopup(()=>`<b>${esc(st.street)}</b>, ${esc(st.suburb)}<br>${t?`<span style="color:${t[2]};font-weight:600">${t[0]}</span><br>`:st.n<3?`<span style="color:#667">Too few houses known to rate</span><br>`:""}Likely to sell score ${Math.round(sval(st))} · ${st.n} house${st.n===1?"":"s"}${st.known!=null&&st.known<st.n?`, ${st.n-st.known} without a known sale date`:""}<br>${left.length} without a number to drop${left.length?`<br><button style="margin-top:8px;width:100%" onclick="toggleDrop([${left}],false)">Mark street dropped</button>`:done?"<br>Dropped":""}`));
   }
   S.dlay=L.layerGroup(lines).addTo(S.map);
   const leg=L.control({position:"bottomleft"});
@@ -624,12 +634,12 @@ function drawStreetLayer(){
 }
 function drawBest(){
   document.querySelectorAll(".top .seg").forEach(g=>{ const b=g.querySelectorAll("button"); if(b.length===2&&b[0].textContent==="Streets"){ b[0].classList.toggle("on",S.dgroup==="street"); b[1].classList.toggle("on",S.dgroup==="suburb"); } });
-  const gs=dropGroups(S.dgroup).slice(0,12), top=gs[0]?.total||1;
+  const gs=dropGroups(S.dgroup).slice(0,12), top=gs[0]?.avg||1;
   S._best=gs;
   $("#best").innerHTML = gs.length ? gs.map((g,i)=>`<div class="card brow" style="padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px">
       <div style="flex:1;min-width:0" onclick="zoomBest(${i})"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${i+1}. ${esc(g.k)}</div>
-      <div class="bar2" style="height:4px;border-radius:9px;background:var(--line);margin:6px 0 4px;overflow:hidden"><div style="height:100%;width:${Math.round(100*g.total/top)}%;background:var(--accent)"></div></div>
-      <div class="muted" style="font-size:12px">${g.n} house${g.n===1?"":"s"} · avg score ${Math.round(g.total/g.n)}</div></div>
+      <div class="bar2" style="height:4px;border-radius:9px;background:var(--line);margin:6px 0 4px;overflow:hidden"><div style="height:100%;width:${Math.max(4,Math.round(100*g.avg/top))}%;background:var(--accent)"></div></div>
+      <div class="muted" style="font-size:12px">Score ${Math.round(g.avg)} · ${g.n} house${g.n===1?"":"s"} · ${g.ids.length} to drop</div></div>
       <button style="min-height:38px;font-size:13px" onclick="toggleDrop(S._best[${i}].ids,false)"><i class="ti ti-check"></i>Dropped</button></div>`).join("")
     : `<p class="muted">Everything has been dropped in the last ${DROP_DAYS} days.</p>`;
 }
