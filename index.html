@@ -124,6 +124,7 @@ details.sec{background:var(--card);border:1px solid var(--line);border-radius:va
 .dmap{height:56vh;min-height:300px;border-radius:12px;border:1px solid var(--line);overflow:hidden;margin-bottom:10px;background:var(--card)}
 .leaflet-popup-content{font:14px/1.4 system-ui,sans-serif}.leaflet-popup-content button{min-height:36px}
 .brow{cursor:pointer}
+.dsub{margin:10px 0}.dsub summary{padding:10px 0;cursor:pointer;list-style:none}.dsub summary::-webkit-details-marker{display:none}.dsub[open] summary{margin-bottom:6px}
 .srcchip{min-height:28px;padding:2px 10px;margin-top:6px;border-radius:999px;font-size:12px;color:var(--muted);gap:4px}.srcchip .ti{font-size:13px}
 .chipgrid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.chipgrid button{min-height:38px;padding:6px 12px;border-radius:999px;font-size:14px}.chipgrid button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .scard table{width:100%}.scard td,.scard th{text-align:right;padding:6px 4px;font-variant-numeric:tabular-nums}.scard td:first-child,.scard th:first-child{text-align:left}
@@ -537,7 +538,7 @@ function loadLeaflet(){
 }
 function dropRows(){ const all=S.drops||[]; if (!S.dtop) return all;
   return all.filter(x=>!isDropped(x)).sort((a,b)=>(Number(b.score)||0)-(Number(a.score)||0)).slice(0,S.dtop); }
-function setTop(n){ S.dtop=n; try{localStorage.setItem("dp_dtop",String(n))}catch{} drawDrops(); }
+function setTop(n){ S.dtop=n; S._topChosen=true; try{localStorage.setItem("dp_dtop",String(n))}catch{} drawDrops(); }
 function dropGroups(by){
   if ((S.streets||[]).length) {
     const byId=new Map((S.drops||[]).map(x=>[x.id,x])), live=id=>byId.has(id)&&!isDropped(byId.get(id));
@@ -555,9 +556,12 @@ function dropGroups(by){
   return [...g.values()].filter(o=>o.n>=3).map(o=>({...o,avg:o.total/o.n})).sort((a,b)=>b.avg-a.avg);
 }
 async function viewDrops(){
-  if (S.dtop===undefined) { try{ S.dtop=+localStorage.getItem("dp_dtop")||0 }catch{ S.dtop=0 } }
+  if (S.dtop===undefined) { try{ const v=localStorage.getItem("dp_dtop"); S.dtop=+v||0; S._topChosen=v!==null; }catch{ S.dtop=0 } }
   S.dview=S.dview||"map"; S.dlayer=S.dlayer||"pins"; S.dgroup=S.dgroup||"street";
-  const r=await api("drops"); S.drops=r.rows||[]; S.streets=r.streets||[];
+  const r=await api("drops");
+  S.drops=(r.rows||[]).map(x=>Array.isArray(x)?{id:x[0],unit:x[1],house_number:x[2],street:x[3],suburb:x[4],lat:x[5],lng:x[6],score:x[7],reasons:[x[8]],dropped_at:x[9]}:x);
+  S.streets=r.streets||[];
+  if (S.dtop===0 && !S._topChosen && S.drops.length>3000) S.dtop=1000; // lots of addresses: start on the top 1000 so the phone stays quick
   drawDrops();
 }
 function drawDrops(){
@@ -587,14 +591,20 @@ function drawDropLayer(){
   if (S.dleg) { S.dleg.remove(); S.dleg=null; }
   if (S.dlayer==="streets") return drawStreetLayer();
   const rows=dropRows().filter(x=>x.lat!=null), max=Math.max(1,...rows.map(x=>Number(x.score)||0));
+  // Units in a block share one point: group them so a block is one pin and counts once on the heat map
+  const bmap=new Map();
+  for (const x of rows) { const k=x.lat.toFixed(6)+","+x.lng.toFixed(6); const b=bmap.get(k)||{lat:x.lat,lng:x.lng,xs:[]}; b.xs.push(x); bmap.set(k,b); }
+  const blds=[...bmap.values()].map(b=>{ const left=b.xs.filter(x=>!isDropped(x)); return {...b,left,score:b.xs.reduce((a,x)=>a+(Number(x.score)||0),0)/b.xs.length}; });
   if (S.dlayer==="heat") {
-    S.dlay=L.heatLayer(rows.filter(x=>!isDropped(x)).map(x=>[x.lat,x.lng,Math.max(0.15,(Number(x.score)||0)/max)]),{radius:28,blur:22,maxZoom:16,minOpacity:0.3}).addTo(S.map);
+    S.dlay=L.heatLayer(blds.filter(b=>b.left.length).map(b=>[b.lat,b.lng,Math.max(0.15,b.score/max)]),{radius:28,blur:22,maxZoom:16,minOpacity:0.3}).addTo(S.map);
     return;
   }
   const accent=getComputedStyle(document.body).getPropertyValue("--accent").trim()||"#1f4e79";
-  S.dlay=L.layerGroup(rows.map(x=>{ const d=isDropped(x), t=(Number(x.score)||0)/max;
-    return L.circleMarker([x.lat,x.lng],{radius:d?5:6+t*4,weight:1.5,color:d?"#9aa3ad":accent,fillColor:d?"#c9ced4":accent,fillOpacity:d?0.5:0.35+t*0.55})
-      .bindPopup(()=>`<b>${esc(dropAddr(x))}</b><br>${esc(x.suburb||"")}<br><span style="color:#667">${esc((x.reasons||[])[0]||"")}</span><br><button style="margin-top:8px;width:100%" onclick="toggleDrop([${x.id}],${d})">${d?"Undo dropped":"Mark dropped"}</button>`); })).addTo(S.map);
+  S.canvas=S.canvas||L.canvas({padding:0.5});
+  S.dlay=L.layerGroup(blds.map(b=>{ const d=!b.left.length, t=b.score/max, x=b.xs[0], many=b.xs.length>1;
+    const label=many?`${esc([x.house_number].filter(Boolean).join(""))} ${esc(x.street||"")} · ${b.xs.length} units`:esc(dropAddr(x));
+    return L.circleMarker([b.lat,b.lng],{renderer:S.canvas,radius:d?5:6+t*4+(many?2:0),weight:many?3:1.5,color:d?"#9aa3ad":accent,fillColor:d?"#c9ced4":accent,fillOpacity:d?0.5:0.35+t*0.55})
+      .bindPopup(()=>`<b>${label}</b><br>${esc(x.suburb||"")}<br><span style="color:#667">${many?`${b.left.length} of ${b.xs.length} letterboxes to drop`:esc((x.reasons||[])[0]||"")}</span><br>${d?`<button style="margin-top:8px;width:100%" onclick="toggleDrop([${b.xs.map(y=>y.id)}],true)">Undo dropped</button>`:`<button style="margin-top:8px;width:100%" onclick="toggleDrop([${b.left.map(y=>y.id)}],false)">${many?"Mark building dropped":"Mark dropped"}</button>`}`); })).addTo(S.map);
 }
 
 // Streets coloured like traffic: the average score of every house on the street decides the colour
@@ -620,7 +630,7 @@ function drawStreetLayer(){
     const key=done?"done":t?["most","likely","some"][STREET_TIERS.indexOf(t)]:"rest";
     if (!shown.has(key)) continue;
     const style=done?{color:"#9aa3ad",weight:4,opacity:.8,dashArray:"6 6"}:t?{color:t[2],weight:t[3],opacity:.9}:{color:"#8a94a3",weight:2.5,opacity:.45};
-    for (const path of st.paths||[]) lines.push(L.polyline(path.map(([x,y])=>[y,x]),{...style,lineCap:"round"}).bindPopup(()=>`<b>${esc(st.street)}</b>, ${esc(st.suburb)}<br>${t?`<span style="color:${t[2]};font-weight:600">${t[0]}</span><br>`:st.n<3?`<span style="color:#667">Too few houses known to rate</span><br>`:""}Likely to sell score ${Math.round(sval(st))} · ${st.n} house${st.n===1?"":"s"}${st.known!=null&&st.known<st.n?`, ${st.n-st.known} without a known sale date`:""}<br>${left.length} without a number to drop${left.length?`<br><button style="margin-top:8px;width:100%" onclick="toggleDrop([${left}],false)">Mark street dropped</button>`:done?"<br>Dropped":""}`));
+    for (const path of st.paths||[]) lines.push(L.polyline(path.map(([x,y])=>[y,x]),{...style,lineCap:"round"}).bindPopup(()=>`<b>${esc(st.street)}</b>, ${esc(st.suburb)}<br>${t?`<span style="color:${t[2]};font-weight:600">${t[0]}</span><br>`:st.n<3?`<span style="color:#667">Too few houses known to rate</span><br>`:""}Likely to sell score ${Math.round(sval(st))} · ${st.n} address${st.n===1?"":"es"}${st.dwellings>st.n?` (${st.dwellings} letterboxes)`:""}${st.known!=null&&st.known<st.n?`, ${st.n-st.known} without a known sale date`:""}<br>${left.length} without a number to drop${left.length?`<br><button style="margin-top:8px;width:100%" onclick="toggleDrop([${left}],false)">Mark street dropped</button>`:done?"<br>Dropped":""}`));
   }
   S.dlay=L.layerGroup(lines).addTo(S.map);
   const leg=L.control({position:"bottomleft"});
@@ -639,7 +649,7 @@ function drawBest(){
   $("#best").innerHTML = gs.length ? gs.map((g,i)=>`<div class="card brow" style="padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px">
       <div style="flex:1;min-width:0" onclick="zoomBest(${i})"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${i+1}. ${esc(g.k)}</div>
       <div class="bar2" style="height:4px;border-radius:9px;background:var(--line);margin:6px 0 4px;overflow:hidden"><div style="height:100%;width:${Math.max(4,Math.round(100*g.avg/top))}%;background:var(--accent)"></div></div>
-      <div class="muted" style="font-size:12px">Score ${Math.round(g.avg)} · ${g.n} house${g.n===1?"":"s"} · ${g.ids.length} to drop</div></div>
+      <div class="muted" style="font-size:12px">Score ${Math.round(g.avg)} · ${g.n} address${g.n===1?"":"es"} · ${g.ids.length} letterbox${g.ids.length===1?"":"es"} to drop</div></div>
       <button style="min-height:38px;font-size:13px" onclick="toggleDrop(S._best[${i}].ids,false)"><i class="ti ti-check"></i>Dropped</button></div>`).join("")
     : `<p class="muted">Everything has been dropped in the last ${DROP_DAYS} days.</p>`;
 }
@@ -648,10 +658,11 @@ function dropListHTML(){
   const bySub=new Map();
   for (const x of dropRows()) { const s=x.suburb||"Unknown", st=x.street||"Unknown"; if(!bySub.has(s)) bySub.set(s,new Map()); const m=bySub.get(s); if(!m.has(st)) m.set(st,[]); m.get(st).push(x); }
   const num=x=>parseInt(String(x.house_number||"").replace(/^.*\//,""))||0;
-  return [...bySub.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([sub,m])=>`<h3 style="margin:16px 0 6px">${esc(sub)}</h3>`+
+  const big=dropRows().length>1500;
+  return [...bySub.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([sub,m])=>(big?`<details class="dsub"><summary><h3 style="display:inline;margin:0">${esc(sub)}</h3> <span class="muted">${[...m.values()].reduce((a,xs)=>a+xs.length,0)}</span></summary>`:`<h3 style="margin:16px 0 6px">${esc(sub)}</h3>`)+
     [...m.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([st,xs])=>{ xs.sort((a,b)=>num(a)-num(b)); const ids=xs.filter(x=>!isDropped(x)).map(x=>x.id);
       return `<div class="card" style="padding:10px 12px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><b style="flex:1">${esc(st)}</b><span class="muted" style="font-size:12px">${xs.length}</span>${ids.length?`<button class="noprint" style="min-height:34px;font-size:13px" onclick="toggleDrop([${ids}],false)"><i class="ti ti-check"></i>Street dropped</button>`:""}</div>`+
-      xs.map(x=>{ const d=isDropped(x); return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--line);${d?"opacity:.5":""}"><span style="flex:1;min-width:0"><span style="font-weight:500">${esc([x.unit&&x.unit+"/",x.house_number].filter(Boolean).join("")||"?")}</span> <span class="muted" style="font-size:12px">${esc((x.reasons||[])[0]||"")}</span></span><button class="noprint" style="min-height:34px;padding:4px 10px;font-size:13px${d?";color:var(--good)":""}" onclick="toggleDrop([${x.id}],${d})">${d?'<i class="ti ti-check"></i>Done':"Drop"}</button></div>`; }).join("")+`</div>`; }).join("")).join("");
+      xs.map(x=>{ const d=isDropped(x); return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--line);${d?"opacity:.5":""}"><span style="flex:1;min-width:0"><span style="font-weight:500">${esc([x.unit&&x.unit+"/",x.house_number].filter(Boolean).join("")||"?")}</span> <span class="muted" style="font-size:12px">${esc((x.reasons||[])[0]||"")}</span></span><button class="noprint" style="min-height:34px;padding:4px 10px;font-size:13px${d?";color:var(--good)":""}" onclick="toggleDrop([${x.id}],${d})">${d?'<i class="ti ti-check"></i>Done':"Drop"}</button></div>`; }).join("")+`</div>`; }).join("")+(big?"</details>":"")).join("");
 }
 async function toggleDrop(ids,undo){
   const set=new Set(ids), now=new Date().toISOString(), prev=new Map();
