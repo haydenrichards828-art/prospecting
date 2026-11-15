@@ -1040,7 +1040,7 @@ function drawLeads(){
   const chip=(k,l,n,red)=>`<button class="${f===k?"on":""}" onclick="S.lf='${k}';drawLeads()"${red&&n?' style="color:var(--bad);font-weight:600"':""}>${l}${n!=null?` ${n}`:""}</button>`;
   const shown=ls.filter(keep), groups=[["Overdue",x=>dueIn(x.follow_up)<0],["Today",x=>dueIn(x.follow_up)===0],["This week",x=>{const n=dueIn(x.follow_up);return n>0&&n<=7;}],["Later",x=>dueIn(x.follow_up)>7],["No follow up date",x=>!x.follow_up]];
   $("#main").innerHTML=`<div class="top">${seg}<button class="iconbtn" onclick="openLead(null)" title="New lead" aria-label="New lead"><i class="ti ti-plus"></i></button></div>
-   <div class="chips">${chip("all","All",null)}${chip("overdue","Overdue",cnt.overdue,true)}${chip("today","Today",cnt.today)}${chip("week","This week",cnt.week)}${chip("buyers","Buyers",cnt.buyers)}</div>`
+   <div class="chips">${chip("all","All",null)}${chip("overdue","Overdue",cnt.overdue,true)}${chip("buyers","Matches",cnt.buyers)}</div>`
    + (shown.length ? groups.map(([g,fn])=>{ const xs=shown.filter(fn).sort((a,b)=>(a.follow_up||"").localeCompare(b.follow_up||"")); return xs.length?`<h2 style="margin:14px 0 6px;${g==="Overdue"?"color:var(--bad)":""}">${g} <span class="muted" style="font-weight:400">${xs.length}</span></h2>`+xs.map(leadRow).join(""):""; }).join("")
      : `<div class="empty"><i class="ti ti-users"></i>No leads here.<br><span class="muted">Tap Lead on a call, or the + above.</span></div>`)
    + (S.leadsClosed?`<p class="muted" style="text-align:center;font-size:12px;margin-top:16px">${S.leadsClosed} closed or do not contact leads hidden</p>`:"");
