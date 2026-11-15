@@ -460,7 +460,7 @@ function drawList(){
     if (!left.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-confetti"></i>That's everyone for today.${S.skipped.size?`<br><button style="margin-top:10px" onclick="S.skipped.clear();drawList()">Go back to ${S.skipped.size} skipped</button>`:""}</div>`; return; }
     $("#list").innerHTML = `<div class="dialer">${cardHTML(left[0])}
       <div class="skiprow"><span class="muted" style="font-size:13px">${left.length} to go</span><button onclick="skipCard(${left[0].property_id})"><i class="ti ti-player-skip-forward"></i>Skip<kbd>S</kbd></button></div>
-      ${left.length>1?`<div class="upnext"><div style="font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px">Up next</div>${left.slice(1,3).map(r=>`<div class="un"><b>${esc(r.owner_name||"Owner unknown")}</b><span>${esc(r.suburb||"")}</span><span style="overflow:hidden;text-overflow:ellipsis">${esc(r.callback?"Callback":whyLine(r))}</span></div>`).join("")}</div>`:""}</div>`;
+      </div>`;
     markShown(left[0].property_id);
     return;
   }
