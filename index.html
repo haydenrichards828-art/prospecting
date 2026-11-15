@@ -47,7 +47,7 @@ nav button.on{background:var(--card);border-color:var(--line);color:var(--ink);f
 .rpb.big{width:auto;height:auto;border-radius:10px;font-size:14px;margin:0;flex:none;padding:8px 14px}
 .laddr{display:flex;align-items:center;gap:10px;margin:6px 0 10px;font-size:15px}.laddr span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lcta{display:flex;gap:8px;margin-bottom:12px}.lcta a{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border-radius:12px;font-weight:600;font-size:16px;text-decoration:none}
-.lcta .call{flex:1;background:var(--accent);color:#fff}.lcta .txt{width:110px;background:var(--accent-bg);color:var(--accent)}.lcta .ti{font-size:20px}
+.lcta .call{flex:1;background:var(--accent);color:#0b1220}.lcta .txt{width:110px;background:var(--accent-bg);color:var(--accent)}.lcta .ti{font-size:20px}
 .lcard{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}.lcard .lk2{font-size:12px;color:var(--muted);margin:10px 0 6px}
 .fu4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.fu4 button{min-height:40px;padding:0 4px}
 details.lmore{margin:4px 0 6px}details.lmore summary{font-size:13px;color:var(--muted);cursor:pointer;padding:6px 0;list-style:none}details.lmore summary::-webkit-details-marker{display:none}details.lmore[open] summary{margin-bottom:6px}
@@ -1111,7 +1111,7 @@ function openLead(id, opts={}){
    ${opts.fresh?`<div class="banner info" style="margin:8px 0 0;padding:8px 10px"><i class="ti ti-sparkles"></i><div>Added to Leads. Fill in what they want below, then Save.</div></div>`:""}
    ${id?`<div class="lcard"><textarea id="ln_body" rows="2" placeholder="What did they say?" class="lin"></textarea>
     <div class="lk2">Follow up</div><div class="fu4" id="ln_fu">${[["Tomorrow",1],["1 week",7],["1 month",30]].map(([t,n])=>`<button onclick="S.ol.follow_up='${addDaysKey(n)}';pickOne(this)">${t}</button>`).join("")}<button onclick="const d=this.nextElementSibling;try{d.showPicker()}catch(e){d.click()}">Pick date</button><input type="date" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none" onchange="S.ol.follow_up=this.value;const b=this.previousElementSibling;pickOne(b);b.textContent=new Date(this.value+'T00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'})"></div></div>
-    <details class="lmore"><summary><i class="ti ti-adjustments-horizontal"></i> Status, next action and contact details</summary>
+    <details class="lmore"><summary>More: status, next action, edit contact ›</summary>
      <div class="lrow2"><select id="ln_status" class="sm" aria-label="Status">${LO.status.map(o=>`<option ${o===S.ol.status?"selected":""}>${o}</option>`).join("")}</select><select id="ln_next" class="sm" aria-label="Next action"><option value="">Next action</option>${LO.next_action.map(o=>`<option ${o===l.next_action?"selected":""}>${esc(o)}</option>`).join("")}</select></div>
      <button class="ghost" style="margin-top:6px;width:100%" onclick="editDetails()"><i class="ti ti-pencil"></i>Edit name, phone and address</button></details>`:""}
    <div id="wview_box" ${opts.fresh||!id?"hidden":""}>${wantsView(b)}</div>
