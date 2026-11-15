@@ -137,6 +137,7 @@ details.sec{background:var(--card);border:1px solid var(--line);border-radius:va
 .skiprow button{min-height:40px;font-size:14px;color:var(--muted);background:transparent;border-color:transparent}
 #list .tag{margin-bottom:8px}
 .dmap{height:56vh;min-height:300px;border-radius:12px;border:1px solid var(--line);overflow:hidden;margin-bottom:10px;background:var(--card)}
+@media (min-width:1000px){body.dwide #main{max-width:1440px}.dsplit{display:grid;grid-template-columns:minmax(0,3fr) minmax(340px,2fr);gap:18px;align-items:start}.dsplit .dmap{height:calc(100vh - 190px);position:sticky;top:70px;margin:0}.dsplit .dside{max-height:calc(100vh - 190px);overflow:auto;position:sticky;top:70px}.dsplit .dside .top{margin-top:0!important}}
 .leaflet-popup-content{font:14px/1.4 system-ui,sans-serif}.leaflet-popup-content button{min-height:36px}
 .brow{cursor:pointer}
 .chipgrid.sm button{white-space:nowrap;flex:none}
@@ -369,7 +370,7 @@ function openSearchProp(pid, inList){
 }
 async function searchMakeLead(pid){ try{ const r=await api("make_lead",{property_id:pid}); await loadLeads(); openLead(r.lead_id,{fresh:!(S.sres?.props||[]).find(x=>x.id===pid)?.is_lead}); }catch(e){ toast(e.message); } }
 
-function go(t){ if (S.searching) { S.searching=false; S.sq=""; S.prevTab=null; } if(!(S.sq||"").trim()) document.body.classList.remove("srch"); if (S.map) { try{S.map.remove()}catch{} S.map=null; } S.tab=t; S.page=0; render(); }
+function go(t){ if (S.searching) { S.searching=false; S.sq=""; S.prevTab=null; } if(!(S.sq||"").trim()) document.body.classList.remove("srch"); if (S.map) { try{S.map.remove()}catch{} S.map=null; } S.tab=t; S.page=0; document.body.classList.toggle("dwide",t==="drops"); render(); }
 
 async function renderLogin(){
   let has = true; try { has = (await api("has_password")).has; } catch {}
@@ -855,8 +856,9 @@ function drawDrops(){
     <div class="chips"><span class="muted">Top</span>${[[0,"All"],[1000,"1000"],[500,"500"],[250,"250"],[100,"100"],[50,"50"]].map(([n,l])=>`<button class="${S.dtop===n?"on":""}" onclick="setTop(${n})">${l}</button>`).join("")}</div>
     <p class="muted" style="margin:0 0 8px;font-size:13px">${S.dtop?`Showing the top ${Math.min(S.dtop,left.length)} of ${left.length} houses to drop`:`${left.length} houses to drop · ${all.length-left.length} dropped in the last ${DROP_DAYS} days`}${onMap<all.length?` · ${all.length-onMap} not on the map yet`:""}</p>`;
   if (S.dview==="list") { $("#main").innerHTML=head+dropListHTML(); return; }
-  $("#main").innerHTML = head + `<div id="dmap" class="dmap"><div class="empty" style="padding:40px 0"><i class="ti ti-loader-2"></i>Loading map</div></div>
-    <div class="top" style="margin-top:4px"><b style="font-size:15px;margin-right:auto">Best places to drop</b>${seg("dgroup",[["street","Streets"],["suburb","Suburbs"]],"drawBest()")}</div><div id="best"></div>`;
+  document.body.classList.add("dwide");
+  $("#main").innerHTML = head + `<div class="dsplit"><div id="dmap" class="dmap"><div class="empty" style="padding:40px 0"><i class="ti ti-loader-2"></i>Loading map</div></div>
+    <div class="dside"><div class="top" style="margin-top:4px"><b style="font-size:15px;margin-right:auto">Best places to drop</b>${seg("dgroup",[["street","Streets"],["suburb","Suburbs"]],"drawBest()")}</div><div id="best"></div></div></div>`;
   drawBest();
   loadLeaflet().then(()=>{ if (S.tab!=="drops"||!$("#dmap")) return;
     if (S.map) { try{S.map.remove()}catch{} }
