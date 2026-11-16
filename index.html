@@ -503,7 +503,7 @@ function cardHTML(r){
    <div class="addr">${esc(r.street_address)}, ${esc(r.suburb)}${r.bedrooms?` · ${r.bedrooms} bed`:""}${rpBtn(r.street_address,r.suburb,r.rp_link)}</div>
    ${r.callback&&r.notes?`<div class="why">${esc(r.notes)}</div>`:`<div class="why">${esc(whyLine(r))}</div>`}
    ${probate&&r.solicitor&&r.phone?`<div class="banner warn" style="margin:10px 0 6px"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> This number is the <b>solicitor</b>, not the family: ${esc(r.solicitor)}.</div></div><a class="phone" href="tel:${esc(r.phone)}"><i class="ti ti-scale"></i>Solicitor ${esc(/^0[2378]/.test(r.phone)?r.phone.replace(/^(\d{2})(\d{4})(\d{4})$/,"$1 $2 $3"):r.phone.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`
-     : probate?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> Don't call the family. Contact the solicitor${sol?" ("+esc(sol.slice(16,-1))+")":""} or write a letter.</div></div>`
+     : probate?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> Don't call the family. Contact the solicitor${sol?" ("+esc(sol.slice(16,-1))+")":""} or write a letter.<br><button class="ghost" style="margin-top:8px" onclick="addSolicitor(${id})"><i class="ti ti-scale"></i>Add solicitor's number</button></div></div>`
      : r.phone?`<a class="phone" href="tel:${esc(r.phone)}"><i class="ti ti-phone"></i>${esc(r.phone.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`:`<div class="nophone">No phone number yet</div>`}
    ${r.today_outcome?`<div class="why" style="color:var(--good)"><i class="ti ti-check"></i> ${LABEL[r.today_outcome]}</div>`:""}
    <div class="acts" style="grid-template-columns:repeat(6,1fr)">
@@ -522,6 +522,12 @@ function sydInput(d){ const p=Object.fromEntries(new Intl.DateTimeFormat("en-CA"
 function sydToISO(v){ const [d,t]=v.split("T"), [y,m,dd]=d.split("-").map(Number), [h,mi]=t.split(":").map(Number); let ts=Date.UTC(y,m-1,dd,h,mi); for(let i=0;i<2;i++){ const p=sydInput(new Date(ts)); const [d2,t2]=p.split("T"),[y2,m2,dd2]=d2.split("-").map(Number),[h2,mi2]=t2.split(":").map(Number); ts+=Date.UTC(y,m-1,dd,h,mi)-Date.UTC(y2,m2-1,dd2,h2,mi2);} return new Date(ts).toISOString(); }
 let notes = {};
 async function addNote(id){ const n = await uiAsk("Note for this call (saved with the next outcome you tap)", {input: notes[id]||"", ok:"Save note"}); if (n!==null) { if (n.trim()) notes[id]=n.trim(); else delete notes[id]; if (S.tab==="calls") drawList(); toast(n.trim()?"Note added":"Note removed"); } }
+// Saves a solicitor's office number against the probate notice; every estate that firm handles then dials them
+async function addSolicitor(id){
+  const firm=prompt("Solicitor or firm name (as you want it shown):"); if(firm===null) return;
+  const phone=prompt("Solicitor's office phone number:"); if(!phone) return;
+  try{ await api("set_solicitor",{property_id:id,firm,phone}); toast("Solicitor saved"); await refreshCalls(); }catch(e){ toast(e.message); }
+}
 function dialTo(phone){ const cur=queue().find(r=>r.phone===phone); if(cur){ markDial(cur.property_id); if(!S.tm.shown) S.tm.shown=S.tm.dial; } window.location.href = "tel:" + phone; }
 // Silent workflow tracking, used to find wasted time and make the app faster. Nothing shows on screen.
 // It keeps what was clicked (by its label), how long since the last click, how far the mouse travelled,
