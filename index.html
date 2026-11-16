@@ -327,121 +327,6 @@ nav .nic,nav .ns{display:none}nav button#nav_settings .nic{display:inline-block}
 @media (max-width:899px) and (max-height:620px){
  .dcall{height:48px!important}.dacts button{height:44px!important}.top{margin:8px 0!important}
 }
-/* Desktop: one shell, one width, content fills it calmly */
-.upnext{display:none}
-@media (min-width:1000px){
- .bar,.wrap,.wrap:has(.dialer.docked),body.dwide #main{max-width:1240px!important}
- .bar{padding:10px 32px!important}
- .wrap{padding-left:32px!important;padding-right:32px!important;padding-bottom:64px!important}
- .top{margin:20px 0 16px!important}
- /* Calls list view and leads: two columns of cards */
- body[data-tab=calls] #list:not(:has(.dialer)){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
- body[data-tab=calls] #list:not(:has(.dialer))>.card{margin:0}
- body[data-tab=leads] #main{columns:2;column-gap:20px}
- body[data-tab=leads] #main>*{break-inside:avoid}
- body[data-tab=leads] #main>h2{break-after:avoid}
- body[data-tab=leads] #main>.top{column-span:all}
- /* Stats and settings: two balanced columns */
- body[data-tab=insights] #main,body[data-tab=settings] #main{columns:2;column-gap:20px}
- body[data-tab=insights] #main>*,body[data-tab=settings] #main>*{break-inside:avoid}
- body[data-tab=insights] #main>h2{break-after:avoid;margin-top:6px}
- body[data-tab=insights] #main>.banner{column-span:all;margin-bottom:16px}
- body[data-tab=settings] #main>button.ghost{column-span:all;margin:16px auto 0;display:flex}
- /* Lead sheet: a side panel instead of a box in the middle */
- #ov.show{justify-content:flex-end;align-items:stretch}
- #ov .sheet{max-width:520px;height:100vh;max-height:100vh;border-radius:0;margin:0}
-}
-@media (min-width:1600px){
- .bar,.wrap,.wrap:has(.dialer.docked),body.dwide #main{max-width:1400px!important}
-}
-/* Desktop calls: one workspace. Queue | person | actions, one surface split by hairlines */
-@media (min-width:1000px){
- .dialer.docked{display:grid!important;grid-template-columns:minmax(0,1fr) 400px!important;gap:0!important;
-  height:calc(100vh - 150px);min-height:520px;align-items:stretch!important;border:1px solid var(--line);border-radius:16px;background:var(--card);overflow:hidden}
- .upnext{display:flex;flex-direction:column;min-height:0;margin:0!important;border-right:1px solid var(--line);background:var(--bg)}
- .unh{display:flex;justify-content:space-between;align-items:baseline;padding:18px 20px 12px;font-weight:600;font-size:14px}
- .unh .muted{font-weight:400;font-size:13px}
- .unl{overflow-y:auto;flex:1;min-height:0}
- .unr{padding:11px 20px;border-top:1px solid var(--line);font-size:14px;line-height:1.35}
- .unr.on{background:var(--accent-bg);box-shadow:inset 3px 0 0 var(--accent)}
- .unn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- .unr.on .unn{color:var(--accent)}
- .una{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- .unw{font-size:12px;margin-top:3px;color:var(--ink);opacity:.75}
- .dleftcol{overflow-y:auto;min-height:0;display:block!important;padding:0!important}
- .dleftcol>.card,#list .dleftcol .dinfo{border:0!important;border-radius:0!important;background:none!important;margin:0!important;padding:40px 48px!important;box-shadow:none!important}
- .dock{position:relative!important;top:auto!important;height:100%;border:0!important;border-left:1px solid var(--line)!important;border-radius:0!important;background:var(--bg)!important;padding:24px!important;display:flex;flex-direction:column;gap:10px;margin:0!important}
- .dock .dsub{margin-top:auto}
- .dock .pop{position:absolute!important;left:16px!important;right:16px!important;top:16px!important;bottom:auto!important;z-index:5;box-shadow:0 12px 32px rgba(0,0,0,.28)}
-}
-@media (min-width:1600px){ .dialer.docked{grid-template-columns:minmax(0,1fr) 440px!important} }
-@media (max-width:999px){.dwhy{display:none}}
-@media (min-width:1000px){
- .dialer.docked{padding:0!important}
- #list .dleftcol .dinfo .why.big{display:none}
- .dwhy{margin-top:22px;border-top:1px solid var(--line);padding-top:18px}
- .dlab{font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600}
- .dwr{padding:9px 0;border-bottom:1px solid var(--line);font-size:16px}
- .dwr:last-child{border-bottom:0}
- #list .dleftcol .dinfo details.hist{margin-top:22px;border-top:1px solid var(--line);padding-top:16px}
- .dacts{grid-template-columns:1fr 1fr!important}
- .dacts button{position:relative;height:60px!important;grid-column:auto!important}
- .dacts button:nth-child(5){grid-column:1/-1!important}
- .dacts kbd{position:absolute;top:6px;right:6px;margin:0!important}
- .dcall{position:relative}.dcall kbd{position:absolute;right:12px;top:50%;transform:translateY(-50%)}
-}
-/* Desktop calls = the phone layout, scaled up: name and info first, buttons straight underneath, one centred column */
-@media (min-width:900px){
- .wrap:has(.dialer.docked){max-width:820px!important}
- .dialer.docked{display:block!important;height:auto!important;min-height:0!important;border:0!important;background:none!important;overflow:visible!important;border-radius:0!important}
- .dleftcol{overflow:visible!important}
- .dleftcol>.card,#list .dleftcol .dinfo{border:1px solid var(--line)!important;border-radius:20px!important;background:var(--card)!important;padding:32px 36px!important}
- #list .dleftcol .dinfo .name{font-size:40px!important}
- #list .dleftcol .dinfo .addr{font-size:19px!important}
- .dwr{font-size:18px}
- .dock{position:relative!important;height:auto!important;border:0!important;border-radius:0!important;background:none!important;padding:0!important;margin:18px 0 0!important;gap:12px!important}
- .dock .dsub{margin-top:4px}
- .dcall{height:78px!important;font-size:30px!important}
- .dacts{grid-template-columns:repeat(6,1fr)!important;gap:12px!important}
- .dacts button{height:72px!important;font-size:19px!important}
- .dacts button:nth-child(1),.dacts button:nth-child(2){grid-column:span 3!important}
- .dacts button:nth-child(3),.dacts button:nth-child(4),.dacts button:nth-child(5){grid-column:span 2!important}
- .dsub button{height:48px!important;font-size:15px!important}
- .dock .pop{left:0!important;right:0!important;top:auto!important;bottom:calc(100% + 10px)!important}
-}
-/* Desktop calls always fit the window: no page scroll */
-@media (min-width:900px){
- body[data-tab=calls]:has(.dialer.docked){overflow:hidden}
- .wrap:has(.dialer.docked){padding-bottom:0!important}
- .wrap:has(.dialer.docked) .top{margin:clamp(8px,1.6vh,18px) 0 clamp(8px,1.4vh,14px)!important}
- .dialer.docked{display:flex!important;flex-direction:column;height:var(--dh,calc(100vh - 140px))!important}
- .dleftcol{flex:1 1 auto;min-height:0;overflow:hidden!important;display:flex!important;flex-direction:column}
- .dleftcol>.card,#list .dleftcol .dinfo{flex:1 1 auto;min-height:0;overflow-y:auto;padding:clamp(16px,3.2vh,32px) clamp(20px,3vw,36px)!important}
- #list .dleftcol .dinfo .name{font-size:clamp(26px,4.4vh,40px)!important}
- #list .dleftcol .dinfo .addr{font-size:clamp(15px,2.1vh,19px)!important}
- .dwhy{margin-top:clamp(10px,2vh,22px)!important;padding-top:clamp(8px,1.8vh,18px)!important}
- .dwr{font-size:clamp(15px,2vh,18px)!important;padding:clamp(4px,1vh,9px) 0!important}
- .dock{flex:none;margin-top:clamp(10px,1.8vh,18px)!important;gap:clamp(8px,1.3vh,12px)!important;padding-bottom:clamp(10px,2vh,20px)!important}
- .dcall{height:clamp(50px,8.5vh,78px)!important;font-size:clamp(22px,3.4vh,30px)!important}
- .dacts{gap:clamp(8px,1.3vh,12px)!important}
- .dacts button{height:clamp(46px,7.6vh,72px)!important;font-size:clamp(15px,2.1vh,19px)!important}
- .dsub button{height:clamp(36px,5vh,48px)!important}
-}
-/* Every size: the calls screen fits the window. Card on top (scrolls inside itself if long), buttons under it */
-body[data-tab=calls]:has(.dialer.docked){overflow:hidden}
-.wrap:has(.dialer.docked){padding-bottom:0!important}
-.wrap:has(.dialer.docked) .top{margin:clamp(6px,1.4vh,18px) 0 clamp(6px,1.2vh,14px)!important}
-.dialer.docked{display:flex!important;flex-direction:column;height:var(--dh,calc(100dvh - 130px))!important;min-height:0!important}
-.dleftcol{flex:1 1 auto;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column;padding:0!important}
-.dleftcol>.card,#list .dleftcol .dinfo{flex:1 1 auto;min-height:0;overflow-y:auto;margin:0!important}
-.dock{flex:none;position:relative!important;top:auto!important;margin:clamp(8px,1.6vh,18px) 0 0!important;padding-bottom:clamp(8px,1.8vh,20px)!important}
-@media (max-width:899px){
- .dcall{height:clamp(44px,8vh,62px)!important}
- .dacts button{height:clamp(42px,7.4vh,58px)!important}
- .dsub button{height:clamp(32px,5vh,44px)!important}
- .dock{gap:clamp(6px,1.1vh,10px)!important}.dacts{gap:clamp(6px,1.1vh,10px)!important}
- #list .dinfo .name{font-size:clamp(20px,min(6.8vw,4.6vh),30px)!important}
-}
 </style>
 </head>
 <body>
@@ -567,7 +452,6 @@ function toast(msg, undo) {
 
 async function render() {
   if (!S.token) return renderLogin();
-  document.body.dataset.tab=S.tab;
   $("#app").innerHTML = `
   <header><div class="bar"><div class="brand"><i class="ti ti-phone-call"></i><span class="bname">Prospect</span></div><input id="hq" class="hsearch" type="search" placeholder="" value="${esc(S.sq||"")}" oninput="hSearch(this.value)" autocomplete="off" onfocus="document.body.classList.add('srch')" onblur="if(!this.value.trim())document.body.classList.remove('srch')" aria-label="Search name, street or suburb"><nav>${[["calls","Calls","Calls","ti-phone"],["leads","Leads","Leads","ti-users"],["drops","Card drops","Drops","ti-mailbox"],["insights","Stats","Stats","ti-chart-arrows"],["settings","","Settings","ti-settings"]].map(([k,l,sh,ic])=>`<button id="nav_${k}" class="${S.tab===k||(k==="settings"&&S.tab==="messages")?"on":""}" onclick="go('${k}')" aria-label="${sh}" title="${l||sh}"><i class="ti ${ic} nic"></i><span class="nl">${l}</span><span class="ns">${sh}</span></button>`).join("")}</nav></div></header>
   <div class="wrap" id="main"><div class="empty"><i class="ti ti-loader-2"></i>Loading</div></div>`;
@@ -624,7 +508,7 @@ function openSearchProp(pid, inList){
 }
 async function searchMakeLead(pid){ try{ const r=await api("make_lead",{property_id:pid}); await loadLeads(); openLead(r.lead_id,{fresh:!(S.sres?.props||[]).find(x=>x.id===pid)?.is_lead}); }catch(e){ toast(e.message); } }
 
-function go(t){ document.body.dataset.tab=t; if (S.searching) { S.searching=false; S.sq=""; S.prevTab=null; } if(!(S.sq||"").trim()) document.body.classList.remove("srch"); if (S.map) { try{S.map.remove()}catch{} S.map=null; } S.tab=t; S.page=0; document.body.classList.toggle("dwide",t==="drops"); render(); }
+function go(t){ if (S.searching) { S.searching=false; S.sq=""; S.prevTab=null; } if(!(S.sq||"").trim()) document.body.classList.remove("srch"); if (S.map) { try{S.map.remove()}catch{} S.map=null; } S.tab=t; S.page=0; document.body.classList.toggle("dwide",t==="drops"); render(); }
 
 async function renderLogin(){
   let has = true; try { has = (await api("has_password")).has; } catch {}
@@ -714,8 +598,6 @@ function queue(){
   const ids = new Set(cb.map(c=>c.property_id));
   return [...cb, ...S.rows.filter(r=>!ids.has(r.property_id))];
 }
-function upNextHTML(left){
-  return `<aside class="upnext"><div class="unh">Today's list <span class="muted">${left.length} to go</span></div><div class="unl">${left.slice(0,15).map((r,i)=>`<div class="unr${i?"":" on"}"><div class="unn">${esc(r.owner_name||"Owner unknown")}</div><div class="una muted">${esc(r.street_address)}, ${esc(r.suburb)}</div>${i?"":`<div class="unw">${esc(whyLine(r))}</div>`}</div>`).join("")}</div></aside>`; }
 function drawList(){
   const all = queue();
   if (!S.rows.length && !all.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-list-search"></i>No list yet for today.<br><span class="muted">It builds itself at 4:30am. To build it now, go to Settings.</span></div>`; return; }
@@ -750,7 +632,6 @@ function whyLine(r){
   if (r.no_answers && !r.today_outcome) bits.push(`${r.no_answers} missed call${r.no_answers>1?"s":""}`);
   return bits.slice(0,3).join(" · ");
 }
-function whyAll(r){ const b=[...(r.reasons||[]).filter(x=>!x.startsWith("Probate notice"))]; if(r.street_sales_12m) b.push(`${r.street_sales_12m} street sale${r.street_sales_12m>1?"s":""} in the last year`); if(r.no_answers&&!r.today_outcome) b.push(`${r.no_answers} missed call${r.no_answers>1?"s":""} so far`); return b; }
 const fmtTel=p=>/^0[2378]/.test(p)?p.replace(/^(\d{2})(\d{4})(\d{4})$/,"$1 $2 $3"):p.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3");
 const canCall=r=>!!r.phone && (!(r.signals||[]).includes("probate") || !!r.solicitor);
 // One at a time: what you need to know about this person. Everything you tap lives in the dock, which never moves.
@@ -762,7 +643,6 @@ function infoHTML(r){
    <div class="name">${esc(r.owner_name||"Owner unknown")}</div>
    <div class="addr">${esc(r.street_address)}, ${esc(r.suburb)}${r.bedrooms?` · ${r.bedrooms} bed`:""}${rpBtn(r.street_address,r.suburb,r.rp_link)}</div>
    <div class="why big">${esc(r.callback&&r.notes?r.notes:whyLine(r))}</div>
-   <div class="dwhy"><div class="dlab">Why they're on the list</div>${[...(r.callback&&r.notes?["Last time: "+r.notes]:[]),...whyAll(r)].map(x=>`<div class="dwr">${esc(x)}</div>`).join("")||`<div class="dwr muted">Owner on the general list</div>`}</div>
    ${r.fire_zone||r.flood_zone?`<div class="hz">${r.fire_zone?`<span class="hzt fire"><i class="ti ti-flame"></i>${r.fire_zone==="Vegetation Buffer"?"Bushfire prone (bush edge)":"Bushfire prone (in bushland)"}</span>`:""}${r.flood_zone?`<span class="hzt flood"><i class="ti ti-droplet"></i>Flood planning area</span>`:""}</div>`:""}
    ${probate&&r.solicitor?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> The call button rings the <b>solicitor</b>, not the family: ${esc(r.solicitor)}.</div></div>`
      : probate?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> Don't call the family. Contact the solicitor${sol?" ("+esc(sol.slice(16,-1))+")":""} or write a letter.<br><button class="ghost" style="margin-top:8px" onclick="addSolicitor(${id})"><i class="ti ti-scale"></i>Add solicitor's number</button></div></div>`:""}
@@ -801,7 +681,7 @@ function dockHTML(r, left){
   </div>`;
 }
 // Fits the one at a time screen exactly into what's visible below the header, so nothing hides behind anything
-function sizeDialer(){ const d=document.querySelector(".dialer.docked"); if(!d) return; const cid=d.querySelector("[id^=cb]")?.id; if(innerWidth<900&&cid&&cid!==S._lastCard){ S._lastCard=cid; scrollTo(0,0); } { const vh=(window.visualViewport&&visualViewport.height)||innerHeight; const t=d.getBoundingClientRect().top+scrollY; d.style.setProperty("--dh", Math.max(300, Math.floor(vh-t))+"px"); return; }
+function sizeDialer(){ const d=document.querySelector(".dialer.docked"); if(!d) return; const cid=d.querySelector("[id^=cb]")?.id; if(innerWidth<900&&cid&&cid!==S._lastCard){ S._lastCard=cid; scrollTo(0,0); } if(innerWidth>=900){ d.style.removeProperty("--dh"); return; }
   window.scrollTo(0,0); const top=d.getBoundingClientRect().top; const vh=(window.visualViewport&&visualViewport.height)||innerHeight;
   d.style.setProperty("--dh", Math.max(320, Math.floor(vh-top))+"px"); }
 window.addEventListener("resize", sizeDialer); try{ document.fonts&&document.fonts.ready.then(sizeDialer); }catch{} if(window.visualViewport) visualViewport.addEventListener("resize", sizeDialer);
