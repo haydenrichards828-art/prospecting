@@ -71,6 +71,7 @@ kbd{display:none}
 .rank{font-size:12px;color:var(--faint);min-width:26px;padding-top:2px}
 .name{font-weight:600}.addr{color:var(--muted);font-size:14px}
 .lstat{margin-top:8px}.listedbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:12px;border:1px solid var(--good,#1a7f4b);color:var(--good,#1a7f4b);background:transparent;font-weight:600;font-size:15px}.listedbtn.on{background:var(--good,#1a7f4b);color:#fff;opacity:1}
+.hz{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}.hzt{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px}.hzt.fire{background:#fff1e6;color:#b4500f}.hzt.flood{background:#e6f2ff;color:#1d5fa8}
 .score{margin-left:auto;text-align:right;font-size:12px;color:var(--muted)}
 .score b{display:block;font-size:18px;color:var(--ink);font-weight:600}
 .phone{display:inline-flex;align-items:center;gap:6px;margin:10px 0 6px;font-weight:500;color:var(--accent);text-decoration:none;font-size:16px}
@@ -502,6 +503,7 @@ function cardHTML(r){
    <div class="name">${esc(r.owner_name||"Owner unknown")}</div>
    <div class="addr">${esc(r.street_address)}, ${esc(r.suburb)}${r.bedrooms?` · ${r.bedrooms} bed`:""}${rpBtn(r.street_address,r.suburb,r.rp_link)}</div>
    ${r.callback&&r.notes?`<div class="why">${esc(r.notes)}</div>`:`<div class="why">${esc(whyLine(r))}</div>`}
+   ${r.fire_zone||r.flood_zone?`<div class="hz">${r.fire_zone?`<span class="hzt fire"><i class="ti ti-flame"></i>${r.fire_zone==="Vegetation Buffer"?"Bushfire prone (bush edge)":"Bushfire prone (in bushland)"}</span>`:""}${r.flood_zone?`<span class="hzt flood"><i class="ti ti-droplet"></i>Flood planning area</span>`:""}</div>`:""}
    ${probate&&r.solicitor&&r.phone?`<div class="banner warn" style="margin:10px 0 6px"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> This number is the <b>solicitor</b>, not the family: ${esc(r.solicitor)}.</div></div><a class="phone" href="tel:${esc(r.phone)}"><i class="ti ti-scale"></i>Solicitor ${esc(/^0[2378]/.test(r.phone)?r.phone.replace(/^(\d{2})(\d{4})(\d{4})$/,"$1 $2 $3"):r.phone.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`
      : probate?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> Don't call the family. Contact the solicitor${sol?" ("+esc(sol.slice(16,-1))+")":""} or write a letter.<br><button class="ghost" style="margin-top:8px" onclick="addSolicitor(${id})"><i class="ti ti-scale"></i>Add solicitor's number</button></div></div>`
      : r.phone?`<a class="phone" href="tel:${esc(r.phone)}"><i class="ti ti-phone"></i>${esc(r.phone.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`:`<div class="nophone">No phone number yet</div>`}
