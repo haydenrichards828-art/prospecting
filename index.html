@@ -427,6 +427,21 @@ nav .nic,nav .ns{display:none}nav button#nav_settings .nic{display:inline-block}
  .dacts button{height:clamp(46px,7.6vh,72px)!important;font-size:clamp(15px,2.1vh,19px)!important}
  .dsub button{height:clamp(36px,5vh,48px)!important}
 }
+/* Every size: the calls screen fits the window. Card on top (scrolls inside itself if long), buttons under it */
+body[data-tab=calls]:has(.dialer.docked){overflow:hidden}
+.wrap:has(.dialer.docked){padding-bottom:0!important}
+.wrap:has(.dialer.docked) .top{margin:clamp(6px,1.4vh,18px) 0 clamp(6px,1.2vh,14px)!important}
+.dialer.docked{display:flex!important;flex-direction:column;height:var(--dh,calc(100dvh - 130px))!important;min-height:0!important}
+.dleftcol{flex:1 1 auto;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column;padding:0!important}
+.dleftcol>.card,#list .dleftcol .dinfo{flex:1 1 auto;min-height:0;overflow-y:auto;margin:0!important}
+.dock{flex:none;position:relative!important;top:auto!important;margin:clamp(8px,1.6vh,18px) 0 0!important;padding-bottom:clamp(8px,1.8vh,20px)!important}
+@media (max-width:899px){
+ .dcall{height:clamp(44px,8vh,62px)!important}
+ .dacts button{height:clamp(42px,7.4vh,58px)!important}
+ .dsub button{height:clamp(32px,5vh,44px)!important}
+ .dock{gap:clamp(6px,1.1vh,10px)!important}.dacts{gap:clamp(6px,1.1vh,10px)!important}
+ #list .dinfo .name{font-size:clamp(20px,min(6.8vw,4.6vh),30px)!important}
+}
 </style>
 </head>
 <body>
@@ -786,7 +801,7 @@ function dockHTML(r, left){
   </div>`;
 }
 // Fits the one at a time screen exactly into what's visible below the header, so nothing hides behind anything
-function sizeDialer(){ const d=document.querySelector(".dialer.docked"); if(!d) return; const cid=d.querySelector("[id^=cb]")?.id; if(innerWidth<900&&cid&&cid!==S._lastCard){ S._lastCard=cid; scrollTo(0,0); } if(innerWidth>=900){ const t=d.getBoundingClientRect().top+scrollY; d.style.setProperty("--dh", Math.max(380, Math.floor(innerHeight-t))+"px"); return; }
+function sizeDialer(){ const d=document.querySelector(".dialer.docked"); if(!d) return; const cid=d.querySelector("[id^=cb]")?.id; if(innerWidth<900&&cid&&cid!==S._lastCard){ S._lastCard=cid; scrollTo(0,0); } { const vh=(window.visualViewport&&visualViewport.height)||innerHeight; const t=d.getBoundingClientRect().top+scrollY; d.style.setProperty("--dh", Math.max(300, Math.floor(vh-t))+"px"); return; }
   window.scrollTo(0,0); const top=d.getBoundingClientRect().top; const vh=(window.visualViewport&&visualViewport.height)||innerHeight;
   d.style.setProperty("--dh", Math.max(320, Math.floor(vh-top))+"px"); }
 window.addEventListener("resize", sizeDialer); try{ document.fonts&&document.fonts.ready.then(sizeDialer); }catch{} if(window.visualViewport) visualViewport.addEventListener("resize", sizeDialer);
