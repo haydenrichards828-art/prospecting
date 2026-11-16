@@ -502,7 +502,8 @@ function cardHTML(r){
    <div class="name">${esc(r.owner_name||"Owner unknown")}</div>
    <div class="addr">${esc(r.street_address)}, ${esc(r.suburb)}${r.bedrooms?` · ${r.bedrooms} bed`:""}${rpBtn(r.street_address,r.suburb,r.rp_link)}</div>
    ${r.callback&&r.notes?`<div class="why">${esc(r.notes)}</div>`:`<div class="why">${esc(whyLine(r))}</div>`}
-   ${probate?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> Don't call the family. Contact the solicitor${sol?" ("+esc(sol.slice(16,-1))+")":""} or write a letter.</div></div>`
+   ${probate&&r.solicitor&&r.phone?`<div class="banner warn" style="margin:10px 0 6px"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> This number is the <b>solicitor</b>, not the family: ${esc(r.solicitor)}.</div></div><a class="phone" href="tel:${esc(r.phone)}"><i class="ti ti-scale"></i>Solicitor ${esc(/^0[2378]/.test(r.phone)?r.phone.replace(/^(\d{2})(\d{4})(\d{4})$/,"$1 $2 $3"):r.phone.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`
+     : probate?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> Don't call the family. Contact the solicitor${sol?" ("+esc(sol.slice(16,-1))+")":""} or write a letter.</div></div>`
      : r.phone?`<a class="phone" href="tel:${esc(r.phone)}"><i class="ti ti-phone"></i>${esc(r.phone.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`:`<div class="nophone">No phone number yet</div>`}
    ${r.today_outcome?`<div class="why" style="color:var(--good)"><i class="ti ti-check"></i> ${LABEL[r.today_outcome]}</div>`:""}
    <div class="acts" style="grid-template-columns:repeat(6,1fr)">
@@ -620,7 +621,7 @@ function pacePop(){ try{ const k="pace_"+todayKey(), a=paceLog(); a.pop(); local
 // Calls per hour over your last stretch of work (stops at any gap over 10 minutes)
 function livePace(){ const a=paceLog(); if(a.length<3) return null; let i=a.length-1; while(i>0 && a[i]-a[i-1]<=600e3 && a.length-1-i<30) i--; const n=a.length-1-i, span=(a[a.length-1]-a[i])/36e5; if(n<2||span<5/60) return null; if(Date.now()-a[a.length-1]>600e3) return null; return Math.round(n/span); }
 function nextDialable(currentId){
-  return queue().filter(r=>!r.today_outcome && r.property_id!==currentId && !S.skipped.has(r.property_id) && r.phone && !(r.signals||[]).includes("probate"))
+  return queue().filter(r=>!r.today_outcome && r.property_id!==currentId && !S.skipped.has(r.property_id) && r.phone && (!(r.signals||[]).includes("probate") || r.solicitor))
 [0];
 }
 async function outcome(id, o){
