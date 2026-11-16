@@ -327,6 +327,43 @@ nav .nic,nav .ns{display:none}nav button#nav_settings .nic{display:inline-block}
 @media (max-width:899px) and (max-height:620px){
  .dcall{height:48px!important}.dacts button{height:44px!important}.top{margin:8px 0!important}
 }
+/* Desktop: one shell, one width, content fills it calmly */
+.upnext{display:none}
+@media (min-width:1000px){
+ .bar,.wrap,.wrap:has(.dialer.docked),body.dwide #main{max-width:1240px!important}
+ .bar{padding:10px 32px!important}
+ .wrap{padding-left:32px!important;padding-right:32px!important;padding-bottom:64px!important}
+ .top{margin:20px 0 16px!important}
+ /* Calls dialer: card and what's coming on the left, buttons on the right */
+ .dialer.docked{grid-template-columns:minmax(0,1fr) 400px!important;gap:24px!important}
+ .dock{top:84px!important}
+ .upnext{display:block;margin-top:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:6px 0}
+ .unh{display:flex;justify-content:space-between;align-items:baseline;padding:10px 20px 8px;font-weight:600;font-size:14px}
+ .unh .muted{font-weight:400;font-size:13px}
+ .unr{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1.6fr);gap:16px;align-items:baseline;padding:11px 20px;border-top:1px solid var(--line);font-size:14px}
+ .unn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .una,.unw{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ /* Calls list view and leads: two columns of cards */
+ body[data-tab=calls] #list:not(:has(.dialer)){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+ body[data-tab=calls] #list:not(:has(.dialer))>.card{margin:0}
+ body[data-tab=leads] #main{columns:2;column-gap:20px}
+ body[data-tab=leads] #main>*{break-inside:avoid}
+ body[data-tab=leads] #main>h2{break-after:avoid}
+ body[data-tab=leads] #main>.top{column-span:all}
+ /* Stats and settings: two balanced columns */
+ body[data-tab=insights] #main,body[data-tab=settings] #main{columns:2;column-gap:20px}
+ body[data-tab=insights] #main>*,body[data-tab=settings] #main>*{break-inside:avoid}
+ body[data-tab=insights] #main>h2{break-after:avoid;margin-top:6px}
+ body[data-tab=insights] #main>.banner{column-span:all;margin-bottom:16px}
+ body[data-tab=settings] #main>button.ghost{column-span:all;margin:16px auto 0;display:flex}
+ /* Lead sheet: a side panel instead of a box in the middle */
+ #ov.show{justify-content:flex-end;align-items:stretch}
+ #ov .sheet{max-width:520px;height:100vh;max-height:100vh;border-radius:0;margin:0}
+}
+@media (min-width:1600px){
+ .bar,.wrap,.wrap:has(.dialer.docked),body.dwide #main{max-width:1400px!important}
+ .dialer.docked{grid-template-columns:minmax(0,1fr) 440px!important}
+}
 </style>
 </head>
 <body>
@@ -452,6 +489,7 @@ function toast(msg, undo) {
 
 async function render() {
   if (!S.token) return renderLogin();
+  document.body.dataset.tab=S.tab;
   $("#app").innerHTML = `
   <header><div class="bar"><div class="brand"><i class="ti ti-phone-call"></i><span class="bname">Prospect</span></div><input id="hq" class="hsearch" type="search" placeholder="" value="${esc(S.sq||"")}" oninput="hSearch(this.value)" autocomplete="off" onfocus="document.body.classList.add('srch')" onblur="if(!this.value.trim())document.body.classList.remove('srch')" aria-label="Search name, street or suburb"><nav>${[["calls","Calls","Calls","ti-phone"],["leads","Leads","Leads","ti-users"],["drops","Card drops","Drops","ti-mailbox"],["insights","Stats","Stats","ti-chart-arrows"],["settings","","Settings","ti-settings"]].map(([k,l,sh,ic])=>`<button id="nav_${k}" class="${S.tab===k||(k==="settings"&&S.tab==="messages")?"on":""}" onclick="go('${k}')" aria-label="${sh}" title="${l||sh}"><i class="ti ${ic} nic"></i><span class="nl">${l}</span><span class="ns">${sh}</span></button>`).join("")}</nav></div></header>
   <div class="wrap" id="main"><div class="empty"><i class="ti ti-loader-2"></i>Loading</div></div>`;
@@ -508,7 +546,7 @@ function openSearchProp(pid, inList){
 }
 async function searchMakeLead(pid){ try{ const r=await api("make_lead",{property_id:pid}); await loadLeads(); openLead(r.lead_id,{fresh:!(S.sres?.props||[]).find(x=>x.id===pid)?.is_lead}); }catch(e){ toast(e.message); } }
 
-function go(t){ if (S.searching) { S.searching=false; S.sq=""; S.prevTab=null; } if(!(S.sq||"").trim()) document.body.classList.remove("srch"); if (S.map) { try{S.map.remove()}catch{} S.map=null; } S.tab=t; S.page=0; document.body.classList.toggle("dwide",t==="drops"); render(); }
+function go(t){ document.body.dataset.tab=t; if (S.searching) { S.searching=false; S.sq=""; S.prevTab=null; } if(!(S.sq||"").trim()) document.body.classList.remove("srch"); if (S.map) { try{S.map.remove()}catch{} S.map=null; } S.tab=t; S.page=0; document.body.classList.toggle("dwide",t==="drops"); render(); }
 
 async function renderLogin(){
   let has = true; try { has = (await api("has_password")).has; } catch {}
@@ -598,6 +636,8 @@ function queue(){
   const ids = new Set(cb.map(c=>c.property_id));
   return [...cb, ...S.rows.filter(r=>!ids.has(r.property_id))];
 }
+function upNextHTML(left){ const nx=left.slice(1,6); if(!nx.length) return "";
+  return `<div class="upnext"><div class="unh">Up next <span class="muted">${left.length-1} more today</span></div>${nx.map(r=>`<div class="unr"><div class="unn">${esc(r.owner_name||"Owner unknown")}</div><div class="una muted">${esc(r.street_address)}, ${esc(r.suburb)}</div><div class="unw muted">${esc(whyLine(r))}</div></div>`).join("")}</div>`; }
 function drawList(){
   const all = queue();
   if (!S.rows.length && !all.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-list-search"></i>No list yet for today.<br><span class="muted">It builds itself at 4:30am. To build it now, go to Settings.</span></div>`; return; }
@@ -605,7 +645,7 @@ function drawList(){
     const left = all.filter(r=>!r.today_outcome && !S.skipped.has(r.property_id));
     if (!left.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-confetti"></i>That's everyone for today.${S.skipped.size?`<br><button style="margin-top:10px" onclick="S.skipped.clear();drawList()">Go back to ${S.skipped.size} skipped</button>`:""}</div>`; return; }
     S.leftCount=left.length; drawProg();
-    $("#list").innerHTML = `<div class="dialer docked"><div class="dleftcol">${cardHTML(left[0],true)}</div>${dockHTML(left[0], left.length)}</div>`;
+    $("#list").innerHTML = `<div class="dialer docked"><div class="dleftcol">${cardHTML(left[0],true)}${upNextHTML(left)}</div>${dockHTML(left[0], left.length)}</div>`;
     sizeDialer();
     markShown(left[0].property_id);
     return;
