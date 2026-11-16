@@ -281,7 +281,7 @@ function demoApi(action, body){
     default: return {ok:true};
   }
 }
-const LABEL = {no_answer:"No answer",not_interested:"Not interested",call_back:"Call back",appraisal:"Appraisal",listed:"Listed",do_not_call:"Do not call",lead:"Lead"};
+const LABEL = {no_answer:"No answer",not_interested:"Not selling",call_back:"Call back",appraisal:"Appraisal",listed:"Listed",do_not_call:"Do not call",lead:"Lead"};
 const ICON = {no_answer:"ti-phone-off",not_interested:"ti-x",call_back:"ti-calendar-time",appraisal:"ti-home-check",listed:"ti-star",do_not_call:"ti-ban",lead:"ti-user-plus"};
 const WHEN = [["now","Now"],["1h","In 1 hour"],["tomorrow_8am","Tomorrow 8am"],["24h","In 24 hours"],["1w","In 1 week"],["custom","Custom"]];
 let S = {token: (()=>{ try { return (typeof window.FORCE_DEMO!=="undefined"&&window.FORCE_DEMO)||location.hash==="#demo" ? "demo" : localStorage.getItem("dp_token"); } catch { return null; } })(), tab:"calls", type:"seller", rows:[], q:"", page:0, ov:null, callbacks:[], templates:[], dialer: (()=>{try{return localStorage.getItem("dp_dialer")!=="0"}catch{return true}})(), autodial: true, skipped:new Set(), saving:new Set()};
@@ -440,7 +440,7 @@ document.addEventListener("visibilitychange", ()=>{
   if (S.tab==="calls") keepAwake();
   if (S.token && hiddenAt && Date.now()-hiddenAt > 30*60e3 && !$("#ov").classList.contains("show")) render(); // fresh list and counts after a long break
 });
-// Keyboard shortcuts on a computer: 1 no answer, 2 not interested, 3 call back, 4 appraisal, S skip, C call
+// Keyboard shortcuts on a computer: 1 no answer, 2 not selling, 3 call back, 4 appraisal, S skip, C call
 document.addEventListener("keydown", e=>{
   if (S.tab!=="calls" || !S.dialer || $("#ov").classList.contains("show") || /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||"") || e.metaKey || e.ctrlKey || e.altKey) return;
   const cur = queue().find(r=>!r.today_outcome && !S.skipped.has(r.property_id)); if (!cur) return;
@@ -511,7 +511,7 @@ function cardHTML(r){
    ${r.today_outcome?`<div class="why" style="color:var(--good)"><i class="ti ti-check"></i> ${LABEL[r.today_outcome]}</div>`:""}
    <div class="acts" style="grid-template-columns:repeat(6,1fr)">
     <button style="grid-column:span 3" onclick="outcome(${id},'no_answer')"><i class="ti ti-phone-off"></i>No answer<kbd>1</kbd></button>
-    <button style="grid-column:span 3" onclick="outcome(${id},'not_interested')"><i class="ti ti-x"></i>Not interested<kbd>2</kbd></button>
+    <button style="grid-column:span 3" onclick="outcome(${id},'not_interested')"><i class="ti ti-x"></i>Not selling<kbd>2</kbd></button>
     <button style="grid-column:span 2" onclick="outcome(${id},'call_back')"><i class="ti ti-calendar-time"></i>Call back<kbd>3</kbd></button>
     <button class="leadb" style="grid-column:span 2" onclick="outcome(${id},'lead')"><i class="ti ti-user-plus"></i>Lead<kbd>5</kbd></button>
     <button class="appr" style="grid-column:span 2" onclick="outcome(${id},'appraisal')"><i class="ti ti-home-check"></i>Appraisal<kbd>4</kbd></button></div>
@@ -1458,7 +1458,7 @@ async function viewSettings(){
     <div style="display:flex;gap:8px;margin-top:14px"><button class="primary" style="flex:1" onclick="saveSettings()">Save</button><button style="flex:1" onclick="regen()"><i class="ti ti-refresh"></i>Rebuild list</button></div></div></details>
    <details class="sec"><summary>Return to the list</summary><div>
     <p class="muted" style="margin-top:0">How long someone stays off your call list after each result. Do not call is forever. Anyone with an open lead or a booked call back stays off until that's dealt with.</p>
-    <div class="rtl">${[["noanswer_gap_days","After a missed call",3],["noanswer_rest_days","After 6 missed calls in a row",90],["not_interested_days","Not interested",365],["lead_closed_days","After a lead is closed or lost",180],["appraisal_days","After an appraisal",365],["sold_days","After it sells",1095],["recent_call_days","Any answered call, at least",7]].map(([k,l,d])=>`<label class="rtlrow"><span>${l}</span><span class="rtlin"><input type="number" min="1" id="r_${k}" value="${s[k]??d}"><span class="muted">days</span></span></label>`).join("")}</div>
+    <div class="rtl">${[["noanswer_gap_days","After a missed call",3],["noanswer_rest_days","After 6 missed calls in a row",90],["not_interested_days","Not selling",365],["lead_closed_days","After a lead is closed or lost",180],["appraisal_days","After an appraisal",365],["sold_days","After it sells",1095],["recent_call_days","Any answered call, at least",7]].map(([k,l,d])=>`<label class="rtlrow"><span>${l}</span><span class="rtlin"><input type="number" min="1" id="r_${k}" value="${s[k]??d}"><span class="muted">days</span></span></label>`).join("")}</div>
     <button class="primary" style="width:100%;margin-top:12px" onclick="saveReturn()">Save</button></div></details>
    <details class="sec"><summary>Password</summary><div><label style="margin-top:0">Current password</label><input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" id="p0"><label>New password (10+ characters)</label><input type="text" autocapitalize="off" autocorrect="off" spellcheck="false" id="p1"><button style="margin-top:12px;width:100%" onclick="changePw()">Change password</button></div></details>
    <button class="ghost" style="width:100%;color:var(--muted)" onclick="logout()"><i class="ti ti-logout"></i>Sign out</button>`;
