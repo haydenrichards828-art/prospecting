@@ -334,15 +334,6 @@ nav .nic,nav .ns{display:none}nav button#nav_settings .nic{display:inline-block}
  .bar{padding:10px 32px!important}
  .wrap{padding-left:32px!important;padding-right:32px!important;padding-bottom:64px!important}
  .top{margin:20px 0 16px!important}
- /* Calls dialer: card and what's coming on the left, buttons on the right */
- .dialer.docked{grid-template-columns:minmax(0,1fr) 400px!important;gap:24px!important}
- .dock{top:84px!important}
- .upnext{display:block;margin-top:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:6px 0}
- .unh{display:flex;justify-content:space-between;align-items:baseline;padding:10px 20px 8px;font-weight:600;font-size:14px}
- .unh .muted{font-weight:400;font-size:13px}
- .unr{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1.6fr);gap:16px;align-items:baseline;padding:11px 20px;border-top:1px solid var(--line);font-size:14px}
- .unn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- .una,.unw{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  /* Calls list view and leads: two columns of cards */
  body[data-tab=calls] #list:not(:has(.dialer)){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
  body[data-tab=calls] #list:not(:has(.dialer))>.card{margin:0}
@@ -362,7 +353,42 @@ nav .nic,nav .ns{display:none}nav button#nav_settings .nic{display:inline-block}
 }
 @media (min-width:1600px){
  .bar,.wrap,.wrap:has(.dialer.docked),body.dwide #main{max-width:1400px!important}
- .dialer.docked{grid-template-columns:minmax(0,1fr) 440px!important}
+}
+/* Desktop calls: one workspace. Queue | person | actions, one surface split by hairlines */
+@media (min-width:1000px){
+ .dialer.docked{display:grid!important;grid-template-columns:minmax(0,1fr) 400px!important;gap:0!important;
+  height:calc(100vh - 150px);min-height:520px;align-items:stretch!important;border:1px solid var(--line);border-radius:16px;background:var(--card);overflow:hidden}
+ .upnext{display:flex;flex-direction:column;min-height:0;margin:0!important;border-right:1px solid var(--line);background:var(--bg)}
+ .unh{display:flex;justify-content:space-between;align-items:baseline;padding:18px 20px 12px;font-weight:600;font-size:14px}
+ .unh .muted{font-weight:400;font-size:13px}
+ .unl{overflow-y:auto;flex:1;min-height:0}
+ .unr{padding:11px 20px;border-top:1px solid var(--line);font-size:14px;line-height:1.35}
+ .unr.on{background:var(--accent-bg);box-shadow:inset 3px 0 0 var(--accent)}
+ .unn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .unr.on .unn{color:var(--accent)}
+ .una{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .unw{font-size:12px;margin-top:3px;color:var(--ink);opacity:.75}
+ .dleftcol{overflow-y:auto;min-height:0;display:block!important;padding:0!important}
+ .dleftcol>.card,#list .dleftcol .dinfo{border:0!important;border-radius:0!important;background:none!important;margin:0!important;padding:40px 48px!important;box-shadow:none!important}
+ .dock{position:relative!important;top:auto!important;height:100%;border:0!important;border-left:1px solid var(--line)!important;border-radius:0!important;background:var(--bg)!important;padding:24px!important;display:flex;flex-direction:column;gap:10px;margin:0!important}
+ .dock .dsub{margin-top:auto}
+ .dock .pop{position:absolute!important;left:16px!important;right:16px!important;top:16px!important;bottom:auto!important;z-index:5;box-shadow:0 12px 32px rgba(0,0,0,.28)}
+}
+@media (min-width:1600px){ .dialer.docked{grid-template-columns:minmax(0,1fr) 440px!important} }
+@media (max-width:999px){.dwhy{display:none}}
+@media (min-width:1000px){
+ .dialer.docked{padding:0!important}
+ #list .dleftcol .dinfo .why.big{display:none}
+ .dwhy{margin-top:22px;border-top:1px solid var(--line);padding-top:18px}
+ .dlab{font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600}
+ .dwr{padding:9px 0;border-bottom:1px solid var(--line);font-size:16px}
+ .dwr:last-child{border-bottom:0}
+ #list .dleftcol .dinfo details.hist{margin-top:22px;border-top:1px solid var(--line);padding-top:16px}
+ .dacts{grid-template-columns:1fr 1fr!important}
+ .dacts button{position:relative;height:60px!important;grid-column:auto!important}
+ .dacts button:nth-child(5){grid-column:1/-1!important}
+ .dacts kbd{position:absolute;top:6px;right:6px;margin:0!important}
+ .dcall{position:relative}.dcall kbd{position:absolute;right:12px;top:50%;transform:translateY(-50%)}
 }
 </style>
 </head>
@@ -636,8 +662,8 @@ function queue(){
   const ids = new Set(cb.map(c=>c.property_id));
   return [...cb, ...S.rows.filter(r=>!ids.has(r.property_id))];
 }
-function upNextHTML(left){ const nx=left.slice(1,6); if(!nx.length) return "";
-  return `<div class="upnext"><div class="unh">Up next <span class="muted">${left.length-1} more today</span></div>${nx.map(r=>`<div class="unr"><div class="unn">${esc(r.owner_name||"Owner unknown")}</div><div class="una muted">${esc(r.street_address)}, ${esc(r.suburb)}</div><div class="unw muted">${esc(whyLine(r))}</div></div>`).join("")}</div>`; }
+function upNextHTML(left){
+  return `<aside class="upnext"><div class="unh">Today's list <span class="muted">${left.length} to go</span></div><div class="unl">${left.slice(0,15).map((r,i)=>`<div class="unr${i?"":" on"}"><div class="unn">${esc(r.owner_name||"Owner unknown")}</div><div class="una muted">${esc(r.street_address)}, ${esc(r.suburb)}</div>${i?"":`<div class="unw">${esc(whyLine(r))}</div>`}</div>`).join("")}</div></aside>`; }
 function drawList(){
   const all = queue();
   if (!S.rows.length && !all.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-list-search"></i>No list yet for today.<br><span class="muted">It builds itself at 4:30am. To build it now, go to Settings.</span></div>`; return; }
@@ -645,7 +671,7 @@ function drawList(){
     const left = all.filter(r=>!r.today_outcome && !S.skipped.has(r.property_id));
     if (!left.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-confetti"></i>That's everyone for today.${S.skipped.size?`<br><button style="margin-top:10px" onclick="S.skipped.clear();drawList()">Go back to ${S.skipped.size} skipped</button>`:""}</div>`; return; }
     S.leftCount=left.length; drawProg();
-    $("#list").innerHTML = `<div class="dialer docked"><div class="dleftcol">${cardHTML(left[0],true)}${upNextHTML(left)}</div>${dockHTML(left[0], left.length)}</div>`;
+    $("#list").innerHTML = `<div class="dialer docked"><div class="dleftcol">${cardHTML(left[0],true)}</div>${dockHTML(left[0], left.length)}</div>`;
     sizeDialer();
     markShown(left[0].property_id);
     return;
@@ -672,6 +698,7 @@ function whyLine(r){
   if (r.no_answers && !r.today_outcome) bits.push(`${r.no_answers} missed call${r.no_answers>1?"s":""}`);
   return bits.slice(0,3).join(" · ");
 }
+function whyAll(r){ const b=[...(r.reasons||[]).filter(x=>!x.startsWith("Probate notice"))]; if(r.street_sales_12m) b.push(`${r.street_sales_12m} street sale${r.street_sales_12m>1?"s":""} in the last year`); if(r.no_answers&&!r.today_outcome) b.push(`${r.no_answers} missed call${r.no_answers>1?"s":""} so far`); return b; }
 const fmtTel=p=>/^0[2378]/.test(p)?p.replace(/^(\d{2})(\d{4})(\d{4})$/,"$1 $2 $3"):p.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3");
 const canCall=r=>!!r.phone && (!(r.signals||[]).includes("probate") || !!r.solicitor);
 // One at a time: what you need to know about this person. Everything you tap lives in the dock, which never moves.
@@ -683,6 +710,7 @@ function infoHTML(r){
    <div class="name">${esc(r.owner_name||"Owner unknown")}</div>
    <div class="addr">${esc(r.street_address)}, ${esc(r.suburb)}${r.bedrooms?` · ${r.bedrooms} bed`:""}${rpBtn(r.street_address,r.suburb,r.rp_link)}</div>
    <div class="why big">${esc(r.callback&&r.notes?r.notes:whyLine(r))}</div>
+   <div class="dwhy"><div class="dlab">Why they're on the list</div>${[...(r.callback&&r.notes?["Last time: "+r.notes]:[]),...whyAll(r)].map(x=>`<div class="dwr">${esc(x)}</div>`).join("")||`<div class="dwr muted">Owner on the general list</div>`}</div>
    ${r.fire_zone||r.flood_zone?`<div class="hz">${r.fire_zone?`<span class="hzt fire"><i class="ti ti-flame"></i>${r.fire_zone==="Vegetation Buffer"?"Bushfire prone (bush edge)":"Bushfire prone (in bushland)"}</span>`:""}${r.flood_zone?`<span class="hzt flood"><i class="ti ti-droplet"></i>Flood planning area</span>`:""}</div>`:""}
    ${probate&&r.solicitor?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> The call button rings the <b>solicitor</b>, not the family: ${esc(r.solicitor)}.</div></div>`
      : probate?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> Don't call the family. Contact the solicitor${sol?" ("+esc(sol.slice(16,-1))+")":""} or write a letter.<br><button class="ghost" style="margin-top:8px" onclick="addSolicitor(${id})"><i class="ti ti-scale"></i>Add solicitor's number</button></div></div>`:""}
