@@ -312,21 +312,6 @@ nav .nic,nav .ns{display:none}nav button#nav_settings .nic{display:inline-block}
  .dock{position:static!important;margin:12px 0 0!important;padding:0 0 calc(16px + env(safe-area-inset-bottom))!important;border-top:none!important;box-shadow:none!important;background:transparent!important}
  #list .dinfo .name{font-size:26px;line-height:1.15;overflow-wrap:anywhere}
 }
-/* Scale with the phone: text, buttons and spacing grow and shrink with screen width */
-@media (max-width:899px){
- .wrap{padding-left:clamp(14px,5vw,24px)!important;padding-right:clamp(14px,5vw,24px)!important}
- #list .dinfo .name{font-size:clamp(21px,6.8vw,30px)!important}
- .dcall{height:clamp(50px,13.5vw,62px)!important;font-size:clamp(19px,6vw,26px)!important}
- .dacts button{height:clamp(46px,13vw,58px)!important;font-size:clamp(14px,4.2vw,18px)!important}
- .dock{gap:clamp(6px,2vw,10px)!important}
- .dacts{gap:clamp(6px,2vw,10px)!important}
- .dleftcol>.card{padding:clamp(14px,4.5vw,20px)!important}
- nav button{font-size:clamp(10px,2.9vw,12px)!important}
- nav .nic{font-size:clamp(17px,5vw,21px)!important}
-}
-@media (max-width:899px) and (max-height:620px){
- .dcall{height:48px!important}.dacts button{height:44px!important}.top{margin:8px 0!important}
-}
 </style>
 </head>
 <body>
