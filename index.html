@@ -91,7 +91,6 @@ kbd{display:none}
 .dock .pop button{min-height:54px;font-size:15px}.dock .pop .wide{grid-column:span 2}.dock .pop .dnc{color:var(--bad)}
 .poph{grid-column:span 2;font-size:13px;color:var(--muted);font-weight:600}
 .dinfo .why.big{font-size:15px;color:var(--ink);white-space:normal;margin-top:8px;line-height:1.4}
-.brk{align-items:center;margin-bottom:10px}.brk button{margin-left:auto;min-height:36px}
 @media (max-width:380px){.dacts button{font-size:14px;height:56px}.dcall{height:54px;font-size:21px}.dialer.docked{padding-bottom:290px}}
 @media (max-height:700px){.dacts button{height:52px}.dcall{height:50px}.dsub button{height:36px}.dialer.docked{padding-bottom:270px}}
 /* Desktop: the dock becomes a fixed panel on the right; info on the left. Keys 1 to 5, C, S, T, N. */
@@ -500,7 +499,7 @@ function drawList(){
   if (S.dialer && !S.q.trim()) {
     const left = all.filter(r=>!r.today_outcome && !S.skipped.has(r.property_id));
     if (!left.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-confetti"></i>That's everyone for today.${S.skipped.size?`<br><button style="margin-top:10px" onclick="S.skipped.clear();drawList()">Go back to ${S.skipped.size} skipped</button>`:""}</div>`; return; }
-    $("#list").innerHTML = `<div class="dialer docked"><div class="dleftcol">${breakNudge()}${cardHTML(left[0],true)}</div>${dockHTML(left[0], left.length)}</div>`;
+    $("#list").innerHTML = `<div class="dialer docked"><div class="dleftcol">${cardHTML(left[0],true)}</div>${dockHTML(left[0], left.length)}</div>`;
     markShown(left[0].property_id);
     return;
   }
@@ -577,13 +576,6 @@ function dockHTML(r, left){
 }
 function closePops(){ document.querySelectorAll(".dock .pop").forEach(p=>p.style.display="none"); }
 function togglePop(pid){ const el=$("#"+pid); const open=el.style.display==="none"; closePops(); if(open) el.style.display="grid"; }
-// After about 50 minutes of calling without a real break, suggest one. Shown once per stretch, never blocks anything.
-function breakNudge(){
-  const a=paceLog(); if(a.length<5) return ""; const now=Date.now(); if(now-a[a.length-1]>600e3) return "";
-  let i=a.length-1; while(i>0 && a[i]-a[i-1]<=600e3) i--; const start=a[i];
-  if(now-start<50*60e3 || S.breakSeen===start) return "";
-  return `<div class="banner info brk"><i class="ti ti-coffee"></i><div><b>${Math.round((now-start)/60e3)} minutes straight.</b> A 5 minute break now keeps your voice and focus sharp for the next hour.</div><button class="ghost" onclick="S.breakSeen=${start};this.parentElement.remove()">OK</button></div>`;
-}
 function cardHTML(r, docked){
   const id=r.property_id, probate=(r.signals||[]).includes("probate");
   if (docked) return infoHTML(r);
