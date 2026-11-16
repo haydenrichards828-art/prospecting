@@ -304,6 +304,14 @@ nav .nic,nav .ns{display:none}nav button#nav_settings .nic{display:inline-block}
 @media (max-width:899px){.dock{margin:0 -20px!important;padding-left:20px!important;padding-right:20px!important}}
 @media (max-width:600px){.bar{padding:8px 12px!important;gap:8px!important}nav{gap:3px!important}}
 @media (max-width:360px){.top .togo{display:none}.wrap{padding-left:16px;padding-right:16px}.dock{margin:0 -16px!important;padding-left:16px!important;padding-right:16px!important}.bar{padding:8px 10px!important;gap:6px!important}}
+/* Phone: one page. Info first, buttons right under it, nothing layered */
+@media (max-width:899px){
+ .dialer.docked{display:block!important;height:auto!important;min-height:0!important}
+ .dleftcol{display:block!important;overflow:visible!important;padding:0!important}
+ .dleftcol>.card{margin-top:0!important}
+ .dock{position:static!important;margin:12px 0 0!important;padding:0 0 calc(16px + env(safe-area-inset-bottom))!important;border-top:none!important;box-shadow:none!important;background:transparent!important}
+ #list .dinfo .name{font-size:26px;line-height:1.15;overflow-wrap:anywhere}
+}
 </style>
 </head>
 <body>
@@ -658,7 +666,7 @@ function dockHTML(r, left){
   </div>`;
 }
 // Fits the one at a time screen exactly into what's visible below the header, so nothing hides behind anything
-function sizeDialer(){ const d=document.querySelector(".dialer.docked"); if(!d) return; if(innerWidth>=900){ d.style.removeProperty("--dh"); return; }
+function sizeDialer(){ const d=document.querySelector(".dialer.docked"); if(!d) return; const cid=d.querySelector("[id^=cb]")?.id; if(innerWidth<900&&cid&&cid!==S._lastCard){ S._lastCard=cid; scrollTo(0,0); } if(innerWidth>=900){ d.style.removeProperty("--dh"); return; }
   window.scrollTo(0,0); const top=d.getBoundingClientRect().top; const vh=(window.visualViewport&&visualViewport.height)||innerHeight;
   d.style.setProperty("--dh", Math.max(320, Math.floor(vh-top))+"px"); }
 window.addEventListener("resize", sizeDialer); try{ document.fonts&&document.fonts.ready.then(sizeDialer); }catch{} if(window.visualViewport) visualViewport.addEventListener("resize", sizeDialer);
