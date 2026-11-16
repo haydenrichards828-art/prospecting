@@ -390,6 +390,25 @@ nav .nic,nav .ns{display:none}nav button#nav_settings .nic{display:inline-block}
  .dacts kbd{position:absolute;top:6px;right:6px;margin:0!important}
  .dcall{position:relative}.dcall kbd{position:absolute;right:12px;top:50%;transform:translateY(-50%)}
 }
+/* Desktop calls = the phone layout, scaled up: name and info first, buttons straight underneath, one centred column */
+@media (min-width:900px){
+ .wrap:has(.dialer.docked){max-width:820px!important}
+ .dialer.docked{display:block!important;height:auto!important;min-height:0!important;border:0!important;background:none!important;overflow:visible!important;border-radius:0!important}
+ .dleftcol{overflow:visible!important}
+ .dleftcol>.card,#list .dleftcol .dinfo{border:1px solid var(--line)!important;border-radius:20px!important;background:var(--card)!important;padding:32px 36px!important}
+ #list .dleftcol .dinfo .name{font-size:40px!important}
+ #list .dleftcol .dinfo .addr{font-size:19px!important}
+ .dwr{font-size:18px}
+ .dock{position:relative!important;height:auto!important;border:0!important;border-radius:0!important;background:none!important;padding:0!important;margin:18px 0 0!important;gap:12px!important}
+ .dock .dsub{margin-top:4px}
+ .dcall{height:78px!important;font-size:30px!important}
+ .dacts{grid-template-columns:repeat(6,1fr)!important;gap:12px!important}
+ .dacts button{height:72px!important;font-size:19px!important}
+ .dacts button:nth-child(1),.dacts button:nth-child(2){grid-column:span 3!important}
+ .dacts button:nth-child(3),.dacts button:nth-child(4),.dacts button:nth-child(5){grid-column:span 2!important}
+ .dsub button{height:48px!important;font-size:15px!important}
+ .dock .pop{left:0!important;right:0!important;top:auto!important;bottom:calc(100% + 10px)!important}
+}
 </style>
 </head>
 <body>
