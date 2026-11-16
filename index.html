@@ -47,7 +47,7 @@ nav button.on{background:var(--card);border-color:var(--line);color:var(--ink);f
 .rpb.big{width:auto;height:auto;border-radius:10px;font-size:14px;margin:0;flex:none;padding:8px 14px}
 .laddr{display:flex;align-items:center;gap:10px;margin:6px 0 10px;font-size:15px}.laddr span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lcta{display:flex;gap:8px;margin-bottom:12px}.lcta a{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border-radius:12px;font-weight:600;font-size:16px;text-decoration:none}
-.lcta .call{flex:1;background:var(--accent);color:var(--card)}.lcta .txt{width:110px;background:var(--accent-bg);color:var(--accent)}.lcta .ti{font-size:20px}
+.lcta .call{flex:1;min-width:0;white-space:nowrap;background:var(--accent);color:var(--card)}.lcta .txt{width:110px;background:var(--accent-bg);color:var(--accent)}.lcta .ti{font-size:20px}
 .lcard{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}.lcard .lk2{font-size:12px;color:var(--muted);margin:10px 0 6px}
 .fu4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.fu4 button{min-height:40px;padding:0 4px}
 details.lmore{margin:4px 0 6px}details.lmore summary{font-size:13px;color:var(--muted);cursor:pointer;padding:6px 0;list-style:none}details.lmore summary::-webkit-details-marker{display:none}details.lmore[open] summary{margin-bottom:6px}
@@ -137,7 +137,7 @@ h2{font-size:18px;margin:22px 0 8px;letter-spacing:-.01em}
 .target .bar2{height:8px;border-radius:999px;background:var(--bg);overflow:hidden;margin-top:8px}.target .bar2 div{height:100%;background:var(--accent)}
 #list .card{padding:20px}#list .name{font-size:20px}#list .phone{font-size:22px}#list .acts button{min-height:56px;font-size:14px}
 details.hist{margin-top:8px;font-size:13px}details.hist summary{cursor:pointer;color:var(--muted)}details.hist p{margin:4px 0;color:var(--muted)}
-.heat{display:grid;grid-template-columns:34px repeat(13,1fr);gap:2px;font-size:11px}.heat div{text-align:center;padding:4px 0;border-radius:4px}
+.heat{display:grid;grid-template-columns:30px repeat(13,minmax(0,1fr));gap:2px;font-size:11px}.heat div{text-align:center;padding:4px 0;border-radius:4px}
 .stage{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.stage button{font-size:13px;min-height:36px}
 @media print{header,.noprint,#toast{display:none!important}.overlay{position:static;background:none;display:block}.sheet{max-height:none;box-shadow:none}body{background:#fff}}
 .top{display:flex;align-items:center;gap:8px;margin:14px 0 10px;flex-wrap:wrap}.top .prog{flex:1 1 100%;margin-bottom:4px}.top .seg{margin-right:auto}.top .prog b{font-size:15px}.top .prog .bar2{height:6px;border-radius:999px;background:var(--line);overflow:hidden;margin-top:6px}.top .prog .bar2 div{height:100%;background:var(--accent)}
@@ -191,7 +191,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 .whead{display:flex;align-items:flex-start;gap:8px}.wlabel{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
 .wbudget{font-size:22px;font-weight:700;line-height:1.15;margin-top:1px}.wbudget.none{font-size:15px;font-weight:500;color:var(--muted)}
 .wedit{margin-left:auto;min-height:34px;padding:4px 10px;font-size:13px;gap:4px;border-radius:999px;background:var(--card);flex:none}
-.wtiles{display:flex;gap:6px;margin-top:6px}.wt{flex:1 1 0;justify-content:center;white-space:nowrap;display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:5px 9px;font-size:13px;color:var(--muted)}.wt .ti{font-size:18px;color:var(--accent)}.wt b{font-size:16px;color:var(--ink)}
+.wtiles{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.wt{flex:1 1 auto;min-width:0;justify-content:center;white-space:nowrap;display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:5px 9px;font-size:13px;color:var(--muted)}.wt .ti{font-size:18px;color:var(--accent)}.wt b{font-size:16px;color:var(--ink)}
 .wpills{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:7px;font-size:13px}.wpills>.ti{font-size:16px;color:var(--muted);margin-right:2px}
 .wpills span{border-radius:999px;padding:3px 9px;background:var(--card);border:1px solid var(--line);font-weight:500}
 .wpills.loc span{background:var(--accent);border-color:var(--accent);color:var(--card)}.wpills.loc span.typ{background:var(--card);border-color:var(--line);color:var(--ink);margin-right:4px}.wpills.loc span.typ .ti{font-size:14px;margin-right:3px;vertical-align:-2px}.wpills.loc span.any{background:var(--card);color:var(--muted);border-style:dashed}
@@ -295,6 +295,15 @@ nav .nic,nav .ns{display:none}nav button#nav_settings .nic{display:inline-block}
  .hsearch{height:46px;flex:0 0 46px!important;width:46px!important;max-width:46px!important;border-radius:12px;background-position:center!important;padding:0 0 0 46px!important}
  body.srch .hsearch{flex:1 1 auto!important;width:auto!important;max-width:none!important;padding-left:36px!important;background-position:11px center!important}
 }
+@media (max-width:380px){.fu4{grid-template-columns:repeat(2,1fr)}.fu4 button{white-space:nowrap;padding-left:4px!important;padding-right:4px!important;font-size:14px}.lcta .txt{width:auto;padding:0 14px}.lcta .call{font-size:15px;gap:6px}}
+@media (max-width:380px){.heat{font-size:10px;gap:1px;letter-spacing:-.3px}.heat div{padding:4px 0}}
+/* Breathing room at the edges */
+.wrap{padding-left:20px;padding-right:20px}
+.card{margin-bottom:12px}
+.top{margin:14px 0 12px}
+@media (max-width:899px){.dock{margin:0 -20px!important;padding-left:20px!important;padding-right:20px!important}}
+@media (max-width:600px){.bar{padding:8px 12px!important;gap:8px!important}nav{gap:3px!important}}
+@media (max-width:360px){.top .togo{display:none}.wrap{padding-left:16px;padding-right:16px}.dock{margin:0 -16px!important;padding-left:16px!important;padding-right:16px!important}.bar{padding:8px 10px!important;gap:6px!important}}
 </style>
 </head>
 <body>
@@ -522,7 +531,7 @@ function paintCalls(){
    ${quiet}
    <div class="top"><div class="prog" id="prog"></div>
     <div class="seg"><button class="${S.type==="seller"?"on":""}" onclick="S.type='seller';S.page=0;render()">Sellers</button><button class="${S.type==="landlord"?"on":""}" onclick="S.type='landlord';S.page=0;render()">Landlords</button></div>
-    ${ready?`<button class="iconbtn" onclick="go('messages')" title="${ready} text${ready>1?"s":""} ready to send" aria-label="${ready} text${ready>1?"s":""} ready to send" style="position:relative;color:var(--accent)"><i class="ti ti-send"></i><span class="badge" style="position:absolute;top:-6px;right:-6px">${ready}</span></button>`:""}
+    ${ready?`<button class="iconbtn" onclick="go('messages')" title="${ready} text${ready>1?"s":""} ready to send" aria-label="${ready} text${ready>1?"s":""} ready to send" style="position:relative;color:var(--accent)"><i class="ti ti-send"></i><span class="badge" style="position:absolute;top:-5px;right:-3px">${ready}</span></button>`:""}
     ${S.dialer?"":`<button class="iconbtn" onclick="toggleDialer()" aria-label="One at a time" title="One at a time"><i class="ti ti-cards"></i></button>`}</div>
    <div id="list"></div>`;
   drawProg(); drawList(); keepAwake();
@@ -531,7 +540,7 @@ function drawProg(){
   const el=$("#prog"), ov=S.ov; if(!el||!ov) return;
   const tg=ov.settings?.daily_target||100, pct=Math.min(100, ov.today_calls/tg*100);
   const pace=livePace();
-  el.innerHTML = `<b>${ov.today_calls}</b><span class="muted">/${tg}</span>${S.dialer&&S.leftCount?` <span class="muted">· ${S.leftCount} to go</span>`:""}${pace?` <span class="muted" title="Calls per hour over your current stretch">· ${pace}/hr</span>`:""}${ov.today_appraisals?` <span style="color:var(--good);font-weight:600">· ${ov.today_appraisals} appr</span>`:""}<div class="bar2"><div style="width:${pct}%;${pct>=100?"background:var(--good)":""}"></div></div>`;
+  el.innerHTML = `<b>${ov.today_calls}</b><span class="muted">/${tg}</span>${S.dialer&&S.leftCount?` <span class="muted togo">· ${S.leftCount} to go</span>`:""}${pace?` <span class="muted" title="Calls per hour over your current stretch">· ${pace}/hr</span>`:""}${ov.today_appraisals?` <span style="color:var(--good);font-weight:600">· ${ov.today_appraisals} appr</span>`:""}<div class="bar2"><div style="width:${pct}%;${pct>=100?"background:var(--good)":""}"></div></div>`;
 }
 // Keep the screen on while working the list (where the phone allows it)
 let wake=null;
@@ -1028,7 +1037,7 @@ function drawDrops(){
     <div class="chips"><span class="muted">Top</span>${[[0,"All"],[1000,"1000"],[500,"500"],[250,"250"],[100,"100"],[50,"50"]].map(([n,l])=>`<button class="${S.dtop===n?"on":""}" onclick="setTop(${n})">${l}</button>`).join("")}</div>
     <p class="muted" style="margin:0 0 8px;font-size:13px">${S.dtop?`Showing the top ${Math.min(S.dtop,left.length)} of ${left.length} houses to drop`:`${left.length} houses to drop · ${all.length-left.length} dropped in the last ${DROP_DAYS} days`}${onMap<all.length?` · ${all.length-onMap} not on the map yet`:""}</p>`;
   if (S.dview==="list") { $("#main").innerHTML=head+dropListHTML(); return; }
-  document.body.classList.add("dwide");
+  document.body.classList.toggle("dwide",S.dview!=="list");
   $("#main").innerHTML = head + `<div class="dsplit"><div id="dmap" class="dmap"><div class="empty" style="padding:40px 0"><i class="ti ti-loader-2"></i>Loading map</div></div>
     <div class="dside"><div class="top" style="margin-top:4px"><b style="font-size:15px;margin-right:auto">Best places to drop</b>${seg("dgroup",[["street","Streets"],["suburb","Suburbs"]],"drawBest()")}</div><div id="best"></div></div></div>`;
   drawBest();
