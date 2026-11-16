@@ -282,6 +282,19 @@ nav button{font-size:14.5px}nav button.on{background:var(--raise);border-color:v
 .lsec h3,.sech{font-size:15px}
 .chips button.on,.seg button.on{font-weight:600}
 .banner{border-radius:var(--rb)}
+
+/* Tabs: words on desktop, icon over a short word on phones, so all five always fit */
+nav .nic,nav .ns{display:none}nav button#nav_settings .nic{display:inline-block}
+@media (max-width:600px){
+ .bar{gap:6px;padding:6px 8px}.bar .brand{display:none}
+ nav{flex:1;margin-left:0;gap:2px;overflow:visible;justify-content:space-between}
+ nav button{flex:1 1 0;min-width:0;flex-direction:column;gap:2px;padding:4px 2px!important;min-height:46px;border-radius:12px;font-size:11px!important;line-height:1.1}
+ nav .nic{display:inline-block!important;font-size:19px}nav .nl{display:none}nav .ns{display:block;white-space:nowrap}
+ nav button.on{color:var(--accent);background:var(--accent-bg);border-color:transparent}
+ nav button{position:relative}nav .ndot{position:absolute;top:5px;left:calc(50% + 8px);margin:0}
+ .hsearch{height:46px;flex:0 0 46px!important;width:46px!important;max-width:46px!important;border-radius:12px;background-position:center!important;padding:0 0 0 46px!important}
+ body.srch .hsearch{flex:1 1 auto!important;width:auto!important;max-width:none!important;padding-left:36px!important;background-position:11px center!important}
+}
 </style>
 </head>
 <body>
@@ -408,7 +421,7 @@ function toast(msg, undo) {
 async function render() {
   if (!S.token) return renderLogin();
   $("#app").innerHTML = `
-  <header><div class="bar"><div class="brand"><i class="ti ti-phone-call"></i><span class="bname">Prospect</span></div><input id="hq" class="hsearch" type="search" placeholder="" value="${esc(S.sq||"")}" oninput="hSearch(this.value)" autocomplete="off" onfocus="document.body.classList.add('srch')" onblur="if(!this.value.trim())document.body.classList.remove('srch')" aria-label="Search name, street or suburb"><nav>${[["calls","Calls"],["leads","Leads"],["drops","Card drops"],["insights","Stats"],["settings",'<i class="ti ti-settings"></i>']].map(([k,l])=>`<button id="nav_${k}" class="${S.tab===k||(k==="settings"&&S.tab==="messages")?"on":""}" onclick="go('${k}')"${k==="settings"?' aria-label="Settings" title="Settings"':""}>${l}</button>`).join("")}</nav></div></header>
+  <header><div class="bar"><div class="brand"><i class="ti ti-phone-call"></i><span class="bname">Prospect</span></div><input id="hq" class="hsearch" type="search" placeholder="" value="${esc(S.sq||"")}" oninput="hSearch(this.value)" autocomplete="off" onfocus="document.body.classList.add('srch')" onblur="if(!this.value.trim())document.body.classList.remove('srch')" aria-label="Search name, street or suburb"><nav>${[["calls","Calls","Calls","ti-phone"],["leads","Leads","Leads","ti-users"],["drops","Card drops","Drops","ti-mailbox"],["insights","Stats","Stats","ti-chart-arrows"],["settings","","Settings","ti-settings"]].map(([k,l,sh,ic])=>`<button id="nav_${k}" class="${S.tab===k||(k==="settings"&&S.tab==="messages")?"on":""}" onclick="go('${k}')" aria-label="${sh}" title="${l||sh}"><i class="ti ${ic} nic"></i><span class="nl">${l}</span><span class="ns">${sh}</span></button>`).join("")}</nav></div></header>
   <div class="wrap" id="main"><div class="empty"><i class="ti ti-loader-2"></i>Loading</div></div>`;
   updateLeadDot(); if (!S.leadsAt || Date.now()-S.leadsAt>10*60e3) { S.leadsAt=Date.now(); loadLeads().catch(()=>{ S.leadsAt=0; }); }
   try { await ({calls:viewCalls,leads:viewLeads,pipeline:viewPipeline,drops:viewDrops,messages:viewMessages,insights:viewInsights,settings:viewSettings})[S.tab](); }
