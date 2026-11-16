@@ -313,6 +313,11 @@ nav .nic,nav .ns{display:none}nav button#nav_settings .nic{display:inline-block}
  #list .dinfo .name{font-size:26px;line-height:1.15;overflow-wrap:anywhere}
 }
 </style>
+<script>
+// Desktop shows the phone version: the same app at phone width, centred, full height
+window.__deskShell = window.self===window.top && innerWidth>=900;
+if (window.__deskShell) document.write('<style>html,body{margin:0;height:100%;overflow:hidden;background:#0f1517}@media (prefers-color-scheme:light){html,body{background:#e9eef0}}body>*:not(#phoneframe){display:none!important}#phoneframe{display:block;width:480px;height:100vh;margin:0 auto;border:0;border-left:1px solid rgba(127,127,127,.25);border-right:1px solid rgba(127,127,127,.25)}</style>');
+</script>
 </head>
 <body>
 <div id="app"></div>
@@ -1732,8 +1737,9 @@ async function importCSV(){
   catch(e){ $("#ir").innerHTML=base+"<br>"+esc(e.message); }
 }
 
-if (S.token) loadCallbacks().then(render); else render();
-if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
+if (window.__deskShell) { const f=document.createElement("iframe"); f.id="phoneframe"; f.title="Prospect"; f.src=location.pathname+location.search+location.hash; f.onload=()=>{ try{ f.contentWindow.focus(); }catch{} }; document.body.appendChild(f); }
+else if (S.token) loadCallbacks().then(render); else render();
+if (!window.__deskShell && !DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
 </html>
