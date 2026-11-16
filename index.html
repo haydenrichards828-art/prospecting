@@ -47,7 +47,7 @@ nav button.on{background:var(--card);border-color:var(--line);color:var(--ink);f
 .rpb.big{width:auto;height:auto;border-radius:10px;font-size:14px;margin:0;flex:none;padding:8px 14px}
 .laddr{display:flex;align-items:center;gap:10px;margin:6px 0 10px;font-size:15px}.laddr span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lcta{display:flex;gap:8px;margin-bottom:12px}.lcta a{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border-radius:12px;font-weight:600;font-size:16px;text-decoration:none}
-.lcta .call{flex:1;background:var(--accent);color:#0b1220}.lcta .txt{width:110px;background:var(--accent-bg);color:var(--accent)}.lcta .ti{font-size:20px}
+.lcta .call{flex:1;background:var(--accent);color:var(--card)}.lcta .txt{width:110px;background:var(--accent-bg);color:var(--accent)}.lcta .ti{font-size:20px}
 .lcard{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}.lcard .lk2{font-size:12px;color:var(--muted);margin:10px 0 6px}
 .fu4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.fu4 button{min-height:40px;padding:0 4px}
 details.lmore{margin:4px 0 6px}details.lmore summary{font-size:13px;color:var(--muted);cursor:pointer;padding:6px 0;list-style:none}details.lmore summary::-webkit-details-marker{display:none}details.lmore[open] summary{margin-bottom:6px}
@@ -70,7 +70,7 @@ kbd{display:none}
 .row{display:flex;gap:12px;align-items:flex-start}
 .rank{font-size:12px;color:var(--faint);min-width:26px;padding-top:2px}
 .name{font-weight:600}.addr{color:var(--muted);font-size:14px}
-.lstat{margin-top:8px}.listedbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:12px;border:1px solid var(--good,#1a7f4b);color:var(--good,#1a7f4b);background:transparent;font-weight:600;font-size:15px}.listedbtn.on{background:var(--good,#1a7f4b);color:#fff;opacity:1}
+.lstat{margin-top:8px}.listedbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:12px;border:1px solid var(--good,#1a7f4b);color:var(--good,#1a7f4b);background:transparent;font-weight:600;font-size:15px}.listedbtn.on{background:var(--good,#1a7f4b);color:var(--card);opacity:1}
 .hz{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}.hzt{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px}.hzt.fire{background:#fff1e6;color:#b4500f}.hzt.flood{background:#e6f2ff;color:#1d5fa8}
 
 /* One at a time: the dock. Same buttons in the same place on every card, so hands learn it. */
@@ -194,7 +194,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 .wtiles{display:flex;gap:6px;margin-top:6px}.wt{flex:1 1 0;justify-content:center;white-space:nowrap;display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:5px 9px;font-size:13px;color:var(--muted)}.wt .ti{font-size:18px;color:var(--accent)}.wt b{font-size:16px;color:var(--ink)}
 .wpills{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:7px;font-size:13px}.wpills>.ti{font-size:16px;color:var(--muted);margin-right:2px}
 .wpills span{border-radius:999px;padding:3px 9px;background:var(--card);border:1px solid var(--line);font-weight:500}
-.wpills.loc span{background:var(--accent);border-color:var(--accent);color:#fff}.wpills.loc span.typ{background:var(--card);border-color:var(--line);color:var(--ink);margin-right:4px}.wpills.loc span.typ .ti{font-size:14px;margin-right:3px;vertical-align:-2px}.wpills.loc span.any{background:var(--card);color:var(--muted);border-style:dashed}
+.wpills.loc span{background:var(--accent);border-color:var(--accent);color:var(--card)}.wpills.loc span.typ{background:var(--card);border-color:var(--line);color:var(--ink);margin-right:4px}.wpills.loc span.typ .ti{font-size:14px;margin-right:3px;vertical-align:-2px}.wpills.loc span.any{background:var(--card);color:var(--muted);border-style:dashed}
 .wpills.must span{background:var(--good-bg);border-color:transparent;color:var(--good)}.wpills.must span .ti{font-size:13px;margin-right:2px}
 .wempty{width:100%;margin-top:10px;min-height:48px;border:1.5px dashed var(--accent);background:var(--accent-bg);color:var(--accent);border-radius:14px;font-size:15px;font-weight:600;gap:6px}
 .weditor{margin-top:10px;border:1px solid var(--accent);border-radius:14px;padding:8px 10px 10px}.weditor .wdone{width:100%;margin-top:8px;min-height:40px}
@@ -205,7 +205,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 .stag{font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-bg);border-radius:999px;padding:1px 7px;vertical-align:middle}
 .btnlike{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border:1px solid var(--line);border-radius:10px;color:inherit;text-decoration:none;background:var(--card)}
 .lsave{position:sticky;bottom:-28px;margin:16px -18px -28px;padding:12px 18px calc(16px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line)}
-.lsave button{width:100%;min-height:54px;font-size:17px;transition:background .2s}.lsave button.saved{background:var(--good);border-color:var(--good);color:#fff}.lsave button.err{background:var(--bad);border-color:var(--bad);color:#fff}
+.lsave button{width:100%;min-height:54px;font-size:17px;transition:background .2s}.lsave button.saved{background:var(--good);border-color:var(--good);color:var(--card)}.lsave button.err{background:var(--bad);border-color:var(--bad);color:#fff}
 .card.lead{padding:12px 14px;margin-bottom:8px;cursor:pointer}.lname{font-weight:600;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lmeta{font-size:13px;margin-top:4px;color:var(--muted)}.lmeta .ti{font-size:14px;margin-right:2px}
 .lcall{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:12px;background:var(--accent-bg);color:var(--accent);flex:none}.lcall .ti{font-size:22px}
@@ -214,14 +214,66 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 .acts button.leadb{background:var(--accent-bg);color:var(--accent);border-color:transparent}
 .dsub{margin:10px 0}.dsub summary{padding:10px 0;cursor:pointer;list-style:none}.dsub summary::-webkit-details-marker{display:none}.dsub[open] summary{margin-bottom:6px}
 .srcchip{min-height:28px;padding:2px 10px;margin-top:6px;border-radius:999px;font-size:12px;color:var(--muted);gap:4px}.srcchip .ti{font-size:13px}
-.chipgrid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.chipgrid button{min-height:38px;padding:6px 12px;border-radius:999px;font-size:14px}.chipgrid button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chipgrid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.chipgrid button{min-height:38px;padding:6px 12px;border-radius:999px;font-size:14px}.chipgrid button.on{background:var(--accent);color:var(--card);border-color:var(--accent)}
 .scard table{width:100%}.scard td,.scard th{text-align:right;padding:6px 4px;font-variant-numeric:tabular-nums}.scard td:first-child,.scard th:first-child{text-align:left}
 .dleg{background:var(--card);color:var(--ink);border-radius:10px;padding:7px 8px;font:12px system-ui,sans-serif;display:flex;flex-wrap:wrap;max-width:280px;gap:5px;box-shadow:0 1px 4px rgba(0,0,0,.25)}.dleg button{display:flex;align-items:center;gap:5px;min-height:32px;padding:4px 9px;border-radius:999px;font-size:13px;background:var(--bg);border:1px solid var(--line);color:var(--ink)}.dleg button.off{opacity:.4;text-decoration:line-through}.dleg button.all{color:var(--accent);font-weight:600}.dleg i{width:16px;height:5px;border-radius:3px;display:inline-block}
 .chips{display:flex;align-items:center;gap:4px;margin:0 0 8px;overflow-x:auto;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chips .muted{font-size:13px;margin-right:2px}
-.chips button{min-height:32px;padding:4px 11px;border-radius:999px;font-size:13px;flex:none}.chips button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chips button{min-height:32px;padding:4px 11px;border-radius:999px;font-size:13px;flex:none}.chips button.on{background:var(--accent);color:var(--card);border-color:var(--accent)}
 @media print{.dmap,#best{display:none}}
 .pager{display:flex;justify-content:center;gap:8px;margin:16px 0}
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* ===== Design system (Nov 2026 pass) =====
+   Calm coastal palette for long sessions. Teal = calling (the one bold colour). Green = good outcome.
+   Sandstone = needs attention. Red only for real problems. Radius: chips round, buttons 12, cards 16, sheets 20. */
+:root{--bg:#f2f5f4;--card:#ffffff;--raise:#f7f9f8;--ink:#12202a;--muted:#52636b;--faint:#93a2a8;--line:#dfe6e4;
+ --accent:#0e6a7d;--accent-bg:#e2f1f4;--good:#1a7a48;--good-bg:#e3f3ea;--warn:#8f5a00;--warn-bg:#fbf1df;--bad:#b3261e;--bad-bg:#fbe9e7;--r:16px;--rb:12px}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1517;--card:#161e21;--raise:#1d272b;--ink:#e7eef0;--muted:#98a9ae;--faint:#66767b;--line:#263236;
+ --accent:#69c3d4;--accent-bg:#12303a;--good:#72d29d;--good-bg:#13301f;--warn:#e6b96b;--warn-bg:#33270f;--bad:#ef8b80;--bad-bg:#351a19}}
+html,body{font-feature-settings:"tnum" 1,"cv11" 1;font-variant-numeric:tabular-nums}
+button{border-radius:var(--rb)}input,select,textarea{border-radius:var(--rb)}
+.card{border-radius:var(--r)}.sheet{border-radius:20px 20px 0 0}@media (min-width:640px){.sheet{border-radius:20px}}
+h2{font-size:18px;font-weight:600;letter-spacing:-.01em;margin:22px 0 10px}h3{font-size:17px;font-weight:600;letter-spacing:-.01em}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:focus:not(:focus-visible){outline:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}button:active{transform:none}}
+/* Red means a problem, nothing else */
+.newtag,.badge{background:var(--accent);color:var(--bg)}
+.rpb,.rpb.exact{background:transparent;color:#e0566a;border:1px solid color-mix(in srgb,#e0566a 55%,transparent);box-shadow:none;font-weight:700;min-height:26px;padding:2px 9px;font-size:12.5px}
+.rpb:hover{background:color-mix(in srgb,#e0566a 12%,transparent);filter:none}
+.rpb.big{padding:7px 12px;font-size:13.5px}
+/* Header: on phones the search tucks into an icon so the tabs get room */
+header{background:color-mix(in srgb,var(--bg) 92%,transparent)}
+nav button{font-size:14.5px}nav button.on{background:var(--raise);border-color:var(--line)}
+@media (max-width:420px){nav button{padding:6px 6px;font-size:14px}}
+@media (max-width:520px){.hsearch{flex:0 0 40px;width:40px;max-width:40px;padding-right:0;color:transparent;cursor:pointer;background-position:11px center}
+ body.srch .hsearch{flex:1 1 auto;width:auto;max-width:none;color:var(--ink)}nav button{padding:6px 8px}}
+/* Calls: details sit right above the dock so eyes barely travel between reading and tapping */
+.dialer.docked{display:flex;flex-direction:column;justify-content:flex-end;min-height:calc(100dvh - 132px)}
+.dock{box-shadow:0 -10px 30px rgba(0,0,0,.18)}
+#list .dinfo{margin-bottom:0;padding:18px 18px 16px}
+#list .dinfo .name{font-size:26px;line-height:1.15;letter-spacing:-.015em;font-weight:650}
+#list .dinfo .why{white-space:normal;overflow:visible}
+.dinfo .addr{font-size:15.5px;margin-top:4px;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.dinfo .why.big{font-size:16px;line-height:1.45;margin-top:10px;color:var(--ink)}
+.dinfo .tag{font-size:12.5px;padding:3px 10px;margin-bottom:10px}
+.dinfo details.hist{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.dcall{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 35%,transparent)}
+.dcall:active,.dacts button:active,.dsub button:active{transform:scale(.97)}
+.dacts button{border-color:var(--line);background:var(--raise)}
+.dacts .appr,.dacts .leadb{background:var(--good-bg)}.dacts .leadb{background:var(--accent-bg)}
+.dsub button{background:transparent;border-color:transparent}
+.prog b{font-size:17px}
+@media (min-width:900px){
+ .dialer.docked{display:grid;min-height:0}
+ #list .dinfo{padding:28px 30px}#list .dinfo .name{font-size:34px}#list .dinfo .addr{font-size:17px}.dinfo .why.big{font-size:18px}
+ .dacts button{height:68px;font-size:16px}.dcall{height:66px;font-size:25px}
+ .dock{box-shadow:none}
+}
+/* Lists and leads: quieter cards, clearer hierarchy */
+.lsec h3,.sech{font-size:15px}
+.chips button.on,.seg button.on{font-weight:600}
+.banner{border-radius:var(--rb)}
 </style>
 </head>
 <body>
@@ -450,7 +502,7 @@ function paintCalls(){
    <div class="top"><div class="prog" id="prog"></div>
     <div class="seg"><button class="${S.type==="seller"?"on":""}" onclick="S.type='seller';S.page=0;render()">Sellers</button><button class="${S.type==="landlord"?"on":""}" onclick="S.type='landlord';S.page=0;render()">Landlords</button></div>
     ${ready?`<button class="iconbtn" onclick="go('messages')" title="${ready} text${ready>1?"s":""} ready to send" aria-label="${ready} text${ready>1?"s":""} ready to send" style="position:relative;color:var(--accent)"><i class="ti ti-send"></i><span class="badge" style="position:absolute;top:-6px;right:-6px">${ready}</span></button>`:""}
-    <button class="iconbtn" onclick="toggleDialer()" aria-label="${S.dialer?"Show full list":"One at a time"}" title="${S.dialer?"Show full list":"One at a time"}"><i class="ti ${S.dialer?"ti-list":"ti-cards"}"></i></button></div>
+    ${S.dialer?"":`<button class="iconbtn" onclick="toggleDialer()" aria-label="One at a time" title="One at a time"><i class="ti ti-cards"></i></button>`}</div>
    <div id="list"></div>`;
   drawProg(); drawList(); keepAwake();
 }
@@ -540,7 +592,7 @@ function infoHTML(r){
    ${probate&&r.solicitor?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> The call button rings the <b>solicitor</b>, not the family: ${esc(r.solicitor)}.</div></div>`
      : probate?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> Don't call the family. Contact the solicitor${sol?" ("+esc(sol.slice(16,-1))+")":""} or write a letter.<br><button class="ghost" style="margin-top:8px" onclick="addSolicitor(${id})"><i class="ti ti-scale"></i>Add solicitor's number</button></div></div>`:""}
    ${notes[id]?`<div class="why"><i class="ti ti-notes"></i> ${esc(notes[id])}</div>`:""}
-   ${(r.history||[]).length?`<details class="hist"><summary>History (${r.history.length})</summary>${r.history.slice(0,8).map(h=>`<p>${fmt(h.at)} · ${LABEL[h.outcome]||h.outcome}${h.notes?` · ${esc(h.notes)}`:""}</p>`).join("")}</details>`:""}
+   ${(r.history||[]).length?`<details class="hist"${r.history.length<=3?" open":""}><summary>History (${r.history.length})</summary>${r.history.slice(0,8).map(h=>`<p>${fmt(h.at)} · ${LABEL[h.outcome]||h.outcome}${h.notes?` · ${esc(h.notes)}`:""}</p>`).join("")}</details>`:""}
   </div>`;
 }
 function dockHTML(r, left){
