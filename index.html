@@ -526,7 +526,7 @@ async function addNote(id){ const n = await uiAsk("Note for this call (saved wit
 async function addSolicitor(id){
   const firm=prompt("Solicitor or firm name (as you want it shown):"); if(firm===null) return;
   const phone=prompt("Solicitor's office phone number:"); if(!phone) return;
-  try{ await api("set_solicitor",{property_id:id,firm,phone}); toast("Solicitor saved"); await refreshCalls(); }catch(e){ toast(e.message); }
+  try{ await api("set_solicitor",{property_id:id,firm,phone}); toast("Solicitor saved"); await refreshCalls(); paintCalls(); }catch(e){ toast(e.message); }
 }
 function dialTo(phone){ const cur=queue().find(r=>r.phone===phone); if(cur){ markDial(cur.property_id); if(!S.tm.shown) S.tm.shown=S.tm.dial; } window.location.href = "tel:" + phone; }
 // Silent workflow tracking, used to find wasted time and make the app faster. Nothing shows on screen.
