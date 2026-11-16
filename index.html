@@ -72,6 +72,38 @@ kbd{display:none}
 .name{font-weight:600}.addr{color:var(--muted);font-size:14px}
 .lstat{margin-top:8px}.listedbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:12px;border:1px solid var(--good,#1a7f4b);color:var(--good,#1a7f4b);background:transparent;font-weight:600;font-size:15px}.listedbtn.on{background:var(--good,#1a7f4b);color:#fff;opacity:1}
 .hz{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}.hzt{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px}.hzt.fire{background:#fff1e6;color:#b4500f}.hzt.flood{background:#e6f2ff;color:#1d5fa8}
+
+/* One at a time: the dock. Same buttons in the same place on every card, so hands learn it. */
+.dialer.docked{padding-bottom:310px}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;max-width:760px;margin:0 auto;background:var(--bg);border-top:1px solid var(--line);padding:10px 12px calc(8px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
+.dcall{display:flex;align-items:center;justify-content:center;gap:10px;height:60px;border-radius:14px;background:var(--accent-bg);color:var(--accent);font-size:23px;font-weight:600;text-decoration:none;letter-spacing:.01em}
+.dcall.sol{background:var(--warn-bg);color:var(--warn)}
+.dcall.off{background:transparent;border:1px dashed var(--line);color:var(--faint);font-size:15px;font-weight:500}
+.dacts{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.dacts button{grid-column:span 2;height:62px;font-size:15px;font-weight:500;white-space:nowrap;padding:6px 4px;gap:6px}
+.dacts button.w3{grid-column:span 3;font-size:16px}
+.dacts .appr{background:var(--good-bg);color:var(--good);border-color:transparent}
+.dacts .leadb{background:var(--accent-bg);color:var(--accent);border-color:transparent}
+.dsub{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.dsub button{height:40px;font-size:13px;color:var(--muted);gap:4px;padding:4px}
+.dleft{font-size:12px;color:var(--faint);text-align:center;margin-top:-2px}
+.dock .pop{position:absolute;left:12px;right:12px;bottom:calc(100% + 8px);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:0 10px 40px rgba(0,0,0,.4);grid-template-columns:1fr 1fr;gap:8px;margin:0}
+.dock .pop button{min-height:54px;font-size:15px}.dock .pop .wide{grid-column:span 2}.dock .pop .dnc{color:var(--bad)}
+.poph{grid-column:span 2;font-size:13px;color:var(--muted);font-weight:600}
+.dinfo .why.big{font-size:15px;color:var(--ink);white-space:normal;margin-top:8px;line-height:1.4}
+.brk{align-items:center;margin-bottom:10px}.brk button{margin-left:auto;min-height:36px}
+@media (max-width:380px){.dacts button{font-size:14px;height:56px}.dcall{height:54px;font-size:21px}.dialer.docked{padding-bottom:290px}}
+@media (max-height:700px){.dacts button{height:52px}.dcall{height:50px}.dsub button{height:36px}.dialer.docked{padding-bottom:270px}}
+/* Desktop: the dock becomes a fixed panel on the right; info on the left. Keys 1 to 5, C, S, T, N. */
+@media (min-width:900px){
+ .wrap:has(.dialer.docked){max-width:1120px}
+ .dialer.docked{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:20px;align-items:start;padding-bottom:0}
+ .dock{position:sticky;top:76px;left:auto;right:auto;bottom:auto;max-width:none;margin:0;border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:14px}
+ .dock .pop{left:0;right:0;bottom:auto;top:calc(100% + 8px)}
+ .dinfo .name{font-size:28px}
+}
+.dock kbd{display:none}
+@media (pointer:fine) and (min-width:900px){.dock kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;margin-left:6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;font:600 11px/1 system-ui,sans-serif;color:var(--muted);background:var(--card)}.dock .appr kbd,.dock .leadb kbd,.dock .dcall kbd{background:transparent}}
 .score{margin-left:auto;text-align:right;font-size:12px;color:var(--muted)}
 .score b{display:block;font-size:18px;color:var(--ink);font-weight:600}
 .phone{display:inline-flex;align-items:center;gap:6px;margin:10px 0 6px;font-weight:500;color:var(--accent);text-decoration:none;font-size:16px}
@@ -449,11 +481,12 @@ document.addEventListener("keydown", e=>{
     if (i>=0 && i<bs.length) { bs[i].click(); e.preventDefault(); return; }
     if (e.key==="Escape") { picks.style.display="none"; e.preventDefault(); return; }
   }
+  if (e.key==="Escape") { closePops(); return; }
   if (k==="n") { addNote(id); e.preventDefault(); return; }
   if (k==="t") { openMessage(id); e.preventDefault(); return; }
   if (k==="r") { const a=$("#c"+id+" .rpb"); if (a) a.click(); e.preventDefault(); return; }
   if (k==="1") outcome(id,"no_answer"); else if (k==="2") outcome(id,"not_interested"); else if (k==="3") outcome(id,"call_back"); else if (k==="4") outcome(id,"appraisal"); else if (k==="5") outcome(id,"lead");
-  else if (k==="s") skipCard(id); else if (k==="c" && cur.phone) dialTo(cur.phone); else return;
+  else if (k==="s") skipCard(id); else if (k==="c" && canCall(cur)) dialTo(cur.phone); else return;
   e.preventDefault();
 });
 function queue(){
@@ -467,9 +500,7 @@ function drawList(){
   if (S.dialer && !S.q.trim()) {
     const left = all.filter(r=>!r.today_outcome && !S.skipped.has(r.property_id));
     if (!left.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-confetti"></i>That's everyone for today.${S.skipped.size?`<br><button style="margin-top:10px" onclick="S.skipped.clear();drawList()">Go back to ${S.skipped.size} skipped</button>`:""}</div>`; return; }
-    $("#list").innerHTML = `<div class="dialer">${cardHTML(left[0])}
-      <div class="skiprow"><span class="muted" style="font-size:13px">${left.length} to go</span><button onclick="skipCard(${left[0].property_id})"><i class="ti ti-player-skip-forward"></i>Skip<kbd>S</kbd></button></div>
-      </div>`;
+    $("#list").innerHTML = `<div class="dialer docked"><div class="dleftcol">${breakNudge()}${cardHTML(left[0],true)}</div>${dockHTML(left[0], left.length)}</div>`;
     markShown(left[0].property_id);
     return;
   }
@@ -495,8 +526,67 @@ function whyLine(r){
   if (r.no_answers && !r.today_outcome) bits.push(`${r.no_answers} missed call${r.no_answers>1?"s":""}`);
   return bits.slice(0,3).join(" · ");
 }
-function cardHTML(r){
+const fmtTel=p=>/^0[2378]/.test(p)?p.replace(/^(\d{2})(\d{4})(\d{4})$/,"$1 $2 $3"):p.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3");
+const canCall=r=>!!r.phone && (!(r.signals||[]).includes("probate") || !!r.solicitor);
+// One at a time: what you need to know about this person. Everything you tap lives in the dock, which never moves.
+function infoHTML(r){
   const id=r.property_id, probate=(r.signals||[]).includes("probate");
+  const sol=(r.reasons||[]).find(x=>x.startsWith("Probate notice ("));
+  return `<div class="card dinfo ${r.today_outcome?"done":""}" id="c${id}">
+   ${r.callback?`<span class="tag">Callback due ${fmt(r.callback_at)}</span>`:""}
+   <div class="name">${esc(r.owner_name||"Owner unknown")}</div>
+   <div class="addr">${esc(r.street_address)}, ${esc(r.suburb)}${r.bedrooms?` · ${r.bedrooms} bed`:""}${rpBtn(r.street_address,r.suburb,r.rp_link)}</div>
+   <div class="why big">${esc(r.callback&&r.notes?r.notes:whyLine(r))}</div>
+   ${r.fire_zone||r.flood_zone?`<div class="hz">${r.fire_zone?`<span class="hzt fire"><i class="ti ti-flame"></i>${r.fire_zone==="Vegetation Buffer"?"Bushfire prone (bush edge)":"Bushfire prone (in bushland)"}</span>`:""}${r.flood_zone?`<span class="hzt flood"><i class="ti ti-droplet"></i>Flood planning area</span>`:""}</div>`:""}
+   ${probate&&r.solicitor?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> The call button rings the <b>solicitor</b>, not the family: ${esc(r.solicitor)}.</div></div>`
+     : probate?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> Don't call the family. Contact the solicitor${sol?" ("+esc(sol.slice(16,-1))+")":""} or write a letter.<br><button class="ghost" style="margin-top:8px" onclick="addSolicitor(${id})"><i class="ti ti-scale"></i>Add solicitor's number</button></div></div>`:""}
+   ${notes[id]?`<div class="why"><i class="ti ti-notes"></i> ${esc(notes[id])}</div>`:""}
+   ${(r.history||[]).length?`<details class="hist"><summary>History (${r.history.length})</summary>${r.history.slice(0,8).map(h=>`<p>${fmt(h.at)} · ${LABEL[h.outcome]||h.outcome}${h.notes?` · ${esc(h.notes)}`:""}</p>`).join("")}</details>`:""}
+  </div>`;
+}
+function dockHTML(r, left){
+  const id=r.property_id, probate=(r.signals||[]).includes("probate");
+  const call = canCall(r)
+    ? `<a class="dcall${probate?" sol":""}" href="tel:${esc(r.phone)}" onclick="markDial(${id})"><i class="ti ${probate?"ti-scale":"ti-phone"}"></i>${probate?"Solicitor ":""}${esc(fmtTel(r.phone))}<kbd>C</kbd></a>`
+    : `<div class="dcall off"><i class="ti ti-phone-off"></i>${probate?"Estate: write a letter instead":"No phone number"}</div>`;
+  return `<div class="dock" id="dock">
+   <div class="picks pop" id="cb${id}" style="display:none"><div class="poph">Call back when?</div>
+    ${callbackPicks().map(([d,h,l],i)=>`<button onclick="quickCallback(${id},${d},${h})">${l}<kbd>${i+1}</kbd></button>`).join("")}<button onclick="pickCallback(${id})">Pick a time<kbd>4</kbd></button>
+    <button class="ghost wide" onclick="closePops()">Cancel<kbd>Esc</kbd></button></div>
+   <div class="pop mpop" id="mm${id}" style="display:none"><div class="poph">More</div>
+    <button onclick="closePops();outcome(${id},'listed')"><i class="ti ti-star"></i>Listed</button>
+    <button onclick="closePops();toggleDialer()"><i class="ti ti-list"></i>Full list</button>
+    <button class="dnc wide" onclick="closePops();outcome(${id},'do_not_call')"><i class="ti ti-ban"></i>Do not call</button>
+    <button class="ghost wide" onclick="closePops()">Cancel<kbd>Esc</kbd></button></div>
+   ${call}
+   <div class="dacts">
+    <button class="w3" onclick="outcome(${id},'no_answer')"><i class="ti ti-phone-off"></i>No answer<kbd>1</kbd></button>
+    <button class="w3" onclick="outcome(${id},'not_interested')"><i class="ti ti-x"></i>Not interested<kbd>2</kbd></button>
+    <button onclick="outcome(${id},'call_back')"><i class="ti ti-calendar-time"></i>Call back<kbd>3</kbd></button>
+    <button class="leadb" onclick="outcome(${id},'lead')"><i class="ti ti-user-plus"></i>Lead<kbd>5</kbd></button>
+    <button class="appr" onclick="outcome(${id},'appraisal')"><i class="ti ti-home-check"></i>Appraisal<kbd>4</kbd></button>
+   </div>
+   <div class="dsub">
+    <button onclick="skipCard(${id})"><i class="ti ti-player-skip-forward"></i>Skip<kbd>S</kbd></button>
+    <button onclick="openMessage(${id})"><i class="ti ti-message"></i>Text<kbd>T</kbd></button>
+    <button onclick="addNote(${id})"><i class="ti ti-notes"></i>Note${notes[id]?" ✓":""}<kbd>N</kbd></button>
+    <button onclick="togglePop('mm${id}')"><i class="ti ti-dots"></i>More</button>
+   </div>
+   <div class="dleft">${left} to go</div>
+  </div>`;
+}
+function closePops(){ document.querySelectorAll(".dock .pop").forEach(p=>p.style.display="none"); }
+function togglePop(pid){ const el=$("#"+pid); const open=el.style.display==="none"; closePops(); if(open) el.style.display="grid"; }
+// After about 50 minutes of calling without a real break, suggest one. Shown once per stretch, never blocks anything.
+function breakNudge(){
+  const a=paceLog(); if(a.length<5) return ""; const now=Date.now(); if(now-a[a.length-1]>600e3) return "";
+  let i=a.length-1; while(i>0 && a[i]-a[i-1]<=600e3) i--; const start=a[i];
+  if(now-start<50*60e3 || S.breakSeen===start) return "";
+  return `<div class="banner info brk"><i class="ti ti-coffee"></i><div><b>${Math.round((now-start)/60e3)} minutes straight.</b> A 5 minute break now keeps your voice and focus sharp for the next hour.</div><button class="ghost" onclick="S.breakSeen=${start};this.parentElement.remove()">OK</button></div>`;
+}
+function cardHTML(r, docked){
+  const id=r.property_id, probate=(r.signals||[]).includes("probate");
+  if (docked) return infoHTML(r);
   const sol=(r.reasons||[]).find(x=>x.startsWith("Probate notice ("));
   return `<div class="card ${r.today_outcome?"done":""}" id="c${id}">
    ${r.callback?`<span class="tag">Callback due ${fmt(r.callback_at)}</span>`:""}
@@ -658,6 +748,7 @@ function callbackPicks(){
   return [[a.k,10,lab(a,10)],[b.k,eve,lab(b,eve)],[c.k,10,c.k===7?"Next week":lab(c,10)]];
 }
 function quickCallback(id, days, hour){
+  if (S.dialer && S.autodial && S.tab==="calls") { const nx=nextDialable(id); if (S.tm&&S.tm.pid===id) S.tmDone=S.tm; if (nx) dialTo(nx.phone); }
   const p=Object.fromEntries(new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date(Date.now()+days*864e5)).map(x=>[x.type,x.value]));
   return record(id,"call_back",sydToISO(`${p.year}-${p.month}-${p.day}T${String(hour).padStart(2,"0")}:00`));
 }
