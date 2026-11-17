@@ -44,6 +44,7 @@ nav button.on{background:var(--card);border-color:var(--line);color:var(--ink);f
 
 .ndot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--bad);margin-left:5px;vertical-align:2px;flex:none}.newtag{font-size:11px;font-weight:700;color:#fff;background:var(--bad);border-radius:999px;padding:1px 7px;margin-right:5px;vertical-align:1px}
 .rpb{display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;letter-spacing:.04em;color:#fff;background:#c8102e;border:1px solid #c8102e;border-radius:8px;padding:3px 10px;margin-left:8px;text-decoration:none;vertical-align:1px;line-height:20px;min-height:28px;box-shadow:0 1px 0 rgba(0,0,0,.15)}.rpb:hover{filter:brightness(1.1)}.rpb.exact{background:#c8102e;color:#fff;border-color:#c8102e}
+.lsb{display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink,#222);background:transparent;border:1px solid currentColor;border-radius:8px;padding:3px 10px;margin-left:6px;text-decoration:none;vertical-align:1px;line-height:20px;min-height:28px;opacity:.8}.lsb:hover{opacity:1}
 .rpb.big{width:auto;height:auto;border-radius:10px;font-size:14px;margin:0;flex:none;padding:8px 14px}
 .laddr{display:flex;align-items:center;gap:10px;margin:6px 0 10px;font-size:15px}.laddr span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lcta{display:flex;gap:8px;margin-bottom:12px}.lcta a{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border-radius:12px;font-weight:600;font-size:16px;text-decoration:none}
@@ -229,7 +230,7 @@ function demoApi(action, body){
     funnel:[...Array(8)].map((_,i)=>({week:new Date(Date.now()-i*7*864e5).toISOString().slice(0,10),calls:i===0?120+D.calls:[0,430,465,410,390,452,400,380][i],answered:i===0?38+D.connected:[0,131,150,122,118,140,126,110][i],call_appraisals:i===0?1+D.appr:[0,3,4,2,3,5,3,2][i],appraisals:i===0?1+D.appr:[0,4,4,3,3,5,4,2][i],listings:i===0?0:[0,1,1,0,1,2,0,1][i],sold:i<3?0:[0,0,0,1,0,1,0,0][i]})),
     sources:Object.entries(D.pipe.reduce((m,x)=>{const k=x.source||"calls";m[k]=m[k]||{source:k,appraisals:0,listings:0,sold:0};m[k].appraisals++;if(x.stage==="listed"||x.stage==="sold")m[k].listings++;if(x.stage==="sold")m[k].sold++;return m;},{})).map(([k,v])=>v),
     week:{this:{calls:420+D.calls,connected:130+D.connected,appraisals:4+D.appr},last:{calls:380,connected:120,appraisals:2},pipeline:{appraisal:D.pipe.filter(x=>x.stage==="appraisal").length,listed:D.pipe.filter(x=>x.stage==="listed").length,sold:0,lost:0},new_listings_week:1}});
-  const first=n=>(n||"there").split(" ")[0];
+  const first=n=>((people(n)[0]||"there").split(" ")[0]);
   switch(action){
     case "has_password": return {has:true};
     case "login": return {token:"demo"};
@@ -488,7 +489,8 @@ function withHeads(rows, prev){ let last=prev?(prev.callback?"\u0001":prev.subur
     return h+cardHTML(r); }).join(""); }
 async function loadHealth(){ const el=$("#health"); if(!el) return;
   try{ const h=(await api("list_health")).rows||{}; const c=(h.checks||[])[0], rep=h.reports||[];
-    el.innerHTML = `<p>Every list is checked before you see it. Anything that breaks a rule is taken off: houses already listed or just sold through Dignam, Dignam off-market listings, homes reported as for sale, owners who bought in the last 12 months, rental records counted as withdrawn listings, the same phone twice and missing numbers.</p>`
+    el.innerHTML = `<p>Every list is checked before you see it. Anything that breaks a rule is taken off: Do Not Call and Do Not Contact people and their households, tenants, previous owners, contacts not confirmed as the owner, numbers that belong to someone else or to an owner who has died, homes sold since the contact was recorded, homes listed or sold through Dignam, Dignam off-market listings, homes reported as for sale, owners who bought in the last 12 months, rental listings counted as withdrawn, invalid numbers and the same phone twice.</p>`
+      + (h.safeguards?`<p><b>Safeguards</b> ${h.rule_breakers_on_list?`<span style="color:var(--bad)">${h.rule_breakers_on_list} rule breakers on today's list</span>`:`<span style="color:var(--good)">today's list passes every check</span>`}</p><ul>${h.safeguards.map(g=>`<li>${g.ok?"":"<b style='color:var(--bad)'>Missing: </b>"}${esc(g.name)}: ${Number(g.n).toLocaleString()} <span class="muted">(${esc(g.what)})</span></li>`).join("")}</ul>`:"")
       + (c?`<p><b>Today:</b> ${c.removed} taken off, ${c.flagged} flagged.</p><ul>${Object.entries(c.rules||{}).map(([k,v])=>`<li>${esc(k)}: ${v}</li>`).join("")}</ul>`:`<p>No check has run yet today.</p>`)
       + (rep.length?`<p style="margin-top:12px"><b>Problems you reported</b></p><ul>${rep.slice(0,10).map(r=>`<li>${esc(r.address)}: ${esc((WRONG.find(w=>w[0]===r.kind)||[,r.kind])[1])}${r.note?" ("+esc(r.note)+")":""}</li>`).join("")}</ul>`:"");
   }catch(e){ el.textContent=e.message; } }
@@ -523,7 +525,12 @@ function drawList(){
   S._io.observe(m);
 }
 // AgentBox and RP list several people against one address ("A / B"). They are not necessarily a couple, so show them separately.
-function people(n){ return String(n||"").split(/\s*(?:\/|;)\s*/).map(x=>x.trim()).filter(Boolean); }
+// Names come from several systems and carry their junk: "(enews)", "Mr.", "Unknown", stray dots. Show people, not data.
+function cleanPerson(x){ let t=String(x||"").replace(/^[^A-Za-z(&]*[A-Za-z]*\)\s*/,m=>/^\(/.test(m)?m:"")
+  .replace(/\([^)]*\)/g," ").replace(/\b(?:Mr|Mrs|Ms|Miss|Dr)\b\.*/g," ").replace(/\b(?:unknown|unkn)\b/gi," ")
+  .replace(/(^|\s)[.,]+(?=\s|$)/g," ").replace(/^\s*&\s*|\s*&\s*$/g,"").replace(/\s+/g," ").trim();
+  return /^(?:wife|husband|partner|owner|tenant)?$/i.test(t)?"":t; }
+function people(n){ const seen=new Set(); return String(n||"").split(/\s*(?:\/|;)\s*/).map(cleanPerson).filter(x=>{ const k=x.toLowerCase(); if(!x||seen.has(k)) return false; seen.add(k); return true; }); }
 function nameHTML(n){ const p=people(n); if(!p.length) return `<div class="name">Owner unknown</div>`;
   return `<div class="name">${esc(p[0])}</div>${p.length>1?`<div class="also">Also on file at this address: ${p.slice(1).map(esc).join(", ")}</div>`:""}`; }
 function whyLine(r){
@@ -538,7 +545,7 @@ function cardHTML(r){
   return `<div class="card ${r.today_outcome?"done":""}" id="c${id}">
    ${r.callback?`<span class="tag">Callback due ${fmt(r.callback_at)}</span>`:""}
    ${nameHTML(r.owner_name)}
-   <div class="addr">${esc(r.street_address)}, ${esc(r.suburb)}${r.bedrooms?` · ${r.bedrooms} bed`:""}${rpBtn(r.street_address,r.suburb,r.rp_link)}</div>
+   <div class="addr">${esc(r.street_address)}, ${esc(r.suburb)}${r.bedrooms?` · ${r.bedrooms} bed`:""}${rpBtn(r.street_address,r.suburb,r.rp_link)}${listingBtn(r.street_address,r.suburb)}</div>
    ${r.callback&&r.notes?`<div class="why">${esc(r.notes)}</div>`:`<div class="why">${esc(whyLine(r))}</div>`}
    ${r.fire_zone||r.flood_zone?`<div class="hz">${r.fire_zone?`<span class="hzt fire"><i class="ti ti-flame"></i>${r.fire_zone==="Vegetation Buffer"?"Bushfire prone (bush edge)":"Bushfire prone (in bushland)"}</span>`:""}${r.flood_zone?`<span class="hzt flood"><i class="ti ti-droplet"></i>Flood planning area</span>`:""}</div>`:""}
    ${probate&&r.solicitor&&r.phone?`<div class="banner warn" style="margin:10px 0 6px"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> This number is the <b>solicitor</b>, not the family: ${esc(r.solicitor)}.</div></div><a class="phone" href="tel:${esc(r.phone)}"><i class="ti ti-scale"></i>Solicitor ${esc(/^0[2378]/.test(r.phone)?r.phone.replace(/^(\d{2})(\d{4})(\d{4})$/,"$1 $2 $3"):r.phone.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`
@@ -653,6 +660,8 @@ function rpUrl(addr,suburb,saved,pc){ if(saved&&/rpp\.corelogic\.com\.au\/proper
 // The RP button: works anywhere, never triggers the card or row it sits on
 function rpBtn(addr,suburb,saved,cls="rpb",pc){ if(!addr&&!suburb) return ""; const exact=saved&&/rpp\.corelogic\.com\.au\/property\//.test(saved);
   return `<a class="${cls}${exact?" exact":""}" href="${esc(rpUrl(addr,suburb,saved,pc))}" target="_blank" rel="noopener" title="${exact?"Open in RP Data":"Search RP Data (address copied)"}" data-addr="${esc(rpAddress(addr,suburb,pc))}" onclick="event.stopPropagation();rpCopy(this)">RP</a>`; }
+function listingBtn(addr,suburb,pc){ if(!addr) return ""; const q=encodeURIComponent(rpAddress(addr,suburb,pc)+" for sale");
+  return `<a class="lsb" href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener" title="Check it isn't listed with another agent (no login)" onclick="event.stopPropagation()">Listing</a>`; }
 function rpCopy(a){ if(a.classList.contains("exact")) return; try{ navigator.clipboard&&navigator.clipboard.writeText(a.dataset.addr); }catch{} }
 // Work timing: when each card came up, when you tapped call, when you came back to the app, when you logged it.
 // Nothing here slows the call down; it just stamps times and sends them with the outcome.
