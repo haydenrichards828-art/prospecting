@@ -111,7 +111,11 @@ details.hist{margin-top:8px;font-size:13px}details.hist summary{cursor:pointer;c
 @media print{header,.noprint,#toast{display:none!important}.overlay{position:static;background:none;display:block}.sheet{max-height:none;box-shadow:none}body{background:#fff}}
 .top{display:flex;align-items:center;gap:8px;margin:14px 0 10px;flex-wrap:wrap}.top .prog{flex:1 1 100%;margin-bottom:4px}.top .seg{margin-right:auto}.top .prog b{font-size:15px}.top .prog .bar2{height:6px;border-radius:999px;background:var(--line);overflow:hidden;margin-top:6px}.top .prog .bar2 div{height:100%;background:var(--accent)}
 .why{color:var(--muted);font-size:13px;margin-top:6px}
-.more{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}.more button{font-size:12px;min-height:44px;padding:6px 4px;flex-direction:column;gap:2px;color:var(--muted)}.more button .ti{font-size:18px}
+.also{color:var(--muted);font-size:13px;margin-top:2px}
+.picks.wrong{grid-template-columns:1fr 1fr}
+@media (max-width:420px){.more button{flex-direction:column!important;gap:2px!important;padding:6px 2px!important;min-height:46px!important}}
+.subhead{display:flex;justify-content:space-between;align-items:baseline;margin:18px 2px 8px;font-weight:600;font-size:15px}.subhead span{font-weight:400;font-size:13px;color:var(--muted)}
+.more{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:6px}.more button{font-size:12px;min-height:44px;padding:6px 4px;flex-direction:column;gap:2px;color:var(--muted)}.more button .ti{font-size:18px}
 .skip{width:100%;margin-top:10px;min-height:52px;font-size:15px;color:var(--muted)}
 .picks{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:10px}.picks button{font-size:14px}
 .iconbtn{min-height:40px;padding:8px 12px}
@@ -129,7 +133,7 @@ details.sec{background:var(--card);border:1px solid var(--line);border-radius:va
 #list .card{padding:16px 16px 12px}
 #list .name{font-size:24px;line-height:1.2;letter-spacing:-.01em}
 #list .addr{font-size:15px;margin-top:2px}
-#list .why{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#list .why{white-space:normal;overflow:visible;overflow-wrap:anywhere}
 #list .phone{display:flex;justify-content:center;width:100%;margin:12px 0 4px;padding:14px;border-radius:12px;background:var(--accent-bg);font-size:26px;font-weight:600;letter-spacing:.01em}
 #list .acts{gap:8px;margin-top:10px}#list .acts button{min-height:72px;font-size:16px;white-space:nowrap}
 #list .more button{white-space:nowrap}
@@ -277,6 +281,8 @@ function demoApi(action, body){
     case "letterbox": return {rows:D.rows.filter(r=>!r.phone).map(r=>({unit:null,house_number:r.street_address.split(" ")[0],street:r.street_address.split(" ").slice(1).join(" "),suburb:r.suburb,postcode:r.postcode,score:r.score,reasons:r.reasons}))};
     case "settings": Object.assign(D.settings, body.values||{}); return {ok:true};
     case "regenerate": return {rows:800};
+    case "report_issue": return {ok:true};
+    case "list_health": return {rows:{checks:[{date:"2026-11-18",removed:5,flagged:209,rules:{"bought under 12 months ago":5,"several people on one record":195,"bought under 2 years ago":14}}],reports:[]}};
     case "import": return {imported:(body.rows||[]).length};
     default: return {ok:true};
   }
@@ -284,7 +290,7 @@ function demoApi(action, body){
 const LABEL = {no_answer:"No answer",not_interested:"Not selling",call_back:"Call back",appraisal:"Appraisal",listed:"Listed",do_not_call:"Do not call",lead:"Lead"};
 const ICON = {no_answer:"ti-phone-off",not_interested:"ti-x",call_back:"ti-calendar-time",appraisal:"ti-home-check",listed:"ti-star",do_not_call:"ti-ban",lead:"ti-user-plus"};
 const WHEN = [["now","Now"],["1h","In 1 hour"],["tomorrow_8am","Tomorrow 8am"],["24h","In 24 hours"],["1w","In 1 week"],["custom","Custom"]];
-let S = {token: (()=>{ try { return (typeof window.FORCE_DEMO!=="undefined"&&window.FORCE_DEMO)||location.hash==="#demo" ? "demo" : localStorage.getItem("dp_token"); } catch { return null; } })(), tab:"calls", type:"seller", rows:[], q:"", page:0, ov:null, callbacks:[], templates:[], dialer: (()=>{try{return localStorage.getItem("dp_dialer")!=="0"}catch{return true}})(), autodial: true, skipped:new Set(), saving:new Set()};
+let S = {token: (()=>{ try { return (typeof window.FORCE_DEMO!=="undefined"&&window.FORCE_DEMO)||location.hash==="#demo" ? "demo" : localStorage.getItem("dp_token"); } catch { return null; } })(), tab:"calls", type:"seller", rows:[], q:"", page:0, ov:null, callbacks:[], templates:[], dialer: (()=>{try{return localStorage.getItem("dp_dialer")!=="0"}catch{return true}})(), autodial: false, skipped:new Set(), saving:new Set()};
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt = d => d ? new Date(d).toLocaleString("en-AU",{timeZone:"Australia/Sydney",weekday:"short",day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}) : "";
@@ -457,11 +463,35 @@ document.addEventListener("keydown", e=>{
   else if (k==="s") skipCard(id); else if (k==="c" && cur.phone) dialTo(cur.phone); else return;
   e.preventDefault();
 });
+// "Wrong info" on a card: fixes or hides the house straight away and records it so the cause gets fixed
+const WRONG=[["on_market","For sale with another agent"],["dignam_listed","Already listed with Dignam"],["rented","Rented out / investment"],["recent_buyer","Only just bought"],["wrong_names","Names wrong or not a couple"],["wrong_reason","Reason is wrong"],["other","Something else"]];
+function togglePick(idv){ const el=$("#"+idv); if(el) el.style.display=el.style.display==="none"?"grid":"none"; }
+async function reportIssue(id,kind){
+  let note=null; if(kind==="wrong_reason"||kind==="other"||kind==="wrong_names"){ note=await uiAsk("What's wrong? (optional)",{input:"",ok:"Send"}); if(note===null) return; }
+  try{ await api("report_issue",{property_id:id,kind,note}); }catch(e){ return toast(e.message); }
+  const hide=["on_market","dignam_listed","rented","recent_buyer"].includes(kind);
+  if(hide){ S.skipped.add(id); toast("Thanks. Taken off the list"); } else toast("Thanks. Logged so it gets fixed");
+  drawList(); }
+function bySuburb(rows){
+  const best={}; rows.forEach(r=>{ const k=r.suburb||""; best[k]=Math.min(best[k]??1e9, r.rank??1e9); });
+  return [...rows].sort((a,b)=>(best[a.suburb||""]-best[b.suburb||""]) || String(a.suburb||"").localeCompare(String(b.suburb||"")) || (a.rank-b.rank));
+}
 function queue(){
   const cb = (S.callbacks||[]).filter(c=>!c.done).map(c=>({...c, rank:0, callback:true, reasons:[], signals:[], history:null}));
   const ids = new Set(cb.map(c=>c.property_id));
-  return [...cb, ...S.rows.filter(r=>!ids.has(r.property_id))];
+  return [...cb, ...bySuburb(S.rows.filter(r=>!ids.has(r.property_id)))];
 }
+// Suburb headings in the scrolling list
+function withHeads(rows, prev){ let last=prev?(prev.callback?"\u0001":prev.suburb||""):null; const cnt={}; (S._rest||rows).forEach(r=>{ if(!r.today_outcome&&!r.callback) cnt[r.suburb||""]=(cnt[r.suburb||""]||0)+1; });
+  return rows.map(r=>{ const k=r.callback?"\u0001":(r.today_outcome?"\u0002":(r.suburb||"")); let h="";
+    if(k!==last){ h=k==="\u0001"?`<div class="subhead">Call backs</div>`:k==="\u0002"?`<div class="subhead">Called today</div>`:`<div class="subhead">${esc(k||"Suburb unknown")}<span>${cnt[k]||0} to call</span></div>`; last=k; }
+    return h+cardHTML(r); }).join(""); }
+async function loadHealth(){ const el=$("#health"); if(!el) return;
+  try{ const h=(await api("list_health")).rows||{}; const c=(h.checks||[])[0], rep=h.reports||[];
+    el.innerHTML = `<p>Every list is checked before you see it. Anything that breaks a rule is taken off: houses already listed or just sold through Dignam, Dignam off-market listings, homes reported as for sale, owners who bought in the last 12 months, rental records counted as withdrawn listings, the same phone twice and missing numbers.</p>`
+      + (c?`<p><b>Today:</b> ${c.removed} taken off, ${c.flagged} flagged.</p><ul>${Object.entries(c.rules||{}).map(([k,v])=>`<li>${esc(k)}: ${v}</li>`).join("")}</ul>`:`<p>No check has run yet today.</p>`)
+      + (rep.length?`<p style="margin-top:12px"><b>Problems you reported</b></p><ul>${rep.slice(0,10).map(r=>`<li>${esc(r.address)}: ${esc((WRONG.find(w=>w[0]===r.kind)||[,r.kind])[1])}${r.note?" ("+esc(r.note)+")":""}</li>`).join("")}</ul>`:"");
+  }catch(e){ el.textContent=e.message; } }
 function drawList(){
   const all = queue();
   if (!S.rows.length && !all.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-list-search"></i>No list yet for today.<br><span class="muted">It builds itself at 4:30am. To build it now, go to Settings.</span></div>`; return; }
@@ -469,27 +499,33 @@ function drawList(){
     const left = all.filter(r=>!r.today_outcome && !S.skipped.has(r.property_id));
     if (!left.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-confetti"></i>That's everyone for today.${S.skipped.size?`<br><button style="margin-top:10px" onclick="S.skipped.clear();drawList()">Go back to ${S.skipped.size} skipped</button>`:""}</div>`; return; }
     $("#list").innerHTML = `<div class="dialer">${cardHTML(left[0])}
-      <div class="skiprow"><span class="muted" style="font-size:13px">${left.length} to go</span><button onclick="skipCard(${left[0].property_id})"><i class="ti ti-player-skip-forward"></i>Skip<kbd>S</kbd></button></div>
+      <div class="skiprow"><span class="muted" style="font-size:13px">${left[0].callback?"Call back":esc(left[0].suburb||"")}${left[0].callback?"":` · ${left.filter(r=>!r.callback&&r.suburb===left[0].suburb).length} left here`} · ${left.length} to go</span><button onclick="skipCard(${left[0].property_id})"><i class="ti ti-player-skip-forward"></i>Skip<kbd>S</kbd></button></div>
       </div>`;
     markShown(left[0].property_id);
     return;
   }
   const q = S.q.trim().toLowerCase();
   let rows = all.filter(r=>!q || [r.owner_name,r.street_address,r.suburb].join(" ").toLowerCase().includes(q));
-  rows.sort((a,b)=>(!!a.today_outcome - !!b.today_outcome) || a.rank-b.rank);
+  const order=new Map(rows.map((r,i)=>[r,i]));
+  rows.sort((a,b)=>(!!a.today_outcome - !!b.today_outcome) || order.get(a)-order.get(b));
   // Continuous scroll: 50 cards at a time, more load as you near the bottom. S.page counts loaded chunks.
   const per=50, shown=Math.min(rows.length, (S.page+1)*per);
+  S._rest = rows;
   $("#list").innerHTML = ``
-    + rows.slice(0,shown).map(cardHTML).join("") + (shown<rows.length?`<div id="more" class="muted" style="text-align:center;padding:16px">Loading more…</div>`:"");
+    + withHeads(rows.slice(0,shown)) + (shown<rows.length?`<div id="more" class="muted" style="text-align:center;padding:16px">Loading more…</div>`:"");
   S._rest = rows; if (S._io) S._io.disconnect();
   const m=$("#more"); if (!m) return;
   S._io = new IntersectionObserver(es=>{ if(!es[0].isIntersecting) return;
     const from=(S.page+1)*per; S.page++; const next=S._rest.slice(from, from+per);
-    m.insertAdjacentHTML("beforebegin", next.map(cardHTML).join(""));
+    m.insertAdjacentHTML("beforebegin", withHeads(next, S._rest[from-1]));
     if (from+per >= S._rest.length) { S._io.disconnect(); m.remove(); }
   }, {rootMargin:"800px"});
   S._io.observe(m);
 }
+// AgentBox and RP list several people against one address ("A / B"). They are not necessarily a couple, so show them separately.
+function people(n){ return String(n||"").split(/\s*(?:\/|;)\s*/).map(x=>x.trim()).filter(Boolean); }
+function nameHTML(n){ const p=people(n); if(!p.length) return `<div class="name">Owner unknown</div>`;
+  return `<div class="name">${esc(p[0])}</div>${p.length>1?`<div class="also">Also on file at this address: ${p.slice(1).map(esc).join(", ")}</div>`:""}`; }
 function whyLine(r){
   const bits = [...(r.reasons||[]).filter(x=>!x.startsWith("Probate notice"))];
   if (r.street_sales_12m) bits.push(`${r.street_sales_12m} street sale${r.street_sales_12m>1?"s":""} this year`);
@@ -501,7 +537,7 @@ function cardHTML(r){
   const sol=(r.reasons||[]).find(x=>x.startsWith("Probate notice ("));
   return `<div class="card ${r.today_outcome?"done":""}" id="c${id}">
    ${r.callback?`<span class="tag">Callback due ${fmt(r.callback_at)}</span>`:""}
-   <div class="name">${esc(r.owner_name||"Owner unknown")}</div>
+   ${nameHTML(r.owner_name)}
    <div class="addr">${esc(r.street_address)}, ${esc(r.suburb)}${r.bedrooms?` · ${r.bedrooms} bed`:""}${rpBtn(r.street_address,r.suburb,r.rp_link)}</div>
    ${r.callback&&r.notes?`<div class="why">${esc(r.notes)}</div>`:`<div class="why">${esc(whyLine(r))}</div>`}
    ${r.fire_zone||r.flood_zone?`<div class="hz">${r.fire_zone?`<span class="hzt fire"><i class="ti ti-flame"></i>${r.fire_zone==="Vegetation Buffer"?"Bushfire prone (bush edge)":"Bushfire prone (in bushland)"}</span>`:""}${r.flood_zone?`<span class="hzt flood"><i class="ti ti-droplet"></i>Flood planning area</span>`:""}</div>`:""}
@@ -517,7 +553,8 @@ function cardHTML(r){
     <button class="appr" style="grid-column:span 2" onclick="outcome(${id},'appraisal')"><i class="ti ti-home-check"></i>Appraisal<kbd>4</kbd></button></div>
    <div class="picks" id="cb${id}" style="display:none">
     ${callbackPicks().map(([d,h,l],i)=>`<button onclick="quickCallback(${id},${d},${h})">${l}<kbd>${i+1}</kbd></button>`).join("")}<button onclick="pickCallback(${id})">Pick a time<kbd>4</kbd></button></div>
-   <div class="more"><button onclick="openMessage(${id})"><i class="ti ti-message"></i>Text<kbd>T</kbd></button><button onclick="addNote(${id})"><i class="ti ti-notes"></i>Note${notes[id]?" ✓":""}<kbd>N</kbd></button><button onclick="outcome(${id},'listed')"><i class="ti ti-star"></i>Listed</button><button class="dnc" onclick="outcome(${id},'do_not_call')"><i class="ti ti-ban"></i>DNC</button></div>
+   <div class="more"><button onclick="openMessage(${id})"><i class="ti ti-message"></i>Text<kbd>T</kbd></button><button onclick="addNote(${id})"><i class="ti ti-notes"></i>Note${notes[id]?" ✓":""}<kbd>N</kbd></button><button onclick="outcome(${id},'listed')"><i class="ti ti-star"></i>Listed</button><button onclick="togglePick('wi${id}')"><i class="ti ti-alert-triangle"></i>Wrong</button><button class="dnc" onclick="outcome(${id},'do_not_call')"><i class="ti ti-ban"></i>DNC</button></div>
+   <div class="picks wrong" id="wi${id}" style="display:none">${WRONG.map(([k,l])=>`<button onclick="reportIssue(${id},'${k}')">${l}</button>`).join("")}</div>
    ${(r.history||[]).length?`<details class="hist"><summary>History</summary>${r.history.slice(0,8).map(h=>`<p>${fmt(h.at)} · ${LABEL[h.outcome]||h.outcome}${h.notes?` · ${esc(h.notes)}`:""}</p>`).join("")}</details>`:""}
   </div>`;
 }
@@ -1437,9 +1474,10 @@ async function reject(v){ await api("reject_version",{version:v}); toast("Propos
 async function viewSettings(){
   const [ov, t] = await Promise.all([api("overview"), api("templates")]); S.templates = t.rows||[]; const s = ov.settings;
   $("#main").innerHTML = `<div style="height:14px"></div>
+   <details class="sec" id="healthsec" ontoggle="if(this.open) loadHealth()"><summary>List health</summary><div id="health" class="muted">Loading…</div></details>
    <details class="sec" open><summary>Import data</summary><div>
     <p class="muted" style="margin-top:0">Export a CSV from Pricefinder, RP Data or the CRM. Columns are matched automatically and you see how it was read first.</p>
-    <select id="ik" onchange="S.pending=null;previewCSV()"><option value="properties">Pricefinder or RP Data export</option><option value="crm">Dignam CRM contacts</option><option value="probate">Probate or estate notices</option><option value="withdrawn">Withdrawn or expired listings</option><option value="dncr">DNCR wash results</option></select>
+    <select id="ik" onchange="S.pending=null;previewCSV()"><option value="properties">Pricefinder or RP Data export</option><option value="crm">Dignam CRM contacts</option><option value="probate">Probate or estate notices</option><option value="withdrawn">Withdrawn or expired listings</option><option value="on_market">Currently for sale (RP Data)</option><option value="dncr">DNCR wash results</option></select>
     <input type="file" id="if" accept=".csv" style="margin-top:8px" onchange="S.pending=null;previewCSV()"><button class="primary" style="margin-top:10px;width:100%" onclick="importCSV()"><i class="ti ti-upload"></i>Import</button><p class="muted" id="ir"></p></div></details>
    <details class="sec"><summary>Import leads from Google Sheets</summary><div>
     <p class="muted" style="margin-top:0">Share the sheet as "Anyone with the link can view", then paste the link. Reads the Master Leads, Appraisal and Listed tabs. Anyone already in Leads is skipped.</p>
@@ -1537,7 +1575,10 @@ function mapRows(rows){
 }
 async function previewCSV(){
   const file=$("#if").files[0]; if(!file) return;
-  const rows=parseCSV(await file.text()); if(rows.length<2){ $("#ir").textContent="File looks empty"; return; }
+  let rows=parseCSV(await file.text());
+  // RP Data exports start with a few lines describing the search; the real header is the first wide row
+  const hi=rows.findIndex(r=>r.filter(c=>String(c).trim()).length>=4); if(hi>0) rows=rows.slice(hi);
+  if(rows.length<2){ $("#ir").textContent="File looks empty"; return; }
   const {out,col,heads}=mapRows(rows); S.pending=out;
   const got=Object.entries(col).map(([k,i])=>`${rows[0][i].trim()} → ${k.replace(/_/g," ")}`);
   const ignored=heads.map((h,i)=>Object.values(col).includes(i)?null:rows[0][i].trim()).filter(Boolean);
