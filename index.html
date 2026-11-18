@@ -468,7 +468,7 @@ document.addEventListener("keydown", e=>{
   e.preventDefault();
 });
 // "Wrong info" on a card: fixes or hides the house straight away and records it so the cause gets fixed
-const WRONG=[["sold","Sold recently"],["on_market","For sale with another agent"],["dignam_listed","Already listed with Dignam"],["rented","Rented out / investment"],["recent_buyer","Only just bought"],["wrong_names","Names wrong or not a couple"],["wrong_reason","Reason is wrong"],["other","Something else"]];
+const WRONG=[["sold","Sold recently"],["on_market","For sale with another agent"],["dignam_listed","Already listed with Dignam"],["rented","Rented, another agency manages it"],["rented_dignam","Rented, Dignam manages it"],["recent_buyer","Only just bought"],["wrong_names","Names wrong or not a couple"],["wrong_reason","Reason is wrong"],["other","Something else"]];
 function togglePick(idv){ const el=$("#"+idv); if(el) el.style.display=el.style.display==="none"?"grid":"none"; }
 async function reportIssue(id,kind){
   let note=null; if(kind==="wrong_reason"||kind==="other"||kind==="wrong_names"){ note=await uiAsk("What's wrong? (optional)",{input:"",ok:"Send"}); if(note===null) return; }
@@ -1619,7 +1619,7 @@ async function importCSV(){
 window.__boot=()=>{ if (S.token) loadCallbacks().then(render); else render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=7"></script>
+<script src="v2.js?v=8"></script>
 <script>window.__boot();</script>
 </body>
 </html>

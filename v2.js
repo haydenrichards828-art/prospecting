@@ -294,8 +294,9 @@ function wrongSheet2(id){
   openSheet2('What is wrong?',`<p style="margin:0 4px;font-size:15px;line-height:21px;color:var(--t2)">Tap one and ${esc(firstName(r.owner_name))} is skipped straight away. Anything in the note box is sent with it.</p>
    <div class="g2">${WRONG.map(([k,l])=>`<button class="r2" style="grid-template-columns:1fr" onclick="wrong2(${id},'${k}')"><span class="rt2"><b>${esc(l)}</b><span>${ISSUE_RULE[k]||''}</span></span></button>`).join('')}</div>`,`moreSheet2(${id})`);
 }
-const ISSUE_RULE={sold:'Off the list for 12 months',on_market:'Off the list for 4 months',dignam_listed:'Off the list for 6 months',rented:'Off for 12 months, then on the landlord list',
-  recent_buyer:'Off the list for 12 months',wrong_names:'Off the list for 3 months while the names get fixed',wrong_reason:'Skipped today, back tomorrow, reason gets checked',other:'Skipped today, back tomorrow'};
+const ISSUE_RULE={sold:'Off the list for 2 years',on_market:'Off until it sells, then 2 years from the sale',dignam_listed:'Never called again',
+  rented:'Off the seller list for good, moves to the landlord list',rented_dignam:'Never called again, on either list',
+  recent_buyer:'Off the list for 2 years',wrong_names:'Off the list for 3 months while the names get fixed',wrong_reason:'Skipped today, back tomorrow',other:'Skipped today, back tomorrow'};
 function wrong2(id,k){ closeOv(); if(S.pick===id) S.pick=null; S.skipped.add(id); drawList();
   toast(`${(WRONG.find(w=>w[0]===k)||[,'Noted'])[1]}. ${ISSUE_RULE[k]||'Skipped'}`);
   api("report_issue",{property_id:id,kind:k,note:notes[id]||null}).catch(e=>{ S.skipped.delete(id); drawList(); toast("Couldn't save that. "+e.message); }); }
