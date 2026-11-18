@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=26">
+<link rel="stylesheet" href="v2.css?v=27">
 </head>
 <body>
 <div id="app"></div>
@@ -791,26 +791,34 @@ async function openMessage(id, ctx){
    <label>Template</label><select id="mt">${S.templates.map(t=>`<option value="${t.id}" ${t.id===t0.id?"selected":""}>${esc(t.name)}</option>`).join("")}</select>
    <div id="extra"></div>
    <label>Preview</label><div class="preview" id="mp">Loading</div>
-   <label>Send</label><div class="opts2 c3" id="mw"></div><div id="mc"></div>
+   <label>When</label><div class="opts2 c4" id="mw"></div><div id="mc"></div>
    <div style="display:flex;gap:8px;margin-top:12px"><button class="ghost" style="flex:1" onclick="closeOv()">Cancel</button><button class="primary" style="flex:2" id="msend"><i class="ti ti-send"></i>Schedule message</button></div></div>`;
-  let when = t0.default_delay || "now";
-  const drawWhen = ()=>{ if($("#msend")) setTimeout(label,0); $("#mw").innerHTML = WHEN.map(([k,l])=>`<button class="${k===when?"on":""}" data-k="${k}">${l}</button>`).join(""); $("#mw").querySelectorAll("button").forEach(b=>b.onclick=()=>{when=b.dataset.k;drawWhen();}); $("#mc").innerHTML = when==="custom"?`<input type="datetime-local" id="mcd" class="optin2" value="${sydInput(new Date(Date.now()+86400e3))}">`:""; };
+  // Four choices cover what actually gets used: now, first thing tomorrow, a week out, or a set time
+  const WHEN2=[["now","Now"],["tomorrow_8am","Tomorrow","tomorrow 8am"],["1w","Next week","next week"],["custom","Pick a time"]];
+  const okWhen=k=>WHEN2.some(w=>w[0]===k)?k:"now";
+  let when = okWhen(t0.default_delay || "now");
+  const drawWhen = ()=>{ if($("#msend")) setTimeout(label,0); $("#mw").innerHTML = WHEN2.map(([k,l])=>`<button class="${k===when?"on":""}" data-k="${k}">${l}</button>`).join(""); $("#mw").querySelectorAll("button").forEach(b=>b.onclick=()=>{when=b.dataset.k;drawWhen();}); $("#mc").innerHTML = when==="custom"?`<input type="datetime-local" id="mcd" class="optin2" value="${sydInput(new Date(Date.now()+86400e3))}">`:""; };
   const tmpl = ()=>S.templates.find(t=>t.id==$("#mt").value);
-  const dayOpts = [1,2,3,4,5,6,7].map(k=>new Date(Date.now()+k*864e5)).filter(d=>sydInfo(d).dow!==7).slice(0,4).map(d=>d.toLocaleDateString("en-AU",{timeZone:"Australia/Sydney",weekday:"short",day:"numeric",month:"short"}));
-  let pickDay=dayOpts[0], pickTime="10am", pickCb=dayOpts[0];
-  const chips = (arr, cur, cls) => `<div class="opts2 c4">${arr.map(v=>`<button class="${cls} ${v===cur?"on":""}" data-v="${v}">${String(v).replace(",","")}</button>`).join("")}</div>`;
-  const drawExtra = ()=>{ const b=tmpl().body; $("#extra").innerHTML = (b.includes("{appt_date}")?`<label>Appraisal date and time</label>${chips(dayOpts,pickDay,"dchip")}${chips(["10am","11am","2pm","4pm"],pickTime,"tchip")}<input id="xa" class="optin2" value="${pickDay}, ${pickTime}">`:"")+(b.includes("{callback_date}")?`<label>Call back date</label>${chips(dayOpts,pickCb,"cchip")}<input id="xc" class="optin2" value="${pickCb}">`:""); ["xa","xc"].forEach(i=>{const e=$("#"+i); if(e) e.oninput=prev;});
-    $("#extra").querySelectorAll(".dchip").forEach(x=>x.onclick=()=>{ pickDay=x.dataset.v; drawExtra(); prev(); });
-    $("#extra").querySelectorAll(".tchip").forEach(x=>x.onclick=()=>{ pickTime=x.dataset.v; drawExtra(); prev(); });
-    $("#extra").querySelectorAll(".cchip").forEach(x=>x.onclick=()=>{ pickCb=x.dataset.v; drawExtra(); prev(); }); };
+  // Dates are picked with the phone's own mini calendar; the message gets a friendly version like "Fri 20 Nov, 10am"
+  const DN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const nice=(v,withTime)=>{ const m=String(v||"").match(/^(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d))?/); if(!m) return "";
+    const d=new Date(+m[1],+m[2]-1,+m[3]); let t=`${DN[d.getDay()]} ${+m[3]} ${MN[+m[2]-1]}`;
+    if(withTime&&m[4]){ const h=+m[4], mi=m[5], ap=h<12?"am":"pm", h12=h%12||12; t+=`, ${h12}${mi==="00"?"":":"+mi}${ap}`; } return t; };
+  const tmr=sydInput(new Date(Date.now()+864e5)).slice(0,10);
+  let apptV=tmr+"T10:00", cbV=tmr;
+  const drawExtra = ()=>{ const b=tmpl().body; $("#extra").innerHTML =
+      (b.includes("{appt_date}")?`<label>Appraisal date and time</label><input type="datetime-local" id="xa_dt" class="optin2" step="900" value="${apptV}"><input type="hidden" id="xa" value="${nice(apptV,true)}">`:"")
+     +(b.includes("{callback_date}")?`<label>Call back date</label><input type="date" id="xc_d" class="optin2" value="${cbV}"><input type="hidden" id="xc" value="${nice(cbV)}">`:"");
+    const a=$("#xa_dt"); if(a) a.oninput=()=>{ apptV=a.value; $("#xa").value=nice(apptV,true); prev(); };
+    const c=$("#xc_d"); if(c) c.oninput=()=>{ cbV=c.value; $("#xc").value=nice(cbV); prev(); }; };
   const args = ()=>({property_id:id,template_id:+$("#mt").value,appt_date:$("#xa")?.value||"{appt_date}",callback_date:$("#xc")?.value||"{callback_date}"});
   let pv={};
   const prev = async()=>{ try{ const r=await api("preview_message",args()); pv=r; $("#mp").textContent=r.body + (r.phone?"":"\n\n(No phone number yet, this will send once one is added)"); }catch(e){$("#mp").textContent=e.message;} };
   // Sending now, inside texting hours, with a number: open the phone's Messages straight away instead of queueing it
   const direct = ()=>{ const i=sydInfo(new Date()), st=(S.ovFull?.settings?.quiet_start||"08:00").slice(0,5), en=(S.ovFull?.settings?.quiet_end||"20:00").slice(0,5), hm=new Intl.DateTimeFormat("en-GB",{timeZone:"Australia/Sydney",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date());
     return when==="now" && i.dow!==7 && !(S.holidays&&S.holidays.has(i.key)) && hm>=st && hm<en; };
-  const label = ()=>{ $("#msend").innerHTML = direct()?'<i class="ti ti-message"></i>Open in Messages':'<i class="ti ti-send"></i>Schedule message'; };
-  $("#mt").onchange=()=>{ when=tmpl().default_delay||"now"; drawWhen(); drawExtra(); prev(); };
+  const label = ()=>{ const w=(WHEN2.find(x=>x[0]===when)||[])[2]||''; $("#msend").innerHTML = direct()?'<i class="ti ti-message"></i>Open in Messages':'<i class="ti ti-send"></i>'+(when==='now'?'Send when texting hours open':when==='custom'?'Schedule message':'Send '+w); };
+  $("#mt").onchange=()=>{ when=okWhen(tmpl().default_delay||"now"); drawWhen(); drawExtra(); prev(); };
   drawWhen(); drawExtra(); prev();
   $("#msend").onclick = async()=>{
     const a=args(); if (($("#xa") && !$("#xa").value.trim()) || ($("#xc") && !$("#xc").value.trim())) return toast("Fill in the date fields first");
@@ -1640,7 +1648,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=35"></script>
+<script src="v2.js?v=37"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>
