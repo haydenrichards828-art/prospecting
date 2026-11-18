@@ -373,3 +373,10 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .wc2 b{display:block;font-size:15px;line-height:19px;color:var(--t1)}
 .wc2 em{display:block;font-style:normal;font-size:12px;font-weight:700;color:var(--t)}
 #demobar ~ #shell{height:calc(100dvh - 24px)}
+
+/* Reasons joined into one bar, like the outcome buttons */
+.wl2{display:grid;gap:2px;border-radius:14px;overflow:hidden}
+.wc2{border:0;border-radius:0;padding:10px 12px;gap:10px;background:color-mix(in srgb,var(--c) 26%,#151a21);min-width:0}
+.wc2 .ti2{width:30px;height:30px;border-radius:8px}
+.wc2>span:last-child{min-width:0}.wc2 b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wc2 b{white-space:normal;overflow:visible}
