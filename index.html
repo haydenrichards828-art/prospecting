@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=31">
+<link rel="stylesheet" href="v2.css?v=34">
 </head>
 <body>
 <div id="app"></div>
@@ -844,7 +844,7 @@ async function viewMessages(){
   const r = await api("messages");
   const st = {scheduled:["Scheduled","warn"],ready:["Ready to send","good"],awaiting_sms_setup:["Ready to send","good"],sent:["Sent","good"],failed:["Failed","bad"],failed_no_phone:["No phone","bad"],cancelled:["Cancelled",""],cancelled_opted_out:["Opted out","bad"]};
   $("#main").innerHTML = `<h2>Texts</h2>
-   ${(r.rows||[]).some(m=>m.status==="ready")?`<div class="banner info"><i class="ti ti-send"></i><div>Texts marked "Ready to send" are due. Tap Send on each one to open it in your Messages app, then tap send there.</div></div>`:""}
+   ${(r.rows||[]).some(m=>m.status==="ready")?`<div class="banner info"><i class="ti ti-send"></i><div>Tap Send to open each due text in Messages.</div></div>`:""}
    ${(r.rows||[]).length ? (r.rows).map(m=>`<div class="card"><div class="row"><div><div class="name">${esc(m.properties?.owner_name||"Owner unknown")}</div><div class="addr">${esc([m.properties?.house_number,m.properties?.street].filter(Boolean).join(" "))}, ${esc(m.properties?.suburb)}</div></div><div class="score">${fmt(m.send_at)}</div></div>
      <div class="preview" style="margin-top:8px">${esc(m.body)}</div><div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span class="chip ${st[m.status]?.[1]||""}">${st[m.status]?.[0]||m.status}</span>
      ${m.status==="ready"&&m.properties?.phone?`<a class="phone" style="margin:0 0 0 auto" href="${smsLink(m.properties.phone,m.body)}" onclick="setTimeout(()=>markSent(${m.id}),1500)"><i class="ti ti-send"></i>Send</a>`:""}
@@ -1653,7 +1653,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=42"></script>
+<script src="v2.js?v=44"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

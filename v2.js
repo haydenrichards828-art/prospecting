@@ -616,3 +616,77 @@ function subPick(){ document.querySelectorAll('#sheet input[list="sublist"]').fo
   inp.addEventListener('input',show); inp.addEventListener('focus',show); inp.addEventListener('blur',()=>setTimeout(()=>box.style.display='none',100));
   if(isAdd){ inp.removeAttribute('onchange'); inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); const f=box.querySelector('button'); if(f){ inp.value=f.dataset.s; } addSub(inp); inp.value=''; show(); } }); }
 }); }
+
+// ---------- Settings: a short menu; each item shows its current value and opens its own small panel ----------
+const RET2=[["noanswer_gap_days","Missed call",3],["noanswer_rest_days","6 missed calls in a row",90],["not_interested_days","Not selling",365],["lead_closed_days","Lead closed or lost",180],["appraisal_days","After an appraisal",365],["sold_days","After it sells",1095],["recent_call_days","Any answered call",7]];
+const daysTxt=d=>d>=365&&d%365===0?`${d/365} yr${d/365>1?'s':''}`:d>=30&&d%30===0?`${d/30} mth${d/30>1?'s':''}`:`${d} day${d>1?'s':''}`;
+const t12=v=>{ const [h,m]=String(v||'').slice(0,5).split(':').map(Number); if(isNaN(h)) return ''; return `${h%12||12}${m?':'+String(m).padStart(2,'0'):''}${h<12?'am':'pm'}`; };
+window.viewSettings=async function(){
+  const [ov,t]=await Promise.all([api("overview"),api("templates")]); S.templates=t.rows||[]; S.setv=ov.settings||{}; const s=S.setv;
+  const sec=(title,rows)=>`<div class="set2"><div class="sth2">${title}</div><div class="g2">${rows.join('')}</div></div>`;
+  const val=v=>`<span class="sv2">${v}${chev2()}</span>`;
+  $("#main").innerHTML=`<div class="setw2"><div class="ph2"><h1>Settings</h1></div>
+   ${sec('Calling',[
+     row2('var(--cb)','skip','Auto dial next','',`<span class="sw2 ${S.autodial?'on':''}"><i></i></span>`,'toggleAuto()'),
+     row2('var(--cb)','clock','Booked call backs','',chev2(),'upcomingCB()'),
+     row2('var(--ns)','ban','Taken off the list','',chev2(),'removedSheet()'),
+     row2('var(--ap)','chart','Daily target','',val(`${s.daily_target??100} calls`),'setTargets()')])}
+   ${sec('Your list',[
+     row2('var(--acc)','users','List size','',val(`${s.seller_list_size} sellers · ${s.landlord_list_size} landlords`),'setTargets()'),
+     row2('#6366f1','cal','When people come back','',val('7 rules'),'setReturn()'),
+     row2('#14b8a6','check','List health','',chev2(),'setHealth()'),
+     row2('#4b5565','house','Rebuild today\'s list','',chev2(),'regen2()')])}
+   ${sec('Texts',[
+     row2('var(--acc)','msg','Message templates','',val(`${S.templates.length}`),'setTemplates()'),
+     row2('var(--acc)','send','Scheduled and sent texts','',chev2(),"go('messages')"),
+     row2('#4b5565','clock','Texting hours','',val(`${t12(s.quiet_start)} to ${t12(s.quiet_end)}`),'setTargets()')])}
+   ${sec('Data',[
+     row2('#d97706','plus','Import a file','',chev2(),'setImport()'),
+     row2('#16a34a','plus','Import leads from Google Sheets','',chev2(),'setSheets()')])}
+   ${sec('Account',[
+     row2('#4b5565','gear','Change password','',chev2(),'setPw()'),
+     row2('#4b5565','users','Sign out','','','logout()')])}
+   </div>`;
+};
+function setTargets(){ const s=S.setv||{};
+  openSheet2('List and targets',`<div class="fg2">
+    <label><span>Calls per day</span><input type="number" id="s7" value="${s.daily_target??100}"></label>
+    <label><span>Appraisals per 100 calls</span><input type="number" step="0.5" id="s8" value="${s.target_rate??3}"></label>
+    <label><span>Sellers on the list</span><input type="number" id="s1" value="${s.seller_list_size}"></label>
+    <label><span>Landlords on the list</span><input type="number" id="s2" value="${s.landlord_list_size}"></label>
+    <label><span>Texts from</span><input type="time" id="s5" value="${String(s.quiet_start||'08:00').slice(0,5)}"></label>
+    <label><span>Texts until</span><input type="time" id="s6" value="${String(s.quiet_end||'20:00').slice(0,5)}"></label>
+    <label><span>Test group %</span><input type="number" id="s3" value="${Math.round((s.control_pct||0)*100)}"></label>
+    <label><span>Only DNCR washed numbers</span><select id="s4"><option value="true" ${s.require_dncr_wash?"selected":""}>Yes</option><option value="false" ${!s.require_dncr_wash?"selected":""}>No</option></select></label>
+   </div><button class="b2 pri wide2b" onclick="saveSettings().then(()=>{closeOv();render()})">Save</button>`); }
+function setReturn(){ const s=S.setv||{};
+  openSheet2('When people come back',`<p class="hint2">Days before someone is back on your list.</p><div class="fg2 one">${RET2.map(([k,l,d])=>`<label><span>${l}</span><span class="din2"><input type="number" min="1" id="r_${k}" value="${s[k]??d}"><em>days</em></span></label>`).join('')}</div>
+   <p class="hint2">Do not call is forever. Open leads and booked call backs stay off until dealt with.</p><button class="b2 pri wide2b" onclick="saveReturn().then(()=>{closeOv();render()})">Save</button>`); }
+function setHealth(){ openSheet2('List health',`<div id="health"><p class="hint2">Checking…</p></div>`); loadHealth(); }
+async function loadHealth(){ const el=$("#health"); if(!el) return;
+  try{ const h=(await api("list_health")).rows||{}; const c=(h.checks||[])[0], rep=h.reports||[], bad=h.rule_breakers_on_list||0;
+    el.innerHTML=`<div class="hb2 ${bad?'bad':''}">${ic2(bad?'warn':'check',22)}<div><b>${bad?`${bad} rule breaker${bad>1?'s':''} on today's list`:'Today\'s list passes every check'}</b><span>${[h.list_size!=null?h.list_size+' people on the list':'',c?c.removed+' taken off this morning':''].filter(Boolean).join(' · ')}</span></div></div>
+     ${(h.safeguards||[]).length?`<div class="sth2">Safeguards</div><div class="g2">${h.safeguards.map(g=>`<div class="r2"><span class="tile" style="background:${g.ok?'#16a34a':'#d97706'}">${ic2(g.ok?'check':'warn',16,'#fff')}</span><span class="rt2"><b>${esc(g.name)}</b></span><span class="sv2">${Number(g.n).toLocaleString()}</span></div>`).join('')}</div>`:''}
+     ${c&&Object.keys(c.rules||{}).length?`<div class="sth2">Taken off this morning</div><div class="g2">${Object.entries(c.rules).map(([k,v])=>`<div class="hr2"><span>${esc(k[0].toUpperCase()+k.slice(1))}</span><b>${v}</b></div>`).join('')}</div>`:''}
+     ${rep.length?`<div class="sth2">Problems you reported</div><div class="g2">${rep.slice(0,10).map(r=>`<div class="hr2"><span>${esc(r.address)}<em>${esc((WRONG.find(w=>w[0]===r.kind)||[,r.kind])[1])}${r.note?' · '+esc(r.note):''}</em></span></div>`).join('')}</div>`:''}`;
+  }catch(e){ el.innerHTML=`<p class="hint2">${esc(e.message)}</p>`; } }
+function setTemplates(){
+  const card=tp=>`<div class="tpl2"><input id="tn${tp.id}" class="tpn2" placeholder="Template name" value="${esc(tp.name)}"><textarea id="tb${tp.id}" rows="${Math.max(3,Math.ceil((tp.body||'').length/(desk2()?70:36))+1)}" placeholder="Hi {first_name}, it's Marlowe from Dignam. … Reply STOP to opt out.">${esc(tp.body)}</textarea>
+    <div class="tpr2"><select id="td${tp.id}">${[["now","Send now"],["tomorrow_8am","Tomorrow 8am"],["1w","Next week"]].map(([k,l])=>`<option value="${k}" ${k===tp.default_delay?"selected":""}>${l}</option>`).join("")}</select>
+    <button class="b2 pri" onclick="saveTpl(${tp.id})">${tp.id?'Save':'Add'}</button>${tp.id?`<button class="b2 del2" onclick="delTpl(${tp.id})">Delete</button>`:''}</div></div>`;
+  openSheet2('Message templates',`<p class="hint2">Fill ins: {first_name} {address} {street} {suburb} {appt_date} {callback_date}</p>${S.templates.map(card).join('')}<div class="sth2">New template</div>${card({id:0,name:'',body:'',default_delay:'now'})}`); }
+function setImport(){
+  openSheet2('Import a file',`<div class="fg2 one"><label><span>What is it?</span><select id="ik" onchange="S.pending=null;previewCSV()"><option value="properties">RP Data or Pricefinder export</option><option value="crm">Dignam CRM contacts</option><option value="probate">Probate notices</option><option value="withdrawn">Withdrawn or expired listings</option><option value="on_market">Currently for sale</option><option value="dncr">DNCR wash results</option><option value="crm_notes">Office notes (file from Claude)</option></select></label>
+   <label><span>File</span><input type="file" id="if" accept=".csv,.json" onchange="S.pending=null;previewCSV()"></label></div><div id="ir" class="hint2"></div>
+   <button class="b2 pri wide2b" onclick="importCSV()">${ic2('plus',18)}Import</button>`); }
+function setSheets(){
+  openSheet2('Import leads from Google Sheets',`<p class="hint2">Share the sheet as "Anyone with the link can view", then paste the link.</p><div class="fg2 one"><label><span>Sheet link</span><input id="gs_url" placeholder="https://docs.google.com/spreadsheets/d/…"></label></div><div id="gs_r" class="hint2"></div>
+   <button class="b2 pri wide2b" id="gs_go" onclick="importLeadsSheet()">${ic2('plus',18)}Import leads</button>`); }
+function setPw(){
+  openSheet2('Change password',`<div class="fg2 one"><label><span>Current password</span><input type="password" id="p0" autocomplete="current-password"></label><label><span>New password, 10 or more characters</span><input type="password" id="p1" autocomplete="new-password"></label></div>
+   <button class="b2 pri wide2b" onclick="changePw()">Change password</button>`); }
+async function saveTpl(id){ const body=$("#tb"+id).value; if(!/stop/i.test(body) && !(await uiAsk("This message has no STOP opt out. Save anyway?", {ok:"Save anyway"}))) return;
+  try{ await api("save_template",{id:id||null,name:$("#tn"+id).value,body,default_delay:$("#td"+id).value}); S.templates=(await api("templates")).rows||[]; toast(id?"Template saved":"Template added"); setTemplates(); }catch(e){toast(e.message);} }
+async function delTpl(id){ if(!(await uiAsk("Delete this template?", {ok:"Delete"}))) return; await api("delete_template",{id}); S.templates=(await api("templates")).rows||[]; setTemplates(); }
+
+async function regen2(){ if(!(await uiAsk("Rebuild today's list now? It takes about a minute.",{ok:'Rebuild'}))) return; regen(); }
