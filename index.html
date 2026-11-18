@@ -550,7 +550,10 @@ function cleanPerson(x){ let t=String(x||"").replace(/^[^A-Za-z(&]*[A-Za-z]*\)\s
   .replace(/\([^)]*\)/g," ").replace(/\b(?:Mr|Mrs|Ms|Miss|Dr)\b\.*/g," ").replace(/\b(?:unknown|unkn)\b/gi," ")
   .replace(/(^|\s)[.,]+(?=\s|$)/g," ").replace(/^\s*&\s*|\s*&\s*$/g,"").replace(/\s+/g," ").trim();
   return /^(?:wife|husband|partner|owner|tenant)?$/i.test(t)?"":t; }
-function people(n){ const seen=new Set(); return String(n||"").split(/\s*(?:\/|;)\s*/).map(cleanPerson).filter(x=>{ const k=x.toLowerCase(); if(!x||seen.has(k)) return false; seen.add(k); return true; }); }
+function people(n){
+  // An estate's solicitor shows as just the firm: the phone button already says it's the solicitor, and the office suburb isn't needed
+  if(/^Solicitor:\s*/.test(String(n||""))) return [String(n).replace(/^Solicitor:\s*/,"").replace(/\s*\(estate of.*$/i,"").replace(/,\s*[^,]+$/,"").trim()];
+  const seen=new Set(); return String(n||"").split(/\s*(?:\/|;)\s*/).map(cleanPerson).filter(x=>{ const k=x.toLowerCase(); if(!x||seen.has(k)) return false; seen.add(k); return true; }); }
 function nameHTML(n){ const p=people(n); if(!p.length) return `<div class="name">Owner unknown</div>`;
   return `<div class="name">${esc(p[0])}</div>${p.length>1?`<div class="also">Also on file at this address: ${p.slice(1).map(esc).join(", ")}</div>`:""}`; }
 function whyLine(r){
@@ -1636,7 +1639,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=30"></script>
+<script src="v2.js?v=31"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>
