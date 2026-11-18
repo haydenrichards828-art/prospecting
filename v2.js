@@ -217,7 +217,7 @@ function numBtn(r,cls){
 }
 function warnBox(r,ph){
   const probate=(r.signals||[]).includes('probate'), sol=(r.reasons||[]).find(x=>x.startsWith('Probate notice ('));
-  let w=ph&&probate?`<div class="warn2">${ic2('warn',18)}<div><b>Deceased estate.</b> ${esc(reasonOf(r).sub)}.</div></div>`:'';
+  let w='';
   if(r.today_outcome){ const tc=(r.history||[]).find(h=>h.id&&h.outcome===r.today_outcome);
     w+=`<div class="warn2" style="color:#5ee08f;background:#16a34a1a;border-color:#16a34a55;align-items:center">${ic2('check',18)}<div style="flex:1"><b>Called today:</b> ${esc(LABEL[r.today_outcome]||r.today_outcome)}</div>${tc?`<button class="b2" style="height:36px" onclick="undoToday(${r.property_id},${tc.id})">Undo</button>`:''}</div>`; }
   return w;
@@ -234,7 +234,8 @@ function drawCall2(){
   const hasRooms=r.bedrooms>0||r.baths>0||r.cars>0;
   const attrs=[['bed',r.bedrooms>0?r.bedrooms:'?','Bedrooms'],['bath',r.baths>0?r.baths:'?','Bathrooms'],['car',r.cars>0?r.cars:(r.cars===0?0:'?'),'Car spaces'],yrs!=null?['clock',yrs+' years','Owned']:['tag',r.last_sale_price?price2(r.last_sale_price):'?','Last bought']];
   // A plain long hold isn't shown here: the years owned already sit beside the photo
-  const tag=R.k==='lh'?'':`<div class="tag2" style="border-color:${R.c}77"><div class="s" style="background:${R.c}">${ic2(R.icon,26,'#fff')}${R.side}</div><div class="m" style="background:${R.c}1a"><b>${esc(R.head)}</b>${R.sub?`<span style="color:${R.t}">${esc(R.sub)}</span>`:''}</div></div>`;
+  // No reason tags on the call screen: the reasons are listed in "Why they are on the list"
+  const tag=true?'':`<div class="tag2" style="border-color:${R.c}77"><div class="s" style="background:${R.c}">${ic2(R.icon,26,'#fff')}${R.side}</div><div class="m" style="background:${R.c}1a"><b>${esc(R.head)}</b>${R.sub?`<span style="color:${R.t}">${esc(R.sub)}</span>`:''}</div></div>`;
   const tl=timeline(r), t0=tl[0], lastRow=t0?(t0.mine?(()=>{ const k=OC2[t0.o]||OC2.no_answer; return row2(k[0],k[2],`${LABEL[t0.o]||t0.o}${t0.n>1?' ×'+t0.n:''}, ${dayMonLong(t0.at)}`,`${tl.length} interaction${tl.length>1?'s':''} with Dignam`,chev2(),`details2(${id},'calls')`); })()
     :row2('#6366f1','msg',`${esc(t0.who||'Dignam')}, ${t0.at?monYear(t0.at.slice(0,10)):'no date'}`,`${tl.length} interaction${tl.length>1?'s':''} with Dignam`,chev2(),`details2(${id},'calls')`))
     :row2('#4b5565','phone',r.callback&&r.notes?'Call back note':'Not contacted','',chev2(),`details2(${id},'calls')`);
@@ -271,7 +272,7 @@ function drawCall2(){
     ${warnBox(r,true)}
     ${numBtn(r,'pnum2')}
     <div class="g2 pgl2" style="flex:none">
-     ${R.k==='lh'?'':row2(R.c,R.icon,esc(R.line),'',chev2(),`details2(${id},'why')`)}
+     ${true?'':row2(R.c,R.icon,esc(R.line),'',chev2(),`details2(${id},'why')`)}
      ${lastRow}
      ${row2('#4b5565','clock',bought?`Bought ${bought.when}${bought.val?' for '+bought.val:''}`:'Sales history','',chev2(),`details2(${id},'history')`)}
     </div>
