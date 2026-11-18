@@ -66,7 +66,6 @@ function reasonOf(r){
   if(sig.includes('da_major')) return mk('da','Subdivision DA in the last year',ownLine||ss||'Plans lodged with council','Subdivision DA','Strong');
   if(S.type==='landlord'||rs.includes('Investment property')) return mk('inv','Investment property',[ownLine,ss].filter(Boolean).join(', ')||'Owner does not live here','Investor','Medium');
   if(yrs) return mk('lh',`Owned for ${yrs} years`,/prime/.test(own)?'In the prime selling window':(ss||'Long time owner'),ownLine,'Medium');
-  if(sig.includes('crm')) return mk('crm','In the Dignam CRM',ss||'Known to the office','In the CRM','Light');
   return mk('gen',rs[0]||'On today\'s list',ss||'','','Light');
 }
 function whyRows(r){
@@ -77,7 +76,7 @@ function whyRows(r){
     else if(/^Neighbour at/.test(x)) out.push(['trend',x.replace(/^Neighbour at /,'Sold nearby: '),'Strong']);
     else if(/DA/.test(x)) out.push(['land',x,'Strong']);
     else if(/^Owned/.test(x)) out.push(['clock',x.replace(/ yrs/,' years').replace(/\s*\(prime selling window\)/,', prime window').replace(/\s*\([^)]*\)$/,''),'Medium']);
-    else if(/CRM/.test(x)) out.push(['users','In the Dignam CRM','Light']);
+    else if(/CRM/.test(x)) return;
     else if(/Investment/.test(x)) out.push(['house',x,'Light']);
     else if(/Large home/i.test(x)) out.push(['bed',x,'Light']);
     else out.push(['tag',x,'Light']); });
