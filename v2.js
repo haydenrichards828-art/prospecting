@@ -198,7 +198,8 @@ function closeOv(){ S.sheetKeys=null; $("#ov").classList.remove("show"); $("#she
 function paintCalls(){ drawProg(); drawList(); keepAwake(); }
 function drawProg(){
   const ov=S.ov; if(!ov) return; const tg=ov.settings?.daily_target||100, c=ov.today_calls||0, a=ov.today_appraisals||0, cn=ov.today_connected||0, pace=livePace();
-  const t=$("#tstats"); if(t) t.innerHTML=`<div><b>${c}</b><span>/ ${tg} calls</span></div><div><b>${cn}</b><span>connected</span></div><div><b style="color:var(--ok)">${a}</b><span>appraisals</span></div>${pace?`<div><b>${pace}</b><span>an hour</span></div>`:''}`;
+  const pl=S.view!=='list'&&S.progLine?`<div class="pl2"><b>${S.progLine.here}</b><span>left in ${esc(S.progLine.sub)}</span></div><div class="pl2"><b>${S.progLine.total}</b><span>to go</span></div><i class="tsep"></i>`:'';
+  const t=$("#tstats"); if(t) t.innerHTML=pl+`<div><b>${c}</b><span>/ ${tg} calls</span></div><div><b>${cn}</b><span>connected</span></div><div><b style="color:var(--ok)">${a}</b><span>appraisals</span></div>${pace?`<div><b>${pace}</b><span>an hour</span></div>`:''}`;
   const p=$("#pstats"); if(p) p.innerHTML=`<span><b>${c}</b> / ${tg}</span><span><b style="color:var(--ok)">${a}</b> appr</span>`;
 }
 function curCall(){ const all=queue(); if(S.pick){ const p=all.find(r=>r.property_id===S.pick); if(p) return p; S.pick=null; } return all.find(r=>!r.today_outcome&&!S.skipped.has(r.property_id)); }
@@ -235,6 +236,8 @@ function drawCall2(){
     :row2('#4b5565','phone',r.callback&&r.notes?'Call back note':'Never called','',chev2(),`details2(${id},'calls')`);
   const bought=hist.find(h=>h.lab==='Bought');
   const icons=[r.bedrooms>0?['bed',r.bedrooms]:null,r.land_area?['land',Math.round(r.land_area)+' m²']:null,yrs!=null?['clock',yrs+' yrs']:null,r.street_sales_12m?['trend',r.street_sales_12m+' sold']:null].filter(Boolean);
+  S.progLine={sub:r.callback?'call backs':(r.suburb||''),here:r.callback?left.filter(x=>x.callback).length:left.filter(x=>!x.callback&&x.suburb===r.suburb).length,total:left.length};
+  drawProg();
   $("#main").innerHTML=failStrip()+hoursStrip()+`
   <div class="call2">
    <section class="cl2">
@@ -253,7 +256,7 @@ function drawCall2(){
      <div><span class="lab2">History</span>${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):'<p class="emptyline" style="margin:0">No sales on record</p>'}</div>
      <div><span class="lab2">Why ${ppl.length>1?'they are':'they are'} on the list</span>${why.slice(0,4).map(([i,t,l])=>`<div class="why2"><span class="tile" style="width:36px;height:36px;border-radius:10px;background:${LVL2[l][0]}">${ic2(i,17,'#fff')}</span><span class="rt2"><b>${esc(t)}</b><span style="color:${LVL2[l][1]}">${l}</span></span></div>`).join('')||'<p class="emptyline" style="margin:0">No reason recorded</p>'}</div>
     </div>
-    <div class="calls2"><span class="lab2">Calls and Dignam history</span>${callCards2(r)}<p class="emptyline" style="margin:6px 0 0">${r.callback?'Call back':esc(r.suburb||'')}${r.callback?'':` · ${left.filter(x=>!x.callback&&x.suburb===r.suburb).length} left here`} · ${left.length} to go</p></div>
+    <div class="calls2"><span class="lab2">Calls and Dignam history</span>${callCards2(r)}</div>
    </section>
   </div>
   <div class="pcall2">
