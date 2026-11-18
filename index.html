@@ -792,8 +792,6 @@ async function openMessage(id, ctx){
    <div id="extra"></div>
    <label>Preview</label><div class="preview" id="mp">Loading</div>
    <label>Send</label><div class="times" id="mw"></div><div id="mc"></div>
-   <label style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="consent" style="width:auto;min-height:0"> They agreed to receive texts on the call</label>
-   <p class="muted">When it's due (8am to 8pm Sydney time, never Sundays or public holidays) it appears in Messages, ready to send from your phone. Every message must end with an opt out.</p>
    <div style="display:flex;gap:8px;margin-top:12px"><button class="ghost" style="flex:1" onclick="closeOv()">Cancel</button><button class="primary" style="flex:2" id="msend"><i class="ti ti-send"></i>Schedule message</button></div>`;
   let when = t0.default_delay || "now";
   const drawWhen = ()=>{ if($("#msend")) setTimeout(label,0); $("#mw").innerHTML = WHEN.map(([k,l])=>`<button class="${k===when?"on":""}" data-k="${k}">${l}</button>`).join(""); $("#mw").querySelectorAll("button").forEach(b=>b.onclick=()=>{when=b.dataset.k;drawWhen();}); $("#mc").innerHTML = when==="custom"?`<input type="datetime-local" id="mcd" style="margin-top:6px" value="${sydInput(new Date(Date.now()+86400e3))}">`:""; };
@@ -818,10 +816,10 @@ async function openMessage(id, ctx){
     if (when==="custom" && !$("#mcd").value) return toast("Pick a send time");
     if (direct() && pv.phone && pv.body) {   // must open inside the tap or the phone blocks it
       openUrl(smsLink(pv.phone, pv.body)); closeOv();
-      api("schedule_message",{...a,when,consent:$("#consent").checked,sent_now:true}).catch(()=>{});
+      api("schedule_message",{...a,when,consent:!!$("#consent")?.checked,sent_now:true}).catch(()=>{});
       return;
     }
-    try { const r = await api("schedule_message",{...a,when,custom_at:when==="custom"?sydToISO($("#mcd").value):null,consent:$("#consent").checked}); closeOv(); toast("Scheduled for "+fmt(r.send_at)); } catch(e){ toast(e.message); }
+    try { const r = await api("schedule_message",{...a,when,custom_at:when==="custom"?sydToISO($("#mcd").value):null,consent:!!$("#consent")?.checked}); closeOv(); toast("Scheduled for "+fmt(r.send_at)); } catch(e){ toast(e.message); }
   };
   $("#ov").classList.add("show");
 }
@@ -1641,7 +1639,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=33"></script>
+<script src="v2.js?v=34"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>
