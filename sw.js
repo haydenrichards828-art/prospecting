@@ -1,6 +1,6 @@
 // Keeps a copy of the app on the phone so it opens instantly, even on weak signal.
 // The page itself is always fetched fresh first, so a new version shows straight away when there is signal.
-const C = "prospect-v2", P = "photos-v1";
+const C = "prospect-v3", P = "photos-v1";
 self.addEventListener("install", e => { self.skipWaiting(); e.waitUntil(caches.open(C).then(c => c.addAll(["./", "index.html"]).catch(() => {}))); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C && k !== P).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", e => {
@@ -15,7 +15,7 @@ self.addEventListener("fetch", e => {
   }
   if (req.mode === "navigate") {                                               // the page: fresh if it arrives within 2.5s, else the saved copy
     e.respondWith(caches.open(C).then(async c => {
-      const net = fetch(req).then(r => { if (r.ok) c.put(url.pathname.endsWith("/") ? "./" : req, r.clone()); return r; });
+      const net = fetch(req.url, { cache: "no-cache", credentials: "same-origin" }).then(r => { if (r.ok) c.put(url.pathname.endsWith("/") ? "./" : req, r.clone()); return r; });   // always check for a new version, never the browser's 10 minute copy
       const saved = await c.match(req, { ignoreSearch: true }) || await c.match("index.html");
       if (!saved) return net;
       return Promise.race([net.catch(() => saved), new Promise(res => setTimeout(() => res(saved), 2500))]);
