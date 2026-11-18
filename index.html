@@ -1190,7 +1190,7 @@ function openLead(id, opts={}){
      <button class="ghost" style="margin-top:6px;width:100%" onclick="editDetails()"><i class="ti ti-pencil"></i>Edit name, phone and address</button></details>`:""}
    <div id="wview_box" ${opts.fresh||!id?"hidden":""}>${wantsView(b)}</div>
    <div class="weditor" id="weditor" ${opts.fresh||!id?"":"hidden"}><div class="wlabel">What they want to buy</div>
-    <div class="lrow2"><input id="b_max" class="sm" inputmode="decimal" placeholder="Budget up to" value="${b.max?money(b.max):""}"><input id="b_min" class="sm" inputmode="decimal" placeholder="Budget from" value="${b.min?money(b.min):""}"></div>
+    <input id="b_max" class="sm" inputmode="decimal" placeholder="Budget up to" value="${b.max?money(b.max):""}"><input id="b_min" type="hidden" value="${b.min?money(b.min):""}">
     <div class="lrow3">${["beds","baths","cars"].map(k=>`<select id="b_${k}" class="sm" aria-label="${k}"><option value="">${{beds:"Beds",baths:"Baths",cars:"Parking"}[k]} any</option>${[1,2,3,4,5].map(n=>`<option value="${n}" ${+b[k]===n?"selected":""}>${n}+ ${{beds:"bed",baths:"bath",cars:"car"}[k]}</option>`).join("")}</select>`).join("")}</div>
     <div class="chipgrid sm" id="b_types">${LO.types.map(t=>`<button class="${(b.types||[]).includes(t)?"on":""}" onclick="this.classList.toggle('on')">${t}</button>`).join("")}<button id="b_flat" class="${b.flat?"on":""}" onclick="this.classList.toggle('on')">Flat block</button></div>
     <div class="chipgrid sm" id="b_musts">${[...new Set([...LO.musts,...(b.musts||[])])].map(t=>`<button class="${(b.musts||[]).includes(t)?"on":""}" onclick="this.classList.toggle('on')">${esc(t)}</button>`).join("")}</div>
