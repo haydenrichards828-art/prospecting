@@ -130,7 +130,7 @@ function timeline(r){
 function callCards2(r){
   const cbn=r.callback&&r.notes?`<div class="cc2"><i style="background:var(--cb)"></i><div><div class="h"><b style="color:var(--cbT)">Call back note</b><span class="lab2">${esc(dayMon(r.callback_at))}</span></div><p>${esc(r.notes)}</p></div></div>`:'';
   const t=timeline(r);
-  if(!t.length) return cbn||`<p class="emptyline" style="margin:0">Never called by anyone at Dignam.</p>`;
+  if(!t.length) return cbn||`<p class="emptyline" style="margin:0">Not contacted.</p>`;
   const when=a=>{ if(!a) return 'no date'; const d=new Date(a); return (Date.now()-d)<330*864e5?dayMonLong(a):monYear(a.slice(0,10)); };
   return cbn+t.map(e=>{
     if(e.mine){ const k=OC2[e.o]||OC2.no_answer; return `<div class="cc2"><i style="background:${k[0]}"></i><div><div class="h"><b style="color:${k[1]}">${esc(LABEL[e.o]||e.o)}${e.n>1?` ×${e.n}`:''}</b><span class="lab2">You · ${e.n>1?'latest ':''}${esc(when(e.at))}</span></div>${e.text?`<p>${esc(e.text)}</p>`:''}</div></div>`; }
@@ -233,7 +233,7 @@ function drawCall2(){
   const tag=`<div class="tag2" style="border-color:${R.c}77"><div class="s" style="background:${R.c}">${ic2(R.icon,26,'#fff')}${R.side}</div><div class="m" style="background:${R.c}1a"><b>${esc(R.head)}</b>${R.sub?`<span style="color:${R.t}">${esc(R.sub)}</span>`:''}</div></div>`;
   const tl=timeline(r), t0=tl[0], lastRow=t0?(t0.mine?(()=>{ const k=OC2[t0.o]||OC2.no_answer; return row2(k[0],k[2],`${LABEL[t0.o]||t0.o}${t0.n>1?' ×'+t0.n:''}, ${dayMonLong(t0.at)}`,`${tl.length} interaction${tl.length>1?'s':''} with Dignam`,chev2(),`details2(${id},'calls')`); })()
     :row2('#6366f1','msg',`${esc(t0.who||'Dignam')}, ${t0.at?monYear(t0.at.slice(0,10)):'no date'}`,`${tl.length} interaction${tl.length>1?'s':''} with Dignam`,chev2(),`details2(${id},'calls')`))
-    :row2('#4b5565','phone',r.callback&&r.notes?'Call back note':'Never called','',chev2(),`details2(${id},'calls')`);
+    :row2('#4b5565','phone',r.callback&&r.notes?'Call back note':'Not contacted','',chev2(),`details2(${id},'calls')`);
   const bought=hist.find(h=>h.lab==='Bought');
   const icons=[r.bedrooms>0?['bed',r.bedrooms]:null,r.land_area?['land',Math.round(r.land_area)+' m²']:null,yrs!=null?['clock',yrs+' yrs']:null,r.street_sales_12m?['trend',r.street_sales_12m+' sold']:null].filter(Boolean);
   S.progLine={sub:r.callback?'call backs':(r.suburb||''),here:r.callback?left.filter(x=>x.callback).length:left.filter(x=>!x.callback&&x.suburb===r.suburb).length,total:left.length};
@@ -353,7 +353,7 @@ function drawList2(){
   const rows=(S.lsub==='Call backs'?cbs:rest.filter(r=>(r.suburb||'Suburb unknown')===S.lsub)).slice().sort((a,b)=>(!!a.today_outcome-!!b.today_outcome));
   const left=rows.filter(r=>!r.today_outcome).length;
   const last=r=>{ if(r.today_outcome){ const k=OC2[r.today_outcome]||OC2.no_answer; return `<span style="display:flex;gap:10px;align-items:center"><span style="font-size:14px;width:52px;color:var(--t2)">Today</span><span class="pill2" style="color:${k[1]};background:color-mix(in srgb, ${k[1]} 14%, transparent)">${esc(LABEL[r.today_outcome])}</span></span>`; }
-    const g=callGroups(r); if(!g.length) return '<span style="font-size:14px;color:var(--t3)">Never called</span>'; const k=OC2[g[0].o]||OC2.no_answer;
+    const g=callGroups(r); if(!g.length) return '<span style="font-size:14px;color:var(--t3)">Not contacted</span>'; const k=OC2[g[0].o]||OC2.no_answer;
     return `<span style="display:flex;gap:10px;align-items:center"><span style="font-size:14px;width:52px;color:var(--t2)">${esc(dayMon(g[0].at))}</span><span class="pill2" style="color:${k[1]};background:color-mix(in srgb, ${k[1]} 14%, transparent)">${esc(LABEL[g[0].o]||g[0].o)}${g[0].n>1?' ×'+g[0].n:''}</span></span>`; };
   $("#main").innerHTML=failStrip()+`<div class="list2">
    <nav class="rail2" aria-label="Suburbs">${cbs.length?`<button class="cbk ${S.lsub==='Call backs'?'on':''}" onclick="S.lsub='Call backs';drawList()">Call backs<span>${cbs.filter(r=>!r.today_outcome).length}</span></button>`:''}${subs.map(([s,n])=>`<button class="${s===S.lsub?'on':''}" onclick="S.lsub=this.dataset.s;drawList()" data-s="${esc(s)}">${esc(s)}<span>${n}</span></button>`).join('')}</nav>
