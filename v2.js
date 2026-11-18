@@ -578,3 +578,8 @@ async function rejectMatch(leadId,listingId){ const l=(S.leads||[]).find(x=>x.id
   const prev=l.buy; l.buy=buy; openLead(leadId,{keepScroll:true});
   try{ await api("save_lead",{id:leadId,lead:{buy}}); toast("Removed. It won't show for them again",()=>{ l.buy=prev; api("save_lead",{id:leadId,lead:{buy:prev||{}}}).catch(()=>{}); openLead(leadId,{keepScroll:true}); }); }
   catch(e){ l.buy=prev; openLead(leadId,{keepScroll:true}); toast("Couldn't save that. "+e.message); } }
+// New lead: their details first, then what they want to buy
+window.openLead=(function(orig){ return function(id,opts){ const r=orig(id,opts);
+  [['d_lead_type','Lead type'],['d_source','Source'],['d_timeframe','Timeframe']].forEach(([k,t])=>{ const o=$('#'+k)?.querySelector('option[value=""]'); if(o) o.textContent=t; });
+  if(!id){ const d=$("#deditor"), w=$("#wview_box"); if(d&&w&&w.parentNode){ w.parentNode.insertBefore(d,w); if(!d.querySelector('.wlabel')) d.insertAdjacentHTML('afterbegin','<div class="wlabel">Their details</div>'); } }
+  return r; }; })(window.openLead);
