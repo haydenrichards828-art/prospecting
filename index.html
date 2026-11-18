@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=11">
+<link rel="stylesheet" href="v2.css?v=12">
 </head>
 <body>
 <div id="app"></div>
@@ -1208,9 +1208,9 @@ function openLead(id, opts={}){
     <div class="lrow3">${["beds","baths","cars"].map(k=>`<select id="b_${k}" class="sm" aria-label="${k}"><option value="">${{beds:"Beds",baths:"Baths",cars:"Parking"}[k]} any</option>${[1,2,3,4,5].map(n=>`<option value="${n}" ${+b[k]===n?"selected":""}>${n}+ ${{beds:"bed",baths:"bath",cars:"car"}[k]}</option>`).join("")}</select>`).join("")}</div>
     <div class="chipgrid sm" id="b_types">${LO.types.map(t=>`<button class="${(b.types||[]).includes(t)?"on":""}" onclick="this.classList.toggle('on')">${t}</button>`).join("")}<button id="b_flat" class="${b.flat?"on":""}" onclick="this.classList.toggle('on')">Flat block</button></div>
     <div class="chipgrid sm" id="b_musts">${[...new Set([...LO.musts,...(b.musts||[])])].map(t=>`<button class="${(b.musts||[]).includes(t)?"on":""}" onclick="this.classList.toggle('on')">${esc(t)}</button>`).join("")}</div>
-    <div class="lrow2"><input id="b_land" class="sm" inputmode="numeric" placeholder="Land m² at least" value="${b.land||""}"><input id="b_must_add" class="sm" placeholder="Other must have"></div>
+    <input id="b_land" type="hidden" value="${b.land||""}">
     <div class="chipgrid sm" id="b_subs">${(b.suburbs||[]).map(s=>`<button class="on" onclick="this.remove()">${esc(s)} ×</button>`).join("")}</div>
-    <input id="b_sub_add" class="sm" list="sublist" placeholder="Add a suburb they want" onchange="addSub(this)"><datalist id="sublist">${SUBURBS.map(s=>`<option value="${s}">`).join("")}</datalist>${id?`<button class="wdone" onclick="editWants(false)"><i class="ti ti-check"></i>Done</button>`:""}</div>
+    <div class="lrow2 wsub"><div style="position:relative"><input id="b_sub_add" class="sm" list="sublist" placeholder="Suburbs they want" onchange="addSub(this)"></div><input id="b_must_add" class="sm" placeholder="Other must have"></div><datalist id="sublist">${SUBURBS.map(s=>`<option value="${s}">`).join("")}</datalist>${id?`<button class="wdone" onclick="editWants(false)"><i class="ti ti-check"></i>Done</button>`:""}</div>
    <div class="deditor" id="deditor" ${id?"hidden":""}>
     <div class="lrow2"><input id="d_name" class="sm" placeholder="Name" value="${esc(l.name||"")}"><input id="d_phone" class="sm" inputmode="tel" placeholder="Phone" value="${esc(l.phone||"")}"></div>
     <div class="lrow2"><input id="d_address" class="sm" placeholder="Address" value="${esc(l.address||"")}"><input id="d_suburb" class="sm" list="sublist" placeholder="Suburb" value="${esc(l.suburb||"")}"></div>
@@ -1633,7 +1633,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=21"></script>
+<script src="v2.js?v=22"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

@@ -310,3 +310,21 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 
 /* The card drop map keeps its layers to itself, so menus and sheets always sit on top of it */
 #dmap{position:relative;z-index:0;isolation:isolate}
+
+/* New and edited leads: tighter so the whole form fits without scrolling */
+.lsheet .weditor,.lsheet .deditor{padding:8px 10px;gap:6px}
+.lsheet .weditor input.sm,.lsheet .deditor input.sm,.lsheet .weditor select.sm,.lsheet .deditor select.sm{height:36px;min-height:36px;padding-top:0;padding-bottom:0}
+.lsheet .lrow2,.lsheet .lrow3{gap:6px}
+.lsheet .chipgrid.sm{gap:5px}
+.lsheet .chipgrid.sm button{padding:5px 10px;min-height:0}
+.lsheet .wlabel{margin-bottom:2px}
+.lsheet .chipgrid.sm:empty{display:none}
+.lsheet .wsub .sugg2{top:100%;left:0;right:0}
+.lsheet .chipgrid.sm{margin-top:4px;gap:4px}
+.lsheet .chipgrid.sm button{min-height:28px;padding:3px 9px}
+.lsheet .weditor,.lsheet .deditor{margin-top:8px}
+#sheet.lsheet .lsave{margin-top:8px}#sheet.lsheet .lsave button{min-height:46px}
+@media (max-height:700px){#sheet.lsheet{padding-top:2px}.lsheet .weditor input.sm,.lsheet .deditor input.sm,.lsheet .weditor select.sm,.lsheet .deditor select.sm{height:34px;min-height:34px}}
+@media (max-height:700px){#sheet.lsheet .lsave button{min-height:42px}#sheet.lsheet .lsave{padding-top:6px}.lsheet .chipgrid.sm button{min-height:26px}.lsheet .lrow2,.lsheet .lrow3{margin-top:5px}}
+@media (max-height:700px){.lsheet .wlabel{font-size:11px;margin-bottom:0}}
+.lsheet .wsub{align-items:center}.lsheet .wsub input{margin:0!important;width:100%}
