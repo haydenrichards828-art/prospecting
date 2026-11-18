@@ -107,13 +107,34 @@ function dignamLast(r){ const ns=r.crm_notes||[]; if(!ns.length) return null;
   return {when:d?monYear(d.on):null, by:d&&d.by, owner:own&&!/^Dignam Real Estate/i.test(own)?own:null, recent:!!d&&(Date.now()-new Date(d.on))<365*864e5}; }
 function dignamLine(r){ const x=dignamLast(r); if(!x) return '';
   const t=x.when?`Last Dignam contact ${x.when}${x.by?', '+x.by:''}`:'In the Dignam CRM, no contact date';
-  return `<div class="dl2" style="color:${x.recent?'var(--cbT)':'var(--t2)'}">${ic2('users',15)}<span>${esc(t)}${x.owner&&x.owner!==x.by?` · Primary agent ${esc(x.owner)}`:''}</span></div>`; }
+  return `<div class="dl2" style="color:${x.recent?'var(--cbT)':'var(--t2)'}">${ic2('users',15)}<span>${esc(t)}${x.owner&&x.owner!==x.by?`<span class="pa"> · Primary agent ${esc(x.owner)}</span>`:''}</span></div>`; }
 function officeNotes(r){ const ns=(r.crm_notes||[]).filter(n=>n.comments||n.last); if(!ns.length) return '';
   return ns.map(n=>`<div class="cc2"><i style="background:#6366f1"></i><div><div class="h"><b style="color:#c7d2fe">Office notes</b><span class="lab2">${esc(n.owner||n.name||'AgentBox')}${n.on?' · last contact '+esc(monYear(n.on)):''}</span></div>${n.comments?`<p>${esc(n.comments)}</p>`:''}${n.last?`<p style="color:var(--t2)">${esc(n.last)}</p>`:''}</div></div>`).join(''); }
+// One timeline: your calls and everything Dignam has logged with them, newest first
+const MON3={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+function officeEntries(r){ const out=[];
+  (r.crm_notes||[]).forEach(n=>{
+    const ln=String(n.last||''); let m; const rx=/(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w* (\d{4}):\s*(.*?)\s*\(Added by:\s*([^)]+)\)/gi;
+    while((m=rx.exec(ln))) out.push({at:new Date(Date.UTC(+m[3],MON3[m[2].toLowerCase()],+m[1],12)).toISOString(),who:m[5].trim(),text:m[4].replace(/^[\s\-:]+|[\s\-]+$/g,''),office:true});
+    const cm=String(n.comments||''); const parts=cm.split(/(?=\b\d{1,2}\/\d{1,2}\/\d{2,4}\b)/);
+    parts.forEach(p=>{ p=p.trim(); if(!p) return; const d=p.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b\s*(.*)$/s);
+      if(d){ let y=+d[3]; if(y<100) y+=2000; const dt=new Date(Date.UTC(y,+d[2]-1,+d[1],12)); const ini=(d[4].match(/^([A-Z]{2,3})\b\s*[-–]?\s*/)||[]);
+        out.push({at:isNaN(dt)?null:dt.toISOString(),who:ini[1]||null,text:d[4].slice(ini[0]?ini[0].length:0).replace(/^[.\s\-–:]+/,'').trim(),office:true}); }
+      else out.push({at:null,who:null,text:p,office:true}); });
+  });
+  return out.filter(e=>e.text); }
+function timeline(r){
+  const mine=callGroups(r).map(c=>({at:c.at,o:c.o,n:c.n,text:c.note,mine:true}));
+  const all=[...mine,...officeEntries(r)];
+  return all.sort((a,b)=>(b.at?Date.parse(b.at):-1)-(a.at?Date.parse(a.at):-1)); }
 function callCards2(r){
-  const g=callGroups(r), cbn=r.callback&&r.notes?`<div class="cc2"><i style="background:var(--cb)"></i><div><div class="h"><b style="color:var(--cbT)">Call back note</b><span class="lab2">${esc(dayMon(r.callback_at))}</span></div><p>${esc(r.notes)}</p></div></div>`:'';
-  if(!g.length) return cbn+((cbn||officeNotes(r))?'':`<p class="emptyline" style="margin:0">Never called. This is the first time.</p>`)+officeNotes(r);
-  return cbn+g.map(c=>{ const k=OC2[c.o]||OC2.no_answer; return `<div class="cc2"><i style="background:${k[0]}"></i><div><div class="h"><b style="color:${k[1]}">${esc(LABEL[c.o]||c.o)}${c.n>1?` ×${c.n}`:''}</b><span class="lab2">${c.n>1?'latest ':''}${esc(dayMonLong(c.at))}</span></div>${c.note?`<p>${esc(c.note)}</p>`:''}</div></div>`; }).join('')+officeNotes(r);
+  const cbn=r.callback&&r.notes?`<div class="cc2"><i style="background:var(--cb)"></i><div><div class="h"><b style="color:var(--cbT)">Call back note</b><span class="lab2">${esc(dayMon(r.callback_at))}</span></div><p>${esc(r.notes)}</p></div></div>`:'';
+  const t=timeline(r);
+  if(!t.length) return cbn||`<p class="emptyline" style="margin:0">Never called by anyone at Dignam.</p>`;
+  const when=a=>{ if(!a) return 'no date'; const d=new Date(a); return (Date.now()-d)<330*864e5?dayMonLong(a):monYear(a.slice(0,10)); };
+  return cbn+t.map(e=>{
+    if(e.mine){ const k=OC2[e.o]||OC2.no_answer; return `<div class="cc2"><i style="background:${k[0]}"></i><div><div class="h"><b style="color:${k[1]}">${esc(LABEL[e.o]||e.o)}${e.n>1?` ×${e.n}`:''}</b><span class="lab2">You · ${e.n>1?'latest ':''}${esc(when(e.at))}</span></div>${e.text?`<p>${esc(e.text)}</p>`:''}</div></div>`; }
+    return `<div class="cc2"><i style="background:#6366f1"></i><div><div class="h"><b style="color:#c7d2fe">${esc(e.who||'Dignam')}</b><span class="lab2">${esc(when(e.at))}</span></div><p>${esc(e.text)}</p></div></div>`; }).join('');
 }
 
 // ---------- photos: NSW aerial imagery plus a Street View link ----------
@@ -209,7 +230,9 @@ function drawCall2(){
   const left=all.filter(x=>!x.today_outcome&&!S.skipped.has(x.property_id));
   const attrs=[r.bedrooms>0?['bed',r.bedrooms,'Bedrooms']:null,r.land_area?['land',Math.round(r.land_area)+' m²','Land']:null,yrs!=null?['clock',yrs+' years','Owned']:null,r.last_sale_price?['tag',price2(r.last_sale_price),'Last bought']:null,['trend',r.street_sales_12m||0,'Street sales this year']].filter(Boolean).slice(0,4);
   const tag=`<div class="tag2" style="border-color:${R.c}77"><div class="s" style="background:${R.c}">${ic2(R.icon,26,'#fff')}${R.side}</div><div class="m" style="background:${R.c}1a"><b>${esc(R.head)}</b>${R.sub?`<span style="color:${R.t}">${esc(R.sub)}</span>`:''}</div></div>`;
-  const lastRow=g.length?(()=>{ const k=OC2[g[0].o]||OC2.no_answer; return row2(k[0],k[2],`${LABEL[g[0].o]||g[0].o}${g[0].n>1?' ×'+g[0].n:''}, ${dayMonLong(g[0].at)}`,'',chev2(),`details2(${id},'calls')`); })():row2((r.crm_notes||[]).length?'#6366f1':'#4b5565',(r.crm_notes||[]).length?'msg':'phone',r.callback&&r.notes?'Call back note':(r.crm_notes||[]).length?'Office notes':'Never called','',chev2(),`details2(${id},'calls')`);
+  const tl=timeline(r), t0=tl[0], lastRow=t0?(t0.mine?(()=>{ const k=OC2[t0.o]||OC2.no_answer; return row2(k[0],k[2],`${LABEL[t0.o]||t0.o}${t0.n>1?' ×'+t0.n:''}, ${dayMonLong(t0.at)}`,`${tl.length} interaction${tl.length>1?'s':''} with Dignam`,chev2(),`details2(${id},'calls')`); })()
+    :row2('#6366f1','msg',`${esc(t0.who||'Dignam')}, ${t0.at?monYear(t0.at.slice(0,10)):'no date'}`,`${tl.length} interaction${tl.length>1?'s':''} with Dignam`,chev2(),`details2(${id},'calls')`))
+    :row2('#4b5565','phone',r.callback&&r.notes?'Call back note':'Never called','',chev2(),`details2(${id},'calls')`);
   const bought=hist.find(h=>h.lab==='Bought');
   const icons=[r.bedrooms>0?['bed',r.bedrooms]:null,r.land_area?['land',Math.round(r.land_area)+' m²']:null,yrs!=null?['clock',yrs+' yrs']:null,r.street_sales_12m?['trend',r.street_sales_12m+' sold']:null].filter(Boolean);
   $("#main").innerHTML=failStrip()+hoursStrip()+`
@@ -230,7 +253,7 @@ function drawCall2(){
      <div><span class="lab2">History</span>${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):'<p class="emptyline" style="margin:0">No sales on record</p>'}</div>
      <div><span class="lab2">Why ${ppl.length>1?'they are':'they are'} on the list</span>${why.slice(0,4).map(([i,t,l])=>`<div class="why2"><span class="tile" style="width:36px;height:36px;border-radius:10px;background:${LVL2[l][0]}">${ic2(i,17,'#fff')}</span><span class="rt2"><b>${esc(t)}</b><span style="color:${LVL2[l][1]}">${l}</span></span></div>`).join('')||'<p class="emptyline" style="margin:0">No reason recorded</p>'}</div>
     </div>
-    <div class="calls2"><span class="lab2">Last calls</span>${callCards2(r)}<p class="emptyline" style="margin:6px 0 0">${r.callback?'Call back':esc(r.suburb||'')}${r.callback?'':` · ${left.filter(x=>!x.callback&&x.suburb===r.suburb).length} left here`} · ${left.length} to go</p></div>
+    <div class="calls2"><span class="lab2">Calls and Dignam history</span>${callCards2(r)}<p class="emptyline" style="margin:6px 0 0">${r.callback?'Call back':esc(r.suburb||'')}${r.callback?'':` · ${left.filter(x=>!x.callback&&x.suburb===r.suburb).length} left here`} · ${left.length} to go</p></div>
    </section>
   </div>
   <div class="pcall2">
@@ -280,7 +303,7 @@ function details2(id,tab){
    history:()=>`${photo2(r,'height:190px',true)}<div class="g2" style="padding:16px;display:flex;flex-direction:column;gap:14px">${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):'<span class="emptyline">No sales on record</span>'}</div>
      <div class="g2">${[['land',r.land_area?Math.round(r.land_area)+' m²':'Not known','Land'],['clock',yrsSince(r.last_sale_date)!=null?yrsSince(r.last_sale_date)+' years':'Not known','Owned'],['trend',String(r.street_sales_12m||0),'Street sales this year']].map(([i,v,l])=>row2('#4b5565',i,esc(v),l)).join('')}</div>
      ${(r.street_address||r.suburb)?`<a class="b2" href="${esc(rpUrl(r.street_address,r.suburb,r.rp_link,r.postcode))}" target="_blank" rel="noopener" data-addr="${esc(rpAddress(r.street_address,r.suburb,r.postcode))}" onclick="rpCopy(this)">Open in RP Data</a>`:''}`}[tab]();
-  openSheet2(esc(people(r.owner_name)[0]||'Owner unknown'),`<div class="seg2">${[['calls','Calls'],['why','Why'],['history','History']].map(([k,l])=>`<button class="${k===tab?'on':''}" onclick="details2(${id},'${k}')">${l}</button>`).join('')}</div>${body}`);
+  openSheet2(esc(people(r.owner_name)[0]||'Owner unknown'),`<div class="seg2">${[['calls','Calls'],['why','Why'],['history','Sales']].map(([k,l])=>`<button class="${k===tab?'on':''}" onclick="details2(${id},'${k}')">${l}</button>`).join('')}</div>${body}`);
 }
 function moreSheet2(id){
   openSheet2('More',`<div class="g2">${row2('var(--acc)','msg','Text message','Schedule a text from a template','<span class="kb2 hide-phone">T</span>',`closeOv();openMessage(${id})`)}${row2('var(--ap)','star','Listed with us','They signed with Dignam','',`record(${id},'listed')`)}</div>

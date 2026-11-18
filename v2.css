@@ -298,3 +298,4 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 
 .dl2{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:6px}.dl2 svg{flex:none}
 .pidr2 .dl2{font-size:13px}
+.pidr2 .dl2 .pa{display:none}
