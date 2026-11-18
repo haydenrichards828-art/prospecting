@@ -33,7 +33,7 @@ const OUT2=[
 const OC2={no_answer:['#5b6576','var(--naT)','phone'],not_interested:['var(--ns)','var(--nsT)','x'],call_back:['var(--cb)','var(--cbT)','clock'],lead:['var(--ld)','var(--accT)','lead'],appraisal:['var(--ap)','#5ee08f','appr'],listed:['var(--ap)','#5ee08f','star'],do_not_call:['var(--ns)','var(--nsT)','ban']};
 const MONF=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONS=MONF.map(m=>m.slice(0,3));
-const TABS2=[['calls','Calls'],['leads','Leads'],['drops','Card drops'],['insights','Stats'],['settings','Settings']];
+const TABS2=[['calls','Calls'],['leads','Leads'],['pipeline','Appraisals and listings'],['drops','Card drops'],['insights','Stats'],['settings','Settings']];
 const LVL2={Strong:['var(--acc)','#93c0ff'],Medium:['#6366f1','#a5b4fc'],Light:['#475063','var(--t2)'],Note:['#b45309','#ffc864']};
 
 // ---------- small helpers ----------
@@ -157,7 +157,7 @@ function tabBtn(id){ return `<button class="tabbtn" id="${id}" onclick="navPop(t
 function vseg2(){ return S.tab==='calls'&&!S.searching?`<div class="vseg">${[['call','Calling'],['list','List']].map(([k,l])=>`<button class="${S.view===k?'on':''}" onclick="setView('${k}')">${l}</button>`).join('')}</div>`:''; }
 function setView(v){ S.view=v; S.dialer=v!=='list'; try{localStorage.setItem("dp_view",v)}catch{} if(v==='list') S.pick=null; render(); }
 function navPop(btn){
-  const ico={calls:['var(--acc)','phone'],leads:['#6366f1','users'],drops:['var(--cb)','mail'],insights:['var(--ap)','chart'],settings:['#4b5565','gear']};
+  const ico={calls:['var(--acc)','phone'],leads:['#6366f1','users'],pipeline:['var(--ap)','appr'],drops:['var(--cb)','mail'],insights:['var(--ap)','chart'],settings:['#4b5565','gear']};
   const ready=S.ov?.ready_texts||0, nl=(S.leads||[]).filter(l=>newMatches(l).length).length;
   const body=`<div class="g2">${TABS2.map(([k,l])=>row2(ico[k][0],ico[k][1],l,k==='leads'&&nl?`${nl} with new matching homes`:'',k===S.tab?ic2('check',18,'var(--accT)'):'',`closePop2();closeOv();go('${k}')`)).join('')}</div>
    ${ready?`<div class="g2" style="margin-top:10px">${row2('var(--acc)','send','Texts',`${ready} ready to send`,chev2(),"closePop2();closeOv();go('messages')")}</div>`:''}`;
@@ -217,7 +217,8 @@ function numBtn(r,cls){
 function warnBox(r,ph){
   const probate=(r.signals||[]).includes('probate'), sol=(r.reasons||[]).find(x=>x.startsWith('Probate notice ('));
   let w=ph&&probate?`<div class="warn2">${ic2('warn',18)}<div><b>Deceased estate.</b> ${esc(reasonOf(r).sub)}.</div></div>`:'';
-  if(r.today_outcome) w+=`<div class="warn2" style="color:#5ee08f;background:#16a34a1a;border-color:#16a34a55">${ic2('check',18)}<div><b>Called today:</b> ${esc(LABEL[r.today_outcome]||r.today_outcome)}</div></div>`;
+  if(r.today_outcome){ const tc=(r.history||[]).find(h=>h.id&&h.outcome===r.today_outcome);
+    w+=`<div class="warn2" style="color:#5ee08f;background:#16a34a1a;border-color:#16a34a55;align-items:center">${ic2('check',18)}<div style="flex:1"><b>Called today:</b> ${esc(LABEL[r.today_outcome]||r.today_outcome)}</div>${tc?`<button class="b2" style="height:36px" onclick="undoToday(${r.property_id},${tc.id})">Undo</button>`:''}</div>`; }
   return w;
 }
 function drawCall2(){
@@ -356,11 +357,10 @@ function drawList2(){
     const g=callGroups(r); if(!g.length) return '<span style="font-size:14px;color:var(--t3)">Not contacted</span>'; const k=OC2[g[0].o]||OC2.no_answer;
     return `<span style="display:flex;gap:10px;align-items:center"><span style="font-size:14px;width:52px;color:var(--t2)">${esc(dayMon(g[0].at))}</span><span class="pill2" style="color:${k[1]};background:color-mix(in srgb, ${k[1]} 14%, transparent)">${esc(LABEL[g[0].o]||g[0].o)}${g[0].n>1?' ×'+g[0].n:''}</span></span>`; };
   $("#main").innerHTML=failStrip()+`<div class="list2">
-   <nav class="rail2" aria-label="Suburbs">${cbs.length?`<button class="cbk ${S.lsub==='Call backs'?'on':''}" onclick="S.lsub='Call backs';drawList()">Call backs<span>${cbs.filter(r=>!r.today_outcome).length}</span></button>`:''}${subs.map(([s,n])=>`<button class="${s===S.lsub?'on':''}" onclick="S.lsub=this.dataset.s;drawList()" data-s="${esc(s)}">${esc(s)}<span>${n}</span></button>`).join('')}</nav>
+   <nav class="rail2" aria-label="Suburbs"><button class="cbk" onclick="upcomingCB()">Booked call backs<span>${ic2('chev',14)}</span></button>${cbs.length?`<button class="cbk ${S.lsub==='Call backs'?'on':''}" onclick="S.lsub='Call backs';drawList()">Call backs<span>${cbs.filter(r=>!r.today_outcome).length}</span></button>`:''}${subs.map(([s,n])=>`<button class="${s===S.lsub?'on':''}" onclick="S.lsub=this.dataset.s;drawList()" data-s="${esc(s)}">${esc(s)}<span>${n}</span></button>`).join('')}</nav>
    <div class="lm2">
     <div class="lh2"><h1>${esc(S.lsub)}</h1><span style="font-size:14px;color:var(--t2)">${left} to call</span>
      <div class="seg2 mini" style="margin-left:auto"><button class="${S.type==='seller'?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button></div>
-     <label class="tsearch">${ic2('search',16)}<input type="search" placeholder="Find a name or street" aria-label="Find" oninput="filterRows2(this.value)"></label>
      <button class="b2 pri hide-phone" style="height:40px" onclick="startSub()">${ic2('phone',18)}Start ${esc(S.lsub)}<span class="key2">Enter</span></button></div>
     <div class="lg2 h"><span>Name</span><span>Why</span><span>Owned</span><span>Last call</span><span></span></div>
     <div class="lr2" id="lrows2">${rows.length?rows.map(r=>{ const R=reasonOf(r), st=strength2(r), y=yrsSince(r.last_sale_date);
@@ -411,7 +411,6 @@ function drawLeads(){
   const ls=(S.leads||[]).slice().sort((a,b)=>(a.follow_up||'9999').localeCompare(b.follow_up||'9999'));
   const over=ls.filter(l=>dueIn(l.follow_up)!==null&&dueIn(l.follow_up)<0).length, D=desk2();
   const head=`<div class="ph2"><h1>Leads</h1>${over&&S.lview==='leads'?`<span class="flag2">${over} overdue</span>`:''}
-    ${D&&S.lview==='leads'?`<label class="tsearch">${ic2('search',16)}<input type="search" placeholder="Find a lead" aria-label="Find a lead" oninput="const q=this.value.toLowerCase();document.querySelectorAll('[data-lq]').forEach(r=>r.style.display=r.dataset.lq.includes(q)?'':'none')"></label>`:''}
     <div class="seg2" style="min-width:250px">${[['leads','Leads '+ls.length],['listings','Listings '+(S.listings||[]).length]].map(([k,l])=>`<button class="${S.lview===k?'on':''}" onclick="S.lview='${k}';drawLeads()">${l}</button>`).join('')}</div>
     <button class="b2 pri" style="height:44px" onclick="${S.lview==='listings'?'openListing()':'openLead(null)'}" aria-label="Add">${ic2('plus',18)}<span class="hide-phone">Add</span></button></div>`;
   const m=$("#main"); m.className='v2main';
@@ -423,7 +422,7 @@ function drawLeads(){
   const nw=l=>{ const n=newMatches(l).length; return n?`<span class="pill2" style="background:#16a34a33;color:#5ee08f;margin-left:8px">${n} new</span>`:''; };
   const table=`<div class="ltab2"><div class="lt2 h"><span>Lead</span><span>Next step</span><span>Due</span><span class="c4">Notes</span><span class="c5">Last spoke</span><span></span></div>${ls.map(l=>`<div class="lt2" onclick="openLead(${l.id})" data-lq="${esc([l.name,l.address,l.suburb,l.phone].join(' ').toLowerCase())}">
      <div class="ltn">${tile(l)}<div><b>${esc(leadTitle(l))}${nw(l)}</b><span>${esc(sub(l))}</span></div></div>
-     <span class="ltnote" style="color:var(--t1)">${esc(l.next_action||(l.status&&l.status!=='Active'?l.status:'Set a next step'))}</span>
+     <span class="ltnote" style="color:var(--t1)">${l.status&&l.status!=='Active'?`<span class="pill2" style="background:${/Listing Won/.test(l.status)?'#16a34a33;color:#5ee08f':/Appraisal/.test(l.status)?'#3b82f633;color:#93c0ff':'#3a425066;color:var(--t2)'};margin-right:8px">${esc(l.status==='Listing Won'?'Listed':l.status)}</span>`:''}${esc(l.next_action||(l.status&&l.status!=='Active'?'':'Set a next step'))}</span>
      <b style="color:${dueCol(l.follow_up)};font-size:14px">${esc(dueLabel(l.follow_up))}</b><span class="ltnote c4">${esc(latest(l))}</span><span class="c5" style="font-size:14px;color:var(--t2)">${l.last_contact?esc(dayMon(l.last_contact)):''}</span>
      <div class="lbtns">${l.phone?`<a class="ib2" href="${smsLink(l.phone,'')}" onclick="event.stopPropagation()" aria-label="Text">${ic2('msg',17,'#fff')}</a><a class="ib2 call" href="tel:${esc(telOf(l.phone))}" onclick="event.stopPropagation()" aria-label="Call">${ic2('phone',17,'#fff')}</a>`:''}</div></div>`).join('')}</div>`;
   const list=`<div class="g2">${ls.map(l=>`<button class="r2" onclick="openLead(${l.id})">${tile(l)}<span class="rt2"><b>${esc(leadTitle(l))}</b><span>${esc(l.next_action||sub(l))}</span></span><span style="display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:${dueCol(l.follow_up)};white-space:nowrap">${esc(dueLabel(l.follow_up).replace('Follow up today','Today').replace('No follow up set','No date'))}${chev2()}</span></button>`).join('')}</div>`;
@@ -513,7 +512,7 @@ let _rs2; addEventListener('resize',()=>{ clearTimeout(_rs2); _rs2=setTimeout(()
 window.viewSettings=(function(orig){ return async function(){ await orig();
   const m=$("#main"); if(!m||S.tab!=='settings') return;
   m.insertAdjacentHTML('afterbegin',`<div class="ph2"><h1>Settings</h1></div>
-   <div class="g2" style="margin-bottom:14px">${row2('var(--cb)','skip','Auto dial next','After No answer or Not selling, ring the next person straight away',`<span class="sw2 ${S.autodial?'on':''}"><i></i></span>`,'toggleAuto()')}${row2('#4b5565','users','Sign out','','','logout()')}</div>`); }; })(window.viewSettings);
+   <div class="g2" style="margin-bottom:14px">${row2('var(--cb)','skip','Auto dial next','After No answer or Not selling, ring the next person straight away',`<span class="sw2 ${S.autodial?'on':''}"><i></i></span>`,'toggleAuto()')}${row2('var(--ns)','ban','Taken off the list','Problems reported and do not calls, bring people back',chev2(),'removedSheet()')}${row2('var(--cb)','clock','Booked call backs','Change the time or cancel',chev2(),'upcomingCB()')}${row2('#4b5565','users','Sign out','','','logout()')}</div>`); }; })(window.viewSettings);
 function toggleAuto(){ S.autodial=!S.autodial; try{localStorage.setItem("dp_autodial",S.autodial?"1":"0")}catch{} document.querySelectorAll('.sw2').forEach(s=>s.classList.toggle('on',S.autodial)); toast(S.autodial?"Auto dial is on":"Auto dial is off"); }
 window.drawDrops=(function(orig){ return function(){ orig(); const top=$("#main .top"); if(top&&!top.querySelector('.pt2')) top.insertAdjacentHTML('afterbegin','<h1 class="pt2">Card drops</h1>'); }; })(window.drawDrops);
 window.viewMessages=(function(orig){ return async function(){ await orig(); const h=$("#main h2"); if(h){ h.outerHTML='<div class="ph2"><h1>Texts</h1></div>'; } }; })(window.viewMessages);
@@ -534,3 +533,39 @@ window.demoApi=(function(orig){ return function(action,body){ const r=orig(actio
 
 // No RP Data buttons anywhere: the address copies instead
 function rpBtn(){ return ''; }
+
+// ---------- fixing things after the fact ----------
+async function undoToday(pid,callId){ try{ await api("undo_outcome",{call_id:callId}); }catch(e){ return toast("Couldn't undo. "+e.message); }
+  const row=S.rows.find(x=>x.property_id===pid), cb=(S.callbacks||[]).find(x=>x.property_id===pid);
+  if(row){ row.today_outcome=null; row.history=(row.history||[]).filter(h=>h.id!==callId); } if(cb){ cb.today_outcome=null; cb.done=false; }
+  if(S.ov) S.ov.today_calls=Math.max(0,(S.ov.today_calls||0)-1);
+  toast("Undone. They're back on your list"); S.pick=pid; drawList(); drawProg(); }
+async function upcomingCB(){
+  openSheet2('Booked call backs','<p class="emptyline">Loading</p>');
+  let rows=[]; try{ rows=(await api("upcoming_callbacks")).rows||[]; }catch(e){ openSheet2('Booked call backs',`<p class="emptyline">${esc(e.message)}</p>`); return; }
+  S._ucb=rows;
+  openSheet2('Booked call backs',rows.length?`<div class="g2">${rows.map((c,i)=>`<div class="r2" style="grid-template-columns:32px minmax(0,1fr) auto"><span class="tile" style="background:var(--cb)">${ic2('clock',17,'#fff')}</span><span class="rt2"><b>${esc(people(c.owner_name)[0]||'Owner unknown')}</b><span>${esc(fmt(c.callback_at))} · ${esc(c.street_address||'')}${c.notes?' · '+esc(c.notes):''}</span></span>
+     <span style="display:flex;gap:6px"><button class="b2" style="height:36px;padding:0 12px!important" onclick="moveCB(${i})">Change</button><button class="b2" style="height:36px;padding:0 12px!important" onclick="cancelCB(${i})">Cancel</button></span></div>`).join('')}</div>`
+   :'<p class="emptyline">No call backs booked.</p>');
+}
+function moveCB(i){ const c=S._ucb[i]; if(!c) return; S._cbBack=true;
+  openSheet2('New time for '+esc(people(c.owner_name)[0]||'them'),`<input type="datetime-local" id="mcb2" value="${sydInput(new Date(c.callback_at))}" style="height:52px;border-radius:14px;padding:0 14px">
+   <button class="b2 pri" onclick="saveMoveCB(${i})">Save new time</button>`,'upcomingCB()'); }
+async function saveMoveCB(i){ const c=S._ucb[i], v=$('#mcb2').value; if(!v) return toast('Pick a date and time');
+  try{ await api("outcome",{property_id:c.property_id,outcome:'call_back',callback_at:sydToISO(v),notes:c.notes||null,list_type:S.type,mode:'list'}); await api("undo_outcome",{call_id:c.call_id}); }catch(e){ return toast(e.message); }
+  toast('Call back moved to '+fmt(sydToISO(v))); await loadCallbacks(); upcomingCB(); }
+async function cancelCB(i){ const c=S._ucb[i]; if(!c) return;
+  if(!(await uiAsk(`Cancel the call back with ${people(c.owner_name)[0]||'them'}? They go back into the normal list.`,{ok:'Cancel call back'}))) return upcomingCB();
+  try{ await api("undo_outcome",{call_id:c.call_id}); }catch(e){ return toast(e.message); }
+  toast('Call back cancelled'); await loadCallbacks(); upcomingCB(); }
+async function removedSheet(){
+  openSheet2('Taken off the list','<p class="emptyline">Loading</p>');
+  let rows=[]; try{ rows=(await api("removed_list")).rows||[]; }catch(e){ openSheet2('Taken off the list',`<p class="emptyline">${esc(e.message)}</p>`); return; }
+  S._rm=rows; const why=t=>String(t||'').replace(/^reported: /,'').replace(/^./,c=>c.toUpperCase());
+  openSheet2('Taken off the list',rows.length?`<p class="emptyline" style="margin:0 4px">Everyone you took off with Something is wrong or Do not call. Bring someone back if it was a mistake.</p><div class="g2">${rows.map((x,i)=>`<div class="r2" style="grid-template-columns:minmax(0,1fr) auto"><span class="rt2"><b>${esc(people(x.owner_name)[0]||x.street_address||'Owner unknown')}</b><span>${esc(why(x.reason))} · ${esc(x.street_address||'')}, ${esc(x.suburb||'')} · ${x.until?'back '+esc(dayMon(x.until)):'for good'}</span></span><button class="b2" style="height:36px;padding:0 12px!important" onclick="restore2(${i})">Bring back</button></div>`).join('')}</div>`
+   :'<p class="emptyline">Nobody taken off yet.</p>');
+}
+async function restore2(i){ const x=S._rm[i]; if(!x) return;
+  try{ await api("restore_removed",{ref:x.ref}); }catch(e){ return toast(e.message); }
+  toast('Back on the list from tomorrow'); removedSheet(); }
+window.viewPipeline=(function(orig){ return async function(){ await orig(); const m=$("#main"); if(m&&S.tab==='pipeline') m.insertAdjacentHTML('afterbegin','<div class="ph2"><h1>Appraisals and listings</h1></div>'); }; })(window.viewPipeline);
