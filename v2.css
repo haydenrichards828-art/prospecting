@@ -357,3 +357,5 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .why2 .rt2 b{font-size:16px}.why2 .rt2 span{font-size:13px}
 .lab2{font-size:14px}
 .prop2{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.two2 .why2 .rt2{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:8px}.two2>div{gap:6px}
+.two2 .why2 .rt2{flex-direction:row}
