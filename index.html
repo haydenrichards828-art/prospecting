@@ -6,6 +6,11 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0a0c0f">
 <title>Prospect · Dignam call list</title>
+<script>
+// Demo copy: keep its pretend data in memory so it never touches the real app's saved notes or sign in
+window.DEMO_ON = window.FORCE_DEMO === true || location.hash === "#demo";
+if (window.DEMO_ON) { const m = {}; try { Object.defineProperty(window, "localStorage", { configurable: true, value: { getItem: k => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, removeItem: k => { delete m[k]; }, clear: () => {}, key: () => null, length: 0 } }); } catch (e) {} }
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
@@ -199,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=9">
+<link rel="stylesheet" href="v2.css?v=10">
 </head>
 <body>
 <div id="app"></div>
@@ -207,7 +212,8 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 <div class="toast" id="toast"></div>
 <script>
 const API = "https://hywtghpfhhvbygunokca.supabase.co/functions/v1/api";
-const DEMO = (typeof window.FORCE_DEMO !== "undefined" && window.FORCE_DEMO) || location.hash === "#demo";
+const DEMO = !!window.DEMO_ON;
+window.openUrl = window.openUrl || (u => { location.href = u; });
 function demoApi(action, body){
   const D = window.__demo || (window.__demo = (()=>{
     const names=["Margaret Collins","David Nguyen","Sarah Mitchell","Peter Russo","Helen Walsh","James O'Brien","Linda Tran","Robert Kelly","Anne Fraser","Michael Stavros","Karen Doyle","Steven Lee"];
@@ -582,7 +588,7 @@ async function addSolicitor(id){
   const phone=prompt("Solicitor's office phone number:"); if(!phone) return;
   try{ await api("set_solicitor",{property_id:id,firm,phone}); toast("Solicitor saved"); await refreshCalls(); paintCalls(); }catch(e){ toast(e.message); }
 }
-function dialTo(phone){ if(!hoursOk()) return; const cur=queue().find(r=>r.phone===phone); if(cur){ markDial(cur.property_id); if(!S.tm.shown) S.tm.shown=S.tm.dial; } window.location.href = "tel:" + phone; }
+function dialTo(phone){ if(!hoursOk()) return; const cur=queue().find(r=>r.phone===phone); if(cur){ markDial(cur.property_id); if(!S.tm.shown) S.tm.shown=S.tm.dial; } openUrl("tel:" + phone); }
 // Silent workflow tracking, used to find wasted time and make the app faster. Nothing shows on screen.
 // It keeps what was clicked (by its label), how long since the last click, how far the mouse travelled,
 // what the mouse paused over first, screen changes and typing time. It never keeps what was typed.
@@ -797,7 +803,7 @@ async function openMessage(id, ctx){
     const a=args(); if (($("#xa") && !$("#xa").value.trim()) || ($("#xc") && !$("#xc").value.trim())) return toast("Fill in the date fields first");
     if (when==="custom" && !$("#mcd").value) return toast("Pick a send time");
     if (direct() && pv.phone && pv.body) {   // must open inside the tap or the phone blocks it
-      location.href = smsLink(pv.phone, pv.body); closeOv();
+      openUrl(smsLink(pv.phone, pv.body)); closeOv();
       api("schedule_message",{...a,when,consent:$("#consent").checked,sent_now:true}).catch(()=>{});
       return;
     }
@@ -1620,6 +1626,7 @@ window.__boot=()=>{ if (S.token) loadCallbacks().then(render); else render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 <script src="v2.js?v=19"></script>
+<script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>
 </html>
