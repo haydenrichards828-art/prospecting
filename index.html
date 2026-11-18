@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=25">
+<link rel="stylesheet" href="v2.css?v=26">
 </head>
 <body>
 <div id="app"></div>
@@ -787,21 +787,22 @@ async function openMessage(id, ctx){
   if (!S.templates.length) return toast("Add a message template in Settings first");
   const pick = ctx==="appraisal" ? S.templates.find(t=>/apprais/i.test(t.name)) : ctx==="call_back" ? S.templates.find(t=>/call ?back/i.test(t.name)) : null;
   const t0 = pick || S.templates[0];
-  $("#sheet").innerHTML = `<h3>Send a message</h3><p class="muted" style="margin:0">Fields fill in automatically from this person's record.</p>
+  $("#sheet").innerHTML = `<div class="msg2"><h3>Send a message</h3>
    <label>Template</label><select id="mt">${S.templates.map(t=>`<option value="${t.id}" ${t.id===t0.id?"selected":""}>${esc(t.name)}</option>`).join("")}</select>
    <div id="extra"></div>
    <label>Preview</label><div class="preview" id="mp">Loading</div>
-   <label>Send</label><div class="times" id="mw"></div><div id="mc"></div>
-   <div style="display:flex;gap:8px;margin-top:12px"><button class="ghost" style="flex:1" onclick="closeOv()">Cancel</button><button class="primary" style="flex:2" id="msend"><i class="ti ti-send"></i>Schedule message</button></div>`;
+   <label>Send</label><div class="opts2 c3" id="mw"></div><div id="mc"></div>
+   <div style="display:flex;gap:8px;margin-top:12px"><button class="ghost" style="flex:1" onclick="closeOv()">Cancel</button><button class="primary" style="flex:2" id="msend"><i class="ti ti-send"></i>Schedule message</button></div></div>`;
   let when = t0.default_delay || "now";
-  const drawWhen = ()=>{ if($("#msend")) setTimeout(label,0); $("#mw").innerHTML = WHEN.map(([k,l])=>`<button class="${k===when?"on":""}" data-k="${k}">${l}</button>`).join(""); $("#mw").querySelectorAll("button").forEach(b=>b.onclick=()=>{when=b.dataset.k;drawWhen();}); $("#mc").innerHTML = when==="custom"?`<input type="datetime-local" id="mcd" style="margin-top:6px" value="${sydInput(new Date(Date.now()+86400e3))}">`:""; };
+  const drawWhen = ()=>{ if($("#msend")) setTimeout(label,0); $("#mw").innerHTML = WHEN.map(([k,l])=>`<button class="${k===when?"on":""}" data-k="${k}">${l}</button>`).join(""); $("#mw").querySelectorAll("button").forEach(b=>b.onclick=()=>{when=b.dataset.k;drawWhen();}); $("#mc").innerHTML = when==="custom"?`<input type="datetime-local" id="mcd" class="optin2" value="${sydInput(new Date(Date.now()+86400e3))}">`:""; };
   const tmpl = ()=>S.templates.find(t=>t.id==$("#mt").value);
   const dayOpts = [1,2,3,4,5,6,7].map(k=>new Date(Date.now()+k*864e5)).filter(d=>sydInfo(d).dow!==7).slice(0,4).map(d=>d.toLocaleDateString("en-AU",{timeZone:"Australia/Sydney",weekday:"short",day:"numeric",month:"short"}));
-  let pickDay=dayOpts[0], pickTime="10am";
-  const chips = (arr, cur, cls) => `<div class="picks" style="grid-template-columns:repeat(4,1fr);margin-top:6px">${arr.map(v=>`<button class="${cls} ${v===cur?"primary":""}" data-v="${v}" style="font-size:13px;min-height:40px">${v}</button>`).join("")}</div>`;
-  const drawExtra = ()=>{ const b=tmpl().body; $("#extra").innerHTML = (b.includes("{appt_date}")?`<label>Appraisal date and time</label>${chips(dayOpts,pickDay,"dchip")}${chips(["10am","11am","2pm","4pm"],pickTime,"tchip")}<input id="xa" style="margin-top:6px" value="${pickDay}, ${pickTime}">`:"")+(b.includes("{callback_date}")?`<label>Callback date</label><input id="xc" placeholder="Tue 18 Nov">`:""); ["xa","xc"].forEach(i=>{const e=$("#"+i); if(e) e.oninput=prev;});
+  let pickDay=dayOpts[0], pickTime="10am", pickCb=dayOpts[0];
+  const chips = (arr, cur, cls) => `<div class="opts2 c4">${arr.map(v=>`<button class="${cls} ${v===cur?"on":""}" data-v="${v}">${String(v).replace(",","")}</button>`).join("")}</div>`;
+  const drawExtra = ()=>{ const b=tmpl().body; $("#extra").innerHTML = (b.includes("{appt_date}")?`<label>Appraisal date and time</label>${chips(dayOpts,pickDay,"dchip")}${chips(["10am","11am","2pm","4pm"],pickTime,"tchip")}<input id="xa" class="optin2" value="${pickDay}, ${pickTime}">`:"")+(b.includes("{callback_date}")?`<label>Call back date</label>${chips(dayOpts,pickCb,"cchip")}<input id="xc" class="optin2" value="${pickCb}">`:""); ["xa","xc"].forEach(i=>{const e=$("#"+i); if(e) e.oninput=prev;});
     $("#extra").querySelectorAll(".dchip").forEach(x=>x.onclick=()=>{ pickDay=x.dataset.v; drawExtra(); prev(); });
-    $("#extra").querySelectorAll(".tchip").forEach(x=>x.onclick=()=>{ pickTime=x.dataset.v; drawExtra(); prev(); }); };
+    $("#extra").querySelectorAll(".tchip").forEach(x=>x.onclick=()=>{ pickTime=x.dataset.v; drawExtra(); prev(); });
+    $("#extra").querySelectorAll(".cchip").forEach(x=>x.onclick=()=>{ pickCb=x.dataset.v; drawExtra(); prev(); }); };
   const args = ()=>({property_id:id,template_id:+$("#mt").value,appt_date:$("#xa")?.value||"{appt_date}",callback_date:$("#xc")?.value||"{callback_date}"});
   let pv={};
   const prev = async()=>{ try{ const r=await api("preview_message",args()); pv=r; $("#mp").textContent=r.body + (r.phone?"":"\n\n(No phone number yet, this will send once one is added)"); }catch(e){$("#mp").textContent=e.message;} };
@@ -1639,7 +1640,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=34"></script>
+<script src="v2.js?v=35"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>
