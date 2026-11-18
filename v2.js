@@ -103,10 +103,12 @@ function callGroups(r){
     else out.push({o:x.outcome,at:x.at,note:x.notes||'',n:1}); });
   return out.slice(0,8);
 }
+function officeNotes(r){ const ns=(r.crm_notes||[]).filter(n=>n.comments||n.last); if(!ns.length) return '';
+  return ns.map(n=>`<div class="cc2"><i style="background:#6366f1"></i><div><div class="h"><b style="color:#c7d2fe">Office notes</b><span class="lab2">${esc(n.name||'AgentBox')}${n.lc?' · last contacted '+esc(n.lc):''}</span></div>${n.comments?`<p>${esc(n.comments)}</p>`:''}${n.last?`<p style="color:var(--t2)">${esc(n.last)}</p>`:''}</div></div>`).join(''); }
 function callCards2(r){
   const g=callGroups(r), cbn=r.callback&&r.notes?`<div class="cc2"><i style="background:var(--cb)"></i><div><div class="h"><b style="color:var(--cbT)">Call back note</b><span class="lab2">${esc(dayMon(r.callback_at))}</span></div><p>${esc(r.notes)}</p></div></div>`:'';
-  if(!g.length) return cbn||`<p class="emptyline" style="margin:0">Never called. This is the first time.</p>`;
-  return cbn+g.map(c=>{ const k=OC2[c.o]||OC2.no_answer; return `<div class="cc2"><i style="background:${k[0]}"></i><div><div class="h"><b style="color:${k[1]}">${esc(LABEL[c.o]||c.o)}${c.n>1?` ×${c.n}`:''}</b><span class="lab2">${c.n>1?'latest ':''}${esc(dayMonLong(c.at))}</span></div>${c.note?`<p>${esc(c.note)}</p>`:''}</div></div>`; }).join('');
+  if(!g.length) return cbn+((cbn||officeNotes(r))?'':`<p class="emptyline" style="margin:0">Never called. This is the first time.</p>`)+officeNotes(r);
+  return cbn+g.map(c=>{ const k=OC2[c.o]||OC2.no_answer; return `<div class="cc2"><i style="background:${k[0]}"></i><div><div class="h"><b style="color:${k[1]}">${esc(LABEL[c.o]||c.o)}${c.n>1?` ×${c.n}`:''}</b><span class="lab2">${c.n>1?'latest ':''}${esc(dayMonLong(c.at))}</span></div>${c.note?`<p>${esc(c.note)}</p>`:''}</div></div>`; }).join('')+officeNotes(r);
 }
 
 // ---------- photos: NSW aerial imagery plus a Street View link ----------
@@ -160,11 +162,11 @@ function updateLeadDot(){}
 
 // ---------- sheets ----------
 function openSheet2(title,body,back){
-  const sh=$("#sheet"); sh.classList.remove('lsheet'); sh.classList.add('v2s');
+  const sh=$("#sheet"); sh.classList.remove('lsheet','wide2'); sh.classList.add('v2s');
   sh.innerHTML=`<div class="grab2"><i></i></div><div class="sh2">${back?`<button onclick="${back}" aria-label="Back">${ic2('back',20)}</button>`:'<span></span>'}<b>${title}</b><button onclick="closeOv()" aria-label="Close">${ic2('x',20)}</button></div><div class="sb2">${body}</div>`;
   $("#ov").classList.add('show'); sh.scrollTop=0;
 }
-function closeOv(){ S.sheetKeys=null; $("#ov").classList.remove("show"); $("#sheet").classList.remove("lsheet","v2s"); }
+function closeOv(){ S.sheetKeys=null; $("#ov").classList.remove("show"); $("#sheet").classList.remove("lsheet","v2s","wide2"); }
 
 // ---------- calls ----------
 function paintCalls(){ drawProg(); drawList(); keepAwake(); }
@@ -178,7 +180,7 @@ function drawList(){ if(S.tab!=='calls'||S.searching||!$("#main")) return; $("#m
 function hoursStrip(){ if(callingAllowed()) return ''; return `<div class="hline2">${ic2('clock',16)}Outside legal calling hours. Next window ${nextWindowText()}. Only call if they asked you to call at this time.</div>`; }
 function failStrip(){ return S.ov?.failed?`<div class="hline2" style="color:var(--nsT);background:#d6455a1a;border-color:#d6455a44">${ic2('warn',16)}Something didn't run overnight.&nbsp;<a href="#" onclick="go('insights');return false" style="color:inherit">See details</a></div>`:''; }
 function barHTML2(id,small){ return `<div class="bar2x">${OUT2.map(o=>`<button style="background:${o.bg}" onclick="act2(${id},'${o.o}')" ${small?`onmousedown="event.preventDefault()" aria-label="${o.lab}"`:''}>${ic2(o.icon,20,'#fff')}${small?'':`<span>${o.lab}</span><span class="k">${o.key}</span>`}</button>`).join('')}</div>`; }
-function setNote(id,v){ if(v.trim()) notes[id]=v; else delete notes[id]; document.querySelectorAll('textarea[data-note]').forEach(t=>{ if(t!==document.activeElement) t.value=v; }); }
+function setNote(id,v){ if(v.trim()) notes[id]=v; else delete notes[id]; document.querySelectorAll('.nsaved').forEach(x=>x.textContent=v.trim()?'· saved':''); document.querySelectorAll('textarea[data-note]').forEach(t=>{ if(t!==document.activeElement) t.value=v; }); }
 function numBtn(r,cls){
   const id=r.property_id, probate=(r.signals||[]).includes('probate');
   if(probate&&!(r.solicitor&&r.phone)) return `<button class="${cls} sol" onclick="addSolicitor(${id})">${ic2('plus',24,'#fff')}<span style="flex:1;font-size:.7em">Add solicitor's number</span></button>`;
@@ -202,7 +204,7 @@ function drawCall2(){
   const left=all.filter(x=>!x.today_outcome&&!S.skipped.has(x.property_id));
   const attrs=[r.bedrooms>0?['bed',r.bedrooms,'Bedrooms']:null,r.land_area?['land',Math.round(r.land_area)+' m²','Land']:null,yrs!=null?['clock',yrs+' years','Owned']:null,r.last_sale_price?['tag',price2(r.last_sale_price),'Last bought']:null,['trend',r.street_sales_12m||0,'Street sales this year']].filter(Boolean).slice(0,4);
   const tag=`<div class="tag2" style="border-color:${R.c}77"><div class="s" style="background:${R.c}">${ic2(R.icon,26,'#fff')}${R.side}</div><div class="m" style="background:${R.c}1a"><b>${esc(R.head)}</b>${R.sub?`<span style="color:${R.t}">${esc(R.sub)}</span>`:''}</div></div>`;
-  const lastRow=g.length?(()=>{ const k=OC2[g[0].o]||OC2.no_answer; return row2(k[0],k[2],`${LABEL[g[0].o]||g[0].o}${g[0].n>1?' ×'+g[0].n:''}, ${dayMonLong(g[0].at)}`,'',chev2(),`details2(${id},'calls')`); })():row2('#4b5565','phone',r.callback&&r.notes?'Call back note':'Never called','',chev2(),`details2(${id},'calls')`);
+  const lastRow=g.length?(()=>{ const k=OC2[g[0].o]||OC2.no_answer; return row2(k[0],k[2],`${LABEL[g[0].o]||g[0].o}${g[0].n>1?' ×'+g[0].n:''}, ${dayMonLong(g[0].at)}`,'',chev2(),`details2(${id},'calls')`); })():row2((r.crm_notes||[]).length?'#6366f1':'#4b5565',(r.crm_notes||[]).length?'msg':'phone',r.callback&&r.notes?'Call back note':(r.crm_notes||[]).length?'Office notes':'Never called','',chev2(),`details2(${id},'calls')`);
   const bought=hist.find(h=>h.lab==='Bought');
   const icons=[r.bedrooms>0?['bed',r.bedrooms]:null,r.land_area?['land',Math.round(r.land_area)+' m²']:null,yrs!=null?['clock',yrs+' yrs']:null,r.street_sales_12m?['trend',r.street_sales_12m+' sold']:null].filter(Boolean);
   $("#main").innerHTML=failStrip()+hoursStrip()+`
@@ -211,13 +213,13 @@ function drawCall2(){
     <div><h1 class="nm2">${esc(nm)}</h1>${ppl.length>1?`<div class="also2">Also on file: ${ppl.slice(1).map(esc).join(', ')}</div>`:''}<button class="ad2 cp2" onclick="copyAddr(${id})" title="Copy address for RP Data">${ic2('pin',21)}<span>${addr}</span><span class="cpl">Copy</span></button></div>
     ${tag}${warnBox(r)}
     ${numBtn(r,'num2')}
-    <label class="nw2"><span class="h"><span class="lab2">Note</span><span class="kb2">N</span></span>
+    <label class="nw2"><span class="h"><span class="lab2">Note <span class="nsaved" style="font-weight:500;color:var(--t3)">${note?'· saved':''}</span></span><span class="kb2">N</span></span>
      <textarea class="note2" id="note2" data-note placeholder="Type while you talk" oninput="setNote(${id},this.value)">${esc(note)}</textarea></label>
     ${barHTML2(id)}
     <div class="ends2"><button onclick="skip2(${id})">${ic2('skip',16)}Skip<span class="k kb2">S</span></button><button onclick="moreSheet2(${id})">${ic2('more',16)}More<span class="k kb2">M</span></button></div>
    </section>
    <section class="cr2">
-    <div class="prop2">${photo2(r,'height:clamp(96px,24vh,240px)',true,desk2())}
+    <div class="prop2">${photo2(r,'height:clamp(96px,24vh,240px);cursor:zoom-in',true,desk2()).replace('class="photo2"',`class="photo2" onclick="if(!event.target.closest('.sv'))bigPhoto(${id})"`)}
      <div class="attrs2">${attrs.map(([i,v,l])=>`<div class="attr2">${ic2(i,20,'var(--t2)')}<div><b>${esc(v)}</b><span>${l}</span></div></div>`).join('')}</div></div>
     <div class="two2">
      <div><span class="lab2">History</span>${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):'<p class="emptyline" style="margin:0">No sales on record</p>'}</div>
@@ -229,7 +231,7 @@ function drawCall2(){
   <div class="pcall2">
    <div class="pb2">
     <div class="ptyp2" style="align-items:center;gap:12px;flex:none;padding-bottom:4px">${photo2(r,'width:44px;height:44px;border-radius:11px',false,!desk2())}<div style="min-width:0"><b style="font-size:18px;display:block">${esc(nm)}</b><span style="font-size:14px;color:var(--t2)">${addr}</span></div></div>
-    <div class="pid2"><div class="pidr2">${photo2(r,'',false,!desk2()).replace('class="photo2"',`class="photo2" onclick="details2(${id},'history')"`)}<div style="min-width:0"><h1>${esc(nm)}</h1><button class="a cp2" onclick="copyAddr(${id})">${addr}<span class="cpl">Copy</span></button></div></div>
+    <div class="pid2"><div class="pidr2">${photo2(r,'',false,!desk2()).replace('class="photo2"',`class="photo2" onclick="bigPhoto(${id})"`)}<div style="min-width:0"><h1>${esc(nm)}</h1><button class="a cp2" onclick="copyAddr(${id})">${addr}<span class="cpl">Copy</span></button></div></div>
      ${icons.length?`<div class="icons2">${icons.map(([i,v])=>`<span>${ic2(i,18,'var(--t2)')}${esc(v)}</span>`).join('')}</div>`:''}</div>
     ${warnBox(r,true)}
     ${numBtn(r,'pnum2')}
@@ -238,7 +240,7 @@ function drawCall2(){
      ${lastRow}
      ${row2('#4b5565','clock',bought?`Bought ${bought.when}${bought.val?' for '+bought.val:''}`:'Sales history','',chev2(),`details2(${id},'history')`)}
     </div>
-    <textarea class="pnote2" id="pnote2" data-note placeholder="Note" oninput="setNote(${id},this.value)" onfocus="typing2(true)" onblur="typing2(false)">${esc(note)}</textarea>
+    <textarea class="pnote2" id="pnote2" data-note placeholder="Note, saves as you type" oninput="setNote(${id},this.value)" onfocus="typing2(true)" onblur="typing2(false)">${esc(note)}</textarea>
    </div>
    <div class="pf2">${barHTML2(id)}<div class="ends2"><button onclick="skip2(${id})">${ic2('skip',16)}Skip</button><button onclick="moreSheet2(${id})">${ic2('more',16)}More</button></div></div>
   </div>`;
@@ -336,6 +338,10 @@ function rpu0(r){ return r.street_address||r.suburb?rpUrl(r.street_address,r.sub
 async function copyAddr(id){ const r=queue().find(x=>x.property_id===id); if(!r) return; const t=rpAddress(r.street_address,r.suburb,r.postcode);
   try{ await navigator.clipboard.writeText(t); }catch{ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy')}catch{} ta.remove(); }
   toast('Copied: '+t); }
+function bigPhoto(id){ const r=queue().find(x=>x.property_id===id); if(!r) return; const u=aerialUrl(r,1200,900);
+  openSheet2(esc(r.street_address||'House'),`<div class="photo2" style="aspect-ratio:4/3;width:100%">${u?`<img src="${u}" alt="" onerror="this.remove()"><span class="pinm"></span><span class="credit">Imagery © NSW Spatial Services</span>`:''}</div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><a class="b2 pri" href="${svUrl(r)}" target="_blank" rel="noopener">${ic2('eye',18)}Street View</a><button class="b2" onclick="copyAddr(${id})">Copy address</button></div>`);
+  $("#sheet").classList.add('wide2'); }
 function filterRows2(q){ q=q.toLowerCase(); document.querySelectorAll('#lrows2 .lg2').forEach(r=>r.style.display=r.dataset.q.includes(q)?'':'none'); }
 function open2(id){ S.pick=id; S.view='call'; S.dialer=true; try{localStorage.setItem("dp_view","call")}catch{} render(); }
 function startSub(){ S.focusSub=S.lsub==='Call backs'?null:S.lsub; S.pick=null; S.skipped.clear(); setView('call'); }
@@ -483,6 +489,7 @@ window.demoApi=(function(orig){ return function(action,body){ const r=orig(actio
       const by=2026-yrs, p=Math.round((350+(i*37)%600)*1000); x.last_sale_date=`${by}-0${1+i%9}-1${i%9}`; x.last_sale_price=p; x.sales=[{d:x.last_sale_date,price:p},...(i%3===0?[{d:`${by-9}-05-02`,price:Math.round(p*0.55)}]:[])];
       x.withdrawn=(x.signals||[]).includes('withdrawn')?[{d:`2026-0${5+i%4}-12`,kind:'withdrawn'}]:null; if(x.withdrawn) x.reasons=x.reasons.map(s=>/Withdrawn/.test(s)?`Listing withdrawn or expired ${MONS[4+i%4]} 2026, not sold since`:s);
       if(i%6===1) x.history=[{at:new Date(Date.now()-864e5*9).toISOString(),outcome:'no_answer',notes:null},{at:new Date(Date.now()-864e5*16).toISOString(),outcome:'no_answer',notes:null},{at:new Date(Date.now()-864e5*60).toISOString(),outcome:'not_interested',notes:'Said maybe next year once the kids finish school. Asked us to try again in spring.'}];
+      if(i%4===1) x.crm_notes=[{name:x.owner_name,comments:'9/8/17 RG. Called, no plans to move. Kids still at school, maybe in a few years.',last:'05 Aug 2019: left message about sale in the street (Added by: Blake)',lc:'15/05/18'}];
       if(i%10===4) x.reasons.push(`Neighbour at ${(i*3)%90+3} ${x.street_address.replace(/^\S+\s/,'')} sold for $1.${2+i%6}m (1${i%9} Oct)`); }); }
   if(action==='overview'&&r){ const wk=[...Array(8)].map((_,i)=>{ const d=new Date(Date.now()-(7-i)*7*864e5); return {start:d.toISOString().slice(0,10),n:[380,412,455,430,470,498,440,120+(D?.calls||0)][i]}; });
     r.periods={week:wk,month:['2026-06-01','2026-07-01','2026-08-01','2026-09-01','2026-10-01','2026-11-01'].map((s,i)=>({start:s,n:[1520,1610,1700,1820,1940,980][i]})),quarter:['2026-01-01','2026-04-01','2026-07-01','2026-10-01'].map((s,i)=>({start:s,n:[4100,4700,5200,2920][i]}))};
