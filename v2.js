@@ -366,19 +366,30 @@ function drawList2(){
   const last=r=>{ if(r.today_outcome){ const k=OC2[r.today_outcome]||OC2.no_answer; return `<span style="display:flex;gap:10px;align-items:center"><span style="font-size:14px;width:52px;color:var(--t2)">Today</span><span class="pill2" style="color:${k[1]};background:color-mix(in srgb, ${k[1]} 14%, transparent)">${esc(LABEL[r.today_outcome])}</span></span>`; }
     const g=callGroups(r); if(!g.length) return '<span style="font-size:14px;color:var(--t3)">Not contacted</span>'; const k=OC2[g[0].o]||OC2.no_answer;
     return `<span style="display:flex;gap:10px;align-items:center"><span style="font-size:14px;width:52px;color:var(--t2)">${esc(dayMon(g[0].at))}</span><span class="pill2" style="color:${k[1]};background:color-mix(in srgb, ${k[1]} 14%, transparent)">${esc(LABEL[g[0].o]||g[0].o)}${g[0].n>1?' ×'+g[0].n:''}</span></span>`; };
+  const lastC=r=>{ if(r.today_outcome||callGroups(r).length) return last(r);
+    const d=dignamLast(r); if(d&&d.when) return `<span style="display:flex;gap:10px;align-items:center"><span style="font-size:14px;color:var(--t2)">${esc(d.when)}</span><span class="pill2" style="color:#99f6e4;background:#14b8a622">Dignam</span></span>`;
+    return '<span style="font-size:14px;color:var(--t3)">Not contacted</span>'; };
   $("#main").innerHTML=failStrip()+`<div class="list2">
    <nav class="rail2" aria-label="Suburbs"><button class="cbk" onclick="upcomingCB()">Booked call backs<span>${ic2('chev',14)}</span></button>${cbs.length?`<button class="cbk ${S.lsub==='Call backs'?'on':''}" onclick="S.lsub='Call backs';drawList()">Call backs<span>${cbs.filter(r=>!r.today_outcome).length}</span></button>`:''}${subs.map(([s,n])=>`<button class="${s===S.lsub?'on':''}" onclick="S.lsub=this.dataset.s;drawList()" data-s="${esc(s)}">${esc(s)}<span>${n}</span></button>`).join('')}</nav>
    <div class="lm2">
     <div class="lh2"><h1>${esc(S.lsub)}</h1><span style="font-size:14px;color:var(--t2)">${left} to call</span>
      <div class="seg2 mini" style="margin-left:auto"><button class="${S.type==='seller'?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button></div>
      <button class="b2 pri hide-phone" style="height:40px" onclick="startSub()">${ic2('phone',18)}Start ${esc(S.lsub)}<span class="key2">Enter</span></button></div>
-    <div class="lg2 h"><span>Name</span><span>Why</span><span>Owned</span><span>Last call</span><span></span></div>
-    <div class="lr2" id="lrows2">${rows.length?rows.map(r=>{ const R=reasonOf(r), st=strength2(r), y=yrsSince(r.last_sale_date);
-      return `<div class="lg2${r.today_outcome?' done':''}" data-q="${esc([r.owner_name,r.street_address].join(' ').toLowerCase())}" onclick="open2(${r.property_id})">
-      <div class="nm"><b>${esc(people(r.owner_name)[0]||'Owner unknown')}</b><span>${esc(r.street_address||'')}${S.lsub===SOL_GROUP&&r.suburb?', '+esc(r.suburb):''}</span><em class="hide-desk">${esc(r.callback?'Call back '+dayMon(r.callback_at):R.line)}</em></div>
-      <div class="c-why" style="display:flex;gap:12px;align-items:center;font-size:15px;min-width:0"><span class="str2">${[0,1,2].map(j=>`<i style="${j<st?'background:var(--accT)':''}"></i>`).join('')}</span><span style="min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.callback?'Call back '+dayMon(r.callback_at):R.line)}</span></div>
-      <b class="c-own" style="font-size:15px">${y!=null?y+' yrs':''}</b><div class="c-last">${last(r)}</div>
-      <button class="ob2 hide-phone">Open${ic2('chev',16)}</button><span class="hide-desk">${chev2()}</span></div>`; }).join(''):'<p class="emptyline" style="padding:28px">Nobody left here today.</p>'}</div>
+    <div class="lg3 h"><span></span><span>Name</span><span>Why they're on the list</span><span>Home</span><span>Last bought</span><span>Last contact</span><span></span></div>
+    <div class="lr2" id="lrows2">${rows.length?rows.map(r=>{ const y=yrsSince(r.last_sale_date), id=r.property_id, ws=r.callback?[['cal','Call back '+dayMon(r.callback_at),'Note']]:whyRows(r).slice(0,3);
+      const ph=(r.signals||[]).includes('probate')&&!(r.solicitor&&r.phone)?null:r.phone, u=aerialUrl(r,PH_SMALL[0],PH_SMALL[1]);
+      const rooms=[r.bedrooms>0?r.bedrooms+' bd':'',r.baths>0?r.baths+' ba':'',r.cars>0?r.cars+' car':''].filter(Boolean).join(' · ');
+      const bought=r.last_sale_date?`<b>${r.last_sale_price?esc(price2(r.last_sale_price)):'Price n/a'}</b><span>${String(r.last_sale_date).slice(0,4)}${y!=null?' · '+y+' yrs ago':''}</span>`:'<span>No sale on record</span>';
+      return `<div class="lg3${r.today_outcome?' done':''}" onclick="open2(${id})">
+      <div class="th3">${u?`<img src="${u}" alt="" loading="lazy" onerror="this.remove()">`:''}</div>
+      <div class="nm3"><b>${esc(people(r.owner_name)[0]||'Owner unknown')}</b><span>${esc(r.street_address||'')}${S.lsub===SOL_GROUP&&r.suburb?', '+esc(r.suburb):''}</span></div>
+      <div class="why3">${(()=>{ const all=ws.map(w=>w[1]), dk=all.filter(t=>!/^Owned /.test(t)), d=dk.length?dk:(all.length?['Long time owner']:[]);
+        const fmt=a=>a.length?`<b>${esc(a[0])}</b>${a.length>1?', '+a.slice(1).map(esc).join(', '):''}`:'';
+        return `<span class="wd3">${fmt(d)}</span><span class="wm3">${fmt(all)}</span>`; })()}</div>
+      <div class="hm3">${rooms?esc(rooms):'<span>Rooms unknown</span>'}</div>
+      <div class="bt3">${bought}</div>
+      <div class="lc3">${lastC(r)}</div>
+      <div class="ac3">${ph&&!r.today_outcome?`<button class="cl3" aria-label="Call ${esc(people(r.owner_name)[0]||'')}" onclick="event.stopPropagation();open2(${id});if(callingAllowed())openUrl('tel:'+${JSON.stringify(String(ph).replace(/\s/g,''))}.replace(/[^0-9+]/g,''))">${ic2('phone',18,'#fff')}</button>`:''}<span class="ch3">${chev2()}</span></div></div>`; }).join(''):'<p class="emptyline" style="padding:28px">Nobody left here today.</p>'}</div>
    </div></div>`;
 }
 function rpu0(r){ return r.street_address||r.suburb?rpUrl(r.street_address,r.suburb,r.rp_link,r.postcode):null; }
