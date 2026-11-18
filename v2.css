@@ -331,3 +331,18 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 /* No frame around the app: it fills the whole window edge to edge */
 #shell{padding:0}
 #shell .panel{border:0;border-radius:0}
+
+/* Call screen right side, tightened so the call history fits without scrolling */
+.prop2{padding:clamp(8px,1.6vh,16px) var(--px);gap:var(--px)}
+.attrs2{gap:8px 14px}.attr2 b{font-size:16px;line-height:20px}.attr2 span{font-size:12px}
+.two2>div{padding:clamp(8px,1.4vh,14px) var(--px);gap:8px}
+.two2.one2{grid-template-columns:1fr}.two2.one2>div{border-right:0}
+.two2.one2>div:last-child{flex-direction:row;flex-wrap:wrap;align-items:center;column-gap:22px;row-gap:8px}
+.two2.one2>div:last-child>.lab2{flex-basis:100%}
+.why2{gap:10px}.why2 .tile{width:28px!important;height:28px!important;border-radius:8px!important}.why2 .rt2 b{font-size:15px}.why2 .rt2 span{font-size:12px}
+.tl2 b,.tl2 em{font-size:15px}.tl2 small{font-size:13px}
+.calls2{padding:clamp(8px,1.4vh,14px) var(--px);gap:6px}
+.cc2{gap:10px;padding:7px 12px;border-radius:10px}
+.cc2>div{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:10px;row-gap:2px;min-width:0}
+.cc2 .h{gap:8px;flex:none}.cc2 .h b{font-size:14px}.cc2 .h span{font-size:13px}
+.cc2 p{margin:0;font-size:14px;line-height:20px;flex:1 1 220px;min-width:0}

@@ -123,7 +123,7 @@ function officeEntries(r){ const out=[];
         out.push({at:isNaN(dt)?null:dt.toISOString(),who:ini[1]||null,text:d[4].slice(ini[0]?ini[0].length:0).replace(/^[.\s\-–:]+/,'').trim(),office:true}); }
       else out.push({at:null,who:null,text:p,office:true}); });
   });
-  return out.filter(e=>e.text); }
+  return out.filter(e=>e.text&&!/^(n\/?a|-|\.|nil|none)$/i.test(e.text.trim())); }
 function timeline(r){
   const mine=callGroups(r).map(c=>({at:c.at,o:c.o,n:c.n,text:c.note,mine:true}));
   const all=[...mine,...officeEntries(r)];
@@ -255,10 +255,10 @@ function drawCall2(){
     <div class="ends2"><button onclick="skip2(${id})">${ic2('skip',16)}Skip<span class="k kb2">S</span></button><button onclick="moreSheet2(${id})">${ic2('more',16)}More<span class="k kb2">M</span></button></div>
    </section>
    <section class="cr2">
-    <div class="prop2">${photo2(r,'height:clamp(96px,24vh,240px);cursor:zoom-in',true,desk2()).replace('class="photo2"',`class="photo2" onclick="if(!event.target.closest('.sv'))bigPhoto(${id})"`)}
+    <div class="prop2">${photo2(r,'height:clamp(90px,17vh,170px);cursor:zoom-in',true,desk2()).replace('class="photo2"',`class="photo2" onclick="if(!event.target.closest('.sv'))bigPhoto(${id})"`)}
      <div class="attrs2">${attrs.map(([i,v,l])=>`<div class="attr2">${ic2(i,20,'var(--t2)')}<div><b>${esc(v)}</b><span>${l}</span></div></div>`).join('')}</div></div>
-    <div class="two2">
-     <div><span class="lab2">History</span>${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):'<p class="emptyline" style="margin:0">No sales on record</p>'}</div>
+    <div class="two2${hist.length?'':' one2'}">
+     ${hist.length?'':'<!--'}<div><span class="lab2">Sales</span>${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):''}</div>${hist.length?'':'-->'}
      <div><span class="lab2">Why ${ppl.length>1?'they are':'they are'} on the list</span>${why.slice(0,4).map(([i,t,l])=>`<div class="why2"><span class="tile" style="width:36px;height:36px;border-radius:10px;background:${LVL2[l][0]}">${ic2(i,17,'#fff')}</span><span class="rt2"><b>${esc(t)}</b><span style="color:${LVL2[l][1]}">${l}</span></span></div>`).join('')||'<p class="emptyline" style="margin:0">No reason recorded</p>'}</div>
     </div>
     <div class="calls2"><span class="lab2">Calls and Dignam history</span>${callCards2(r)}</div>
