@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=23">
+<link rel="stylesheet" href="v2.css?v=25">
 </head>
 <body>
 <div id="app"></div>
@@ -1570,6 +1570,7 @@ const ALIAS={
  previous_sale_date:["previous_sale_date","prior_sale_date","second_last_sale_date"],
  is_landlord:["is_landlord","landlord","investor","owner_type","occupancy","owner_occupied"],
  crm_flag:["crm_flag","in_crm"],
+ agency:["agency","selling_agency","sold_by_agency","last_agency"],agent:["agent","selling_agent","sold_by_agent","last_agent"],
  notice_date:["notice_date","date_of_notice","published","published_date"],
  solicitor:["solicitor","law_firm","applicant_solicitor"],
  event_date:["event_date","withdrawn_date","expired_date","date_withdrawn","off_market_date","listing_end_date"],
@@ -1607,6 +1608,7 @@ function mapRows(rows){
     o.is_landlord = llh==="owner_occupied" ? /^(n|no|false|0)$/.test(ll) : (/^(y|yes|true|1)$/.test(ll) || /invest|rent|tenant|non.?owner/.test(ll));
     if(!o.is_landlord && o.owner_address && o.street && !/^(po box|p\.o\.|locked bag|gpo)/i.test(o.owner_address.trim())){ const oa=o.owner_address.toLowerCase(), st=o.street.toLowerCase().split(" ")[0]; if(!(oa.includes(st) && (!o.house_number || oa.includes(o.house_number.toLowerCase())))) o.is_landlord=true; }
     o.crm_flag=/^(y|yes|true|1)$/i.test(g("crm_flag")) || $("#ik").value==="crm";
+    o.agency=g("agency")==="-"?"":g("agency"); o.agent=g("agent")==="-"?"":g("agent");
     o.notice_date=toISO(g("notice_date")); o.solicitor=g("solicitor"); o.event_date=toISO(g("event_date"));
     const rg=g("registered").toLowerCase(); o.registered=/^(y|yes|true|1|registered|on register|do not call)$/.test(rg);
     out.push(o); }
@@ -1639,7 +1641,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=31"></script>
+<script src="v2.js?v=33"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

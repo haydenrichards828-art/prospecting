@@ -30,7 +30,7 @@ const OUT2=[
  {o:'call_back',lab:'Call back',bg:'var(--cb)',icon:'clock',key:'3'},
  {o:'lead',lab:'Lead',bg:'var(--ld)',icon:'lead',key:'4'},
  {o:'appraisal',lab:'Appraisal',bg:'var(--ap)',icon:'appr',key:'5'}];
-const OC2={no_answer:['#5b6576','var(--naT)','phone'],not_interested:['var(--ns)','var(--nsT)','x'],call_back:['var(--cb)','var(--cbT)','clock'],lead:['var(--ld)','var(--accT)','lead'],appraisal:['var(--ap)','#5ee08f','appr'],listed:['var(--ap)','#5ee08f','star'],do_not_call:['var(--ns)','var(--nsT)','ban']};
+const OC2={no_answer:['#7C3AED','var(--naT)','phone'],not_interested:['var(--ns)','var(--nsT)','x'],call_back:['var(--cb)','var(--cbT)','clock'],lead:['var(--ld)','var(--accT)','lead'],appraisal:['var(--ap)','#5ee08f','appr'],listed:['var(--ap)','#5ee08f','star'],do_not_call:['var(--ns)','var(--nsT)','ban']};
 const MONF=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONS=MONF.map(m=>m.slice(0,3));
 const TABS2=[['calls','Calls'],['leads','Leads'],['pipeline','Appraisals and listings'],['drops','Card drops'],['insights','Stats'],['settings','Settings']];
@@ -89,7 +89,12 @@ function whyRows(r){
 function strength2(r){ return ({Strong:3,Medium:2,Light:1})[reasonOf(r).lvl]||1; }
 function histRows(r){
   const ev=[]; const sales=r.sales||[];
-  sales.forEach((s,i)=>ev.push({d:s.d,lab:i===0?'Bought':'Sold',val:price2(s.price),col:'#9ba4b2',year:true}));
+  // Each sale shows how much it rose from the one before and how long that owner held it; the latest shows who sold it when we know
+  const ag=r.last_agency&&sales[0]&&r.agency_sale_date&&Math.abs(new Date(r.agency_sale_date)-new Date(sales[0].d))<=120*864e5;
+  sales.forEach((s,i)=>{ const pv=sales[i+1]; let gain='';
+    if(pv&&s.price&&pv.price){ const yrs=(new Date(s.d)-new Date(pv.d))/31557600000, df=s.price-pv.price, pc=Math.round(df/pv.price*100);
+      gain=`${df>=0?'+':'−'}${price2(Math.abs(df))} (${df>=0?'+':''}${pc}%) over ${yrs<1?Math.max(1,Math.round(yrs*12))+' months':(Math.round(yrs*10)/10)+' yrs'}`; }
+    ev.push({d:s.d,lab:i===0?'Bought':'Sold',val:price2(s.price),col:'#9ba4b2',year:true,gain,agency:i===0&&ag?[r.last_agency,r.last_agent].filter(Boolean).join(', '):''}); });
   if(!sales.length&&r.last_sale_date) ev.push({d:r.last_sale_date,lab:'Bought',val:price2(r.last_sale_price),col:'#9ba4b2',year:true});
   (r.withdrawn||[]).filter(w=>w.kind!=='rental_withdrawn').forEach(w=>ev.push({d:w.d,lab:/expir/.test(w.kind)?'Expired':'Withdrawn',val:'Not sold',col:'#f0a92b'}));
   ev.sort((a,b)=>String(a.d).localeCompare(String(b.d)));
@@ -135,7 +140,7 @@ function callCards2(r){
   const when=a=>{ if(!a) return 'no date'; const d=new Date(a); return (Date.now()-d)<330*864e5?dayMonLong(a):monYear(a.slice(0,10)); };
   return cbn+t.map(e=>{
     if(e.mine){ const k=OC2[e.o]||OC2.no_answer; return `<div class="cc2"><i style="background:${k[0]}"></i><div><div class="h"><b style="color:${k[1]}">${esc(LABEL[e.o]||e.o)}${e.n>1?` ×${e.n}`:''}</b><span class="lab2">You · ${e.n>1?'latest ':''}${esc(when(e.at))}</span></div>${e.text?`<p>${esc(e.text)}</p>`:''}</div></div>`; }
-    return `<div class="cc2"><i style="background:#6366f1"></i><div><div class="h"><b style="color:#c7d2fe">${esc(e.who||'Dignam')}</b><span class="lab2">${esc(when(e.at))}</span></div><p>${esc(e.text)}</p></div></div>`; }).join('');
+    return `<div class="cc2"><i style="background:#14b8a6"></i><div><div class="h"><b style="color:#99f6e4">${esc(e.who||'Dignam')}</b><span class="lab2">${esc(when(e.at))}</span></div><p>${esc(e.text)}</p></div></div>`; }).join('');
 }
 
 // ---------- photos: NSW aerial imagery plus a Street View link ----------
@@ -257,7 +262,7 @@ function drawCall2(){
    </section>
    <section class="cr2">
     <div class="prop2">${photo2(r,'height:clamp(170px,30vh,320px);cursor:zoom-in',true,desk2()).replace('class="photo2"',`class="photo2" onclick="if(!event.target.closest('.sv'))bigPhoto(${id})"`)}
-     <div class="sales2"><span class="lab2">Sales history</span>${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):'<p class="emptyline" style="margin:0">No sales on record</p>'}</div></div>
+     <div class="sales2"><span class="lab2">Sales history</span>${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}${h.gain?` <span class="gain2 ${h.gain[0]==='+'?'up':'dn'}">${esc(h.gain)}</span>`:''}</small>${h.agency?`<small class="agy2">Sold through ${esc(h.agency)}</small>`:''}</div></div>`).join(''):'<p class="emptyline" style="margin:0">No sales on record</p>'}</div></div>
     <div class="calls2"><span class="lab2">Calls and Dignam history</span>${callCards2(r)}</div>
     <div class="facts2">${attrs.map(([i,v,l])=>`<div class="attr2">${ic2(i,22,'var(--t2)')}<div><b>${esc(v)}</b><span>${l}</span></div></div>`).join('')}</div>
    </section>
