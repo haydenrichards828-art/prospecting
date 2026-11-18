@@ -105,7 +105,8 @@ function callGroups(r){
 function dignamLast(r){ const ns=r.crm_notes||[]; if(!ns.length) return null;
   const d=ns.filter(n=>n.on).sort((a,b)=>String(b.on).localeCompare(String(a.on)))[0], own=(ns.find(n=>n.owner)||{}).owner;
   return {when:d?monYear(d.on):null, by:d&&d.by, owner:own&&!/^Dignam Real Estate/i.test(own)?own:null, recent:!!d&&(Date.now()-new Date(d.on))<365*864e5}; }
-function dignamLine(r){ const x=dignamLast(r); if(!x) return '';
+// The office line under the name is gone: Dignam's contacts and notes show in the history instead
+function dignamLine(r){ return ''; const x=dignamLast(r); if(!x) return '';
   const t=x.when?`Last Dignam contact ${x.when}${x.by?', '+x.by:''}`:'In the Dignam CRM, no contact date';
   return `<div class="dl2" style="color:${x.recent?'var(--cbT)':'var(--t2)'}">${ic2('users',15)}<span>${esc(t)}${x.owner&&x.owner!==x.by?`<span class="pa"> · Primary agent ${esc(x.owner)}</span>`:''}</span></div>`; }
 function officeNotes(r){ const ns=(r.crm_notes||[]).filter(n=>n.comments||n.last); if(!ns.length) return '';
