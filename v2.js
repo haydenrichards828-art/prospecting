@@ -360,27 +360,27 @@ function drawList2(){
   const subs=[]; rest.forEach(r=>{ const k=grp(r)||'Suburb unknown'; let s=subs.find(x=>x[0]===k); if(!s) subs.push(s=[k,0,0]); s[2]++; if(!r.today_outcome) s[1]++; });
   if(!all.length){ $("#main").innerHTML=`<div class="empty2"><b>No list yet for today</b>It builds itself at 4:30am. To build it now, go to Settings.</div>`; return; }
   const names=[...(cbs.length?['Call backs']:[]),...subs.map(s=>s[0])];
-  if(!names.includes(S.lsub)) S.lsub=(S.focusSub&&names.includes(S.focusSub))?S.focusSub:names[0];
+  if(!names.includes(S.lsub)) S.lsub=(S.focusSub&&names.includes(S.focusSub))?S.focusSub:(names.find(n=>n!==SOL_GROUP)||names[0]);
   const rows=(S.lsub==='Call backs'?cbs:rest.filter(r=>(grp(r)||'Suburb unknown')===S.lsub)).slice().sort((a,b)=>(!!a.today_outcome-!!b.today_outcome));
   const left=rows.filter(r=>!r.today_outcome).length;
-  const last=r=>{ if(r.today_outcome){ const k=OC2[r.today_outcome]||OC2.no_answer; return `<span style="display:flex;gap:10px;align-items:center"><span style="font-size:14px;width:52px;color:var(--t2)">Today</span><span class="pill2" style="color:${k[1]};background:color-mix(in srgb, ${k[1]} 14%, transparent)">${esc(LABEL[r.today_outcome])}</span></span>`; }
-    const g=callGroups(r); if(!g.length) return '<span style="font-size:14px;color:var(--t3)">Not contacted</span>'; const k=OC2[g[0].o]||OC2.no_answer;
-    return `<span style="display:flex;gap:10px;align-items:center"><span style="font-size:14px;width:52px;color:var(--t2)">${esc(dayMon(g[0].at))}</span><span class="pill2" style="color:${k[1]};background:color-mix(in srgb, ${k[1]} 14%, transparent)">${esc(LABEL[g[0].o]||g[0].o)}${g[0].n>1?' ×'+g[0].n:''}</span></span>`; };
-  const lastC=r=>{ if(r.today_outcome||callGroups(r).length) return last(r);
-    const d=dignamLast(r); if(d&&d.when) return `<span style="display:flex;gap:10px;align-items:center"><span style="font-size:14px;color:var(--t2)">${esc(d.when)}</span><span class="pill2" style="color:#99f6e4;background:#14b8a622">Dignam</span></span>`;
-    return '<span style="font-size:14px;color:var(--t3)">Not contacted</span>'; };
+  // Last contact reads like Last bought: what happened on top, when underneath
+  const two=(top,col,sub)=>`<b style="color:${col}">${esc(top)}</b><span>${esc(sub)}</span>`;
+  const lastC=r=>{ if(r.today_outcome){ const k=OC2[r.today_outcome]||OC2.no_answer; return two(LABEL[r.today_outcome]||r.today_outcome,k[1],'Today'); }
+    const g=callGroups(r); if(g.length){ const k=OC2[g[0].o]||OC2.no_answer; return two((LABEL[g[0].o]||g[0].o)+(g[0].n>1?' ×'+g[0].n:''),k[1],'You · '+dayMon(g[0].at)); }
+    const d=dignamLast(r); if(d&&d.when) return two('Dignam','#99f6e4',d.when+(d.by?' · '+d.by:''));
+    return '<span class="nc3">Not contacted</span>'; };
   $("#main").innerHTML=failStrip()+`<div class="list2">
-   <nav class="rail2" aria-label="Suburbs"><button class="cbk" onclick="upcomingCB()">Booked call backs<span>${ic2('chev',14)}</span></button>${cbs.length?`<button class="cbk ${S.lsub==='Call backs'?'on':''}" onclick="S.lsub='Call backs';drawList()">Call backs<span>${cbs.filter(r=>!r.today_outcome).length}</span></button>`:''}${subs.map(([s,n])=>`<button class="${s===S.lsub?'on':''}" onclick="S.lsub=this.dataset.s;drawList()" data-s="${esc(s)}">${esc(s)}<span>${n}</span></button>`).join('')}</nav>
+   <nav class="rail2" aria-label="Suburbs"><button class="cbk" onclick="upcomingCB()">Booked call backs<span>${ic2('chev',14)}</span></button>${cbs.length?`<button class="cbk ${S.lsub==='Call backs'?'on':''}" onclick="S.lsub='Call backs';drawList()">Call backs<span>${cbs.filter(r=>!r.today_outcome).length}</span></button>`:''}${subs.filter(([s])=>s!==SOL_GROUP).map(([s,n])=>`<button class="${s===S.lsub?'on':''}" onclick="S.lsub=this.dataset.s;drawList()" data-s="${esc(s)}">${esc(s)}<span>${n}</span></button>`).join('')}</nav>
    <div class="lm2">
     <div class="lh2"><h1>${esc(S.lsub)}</h1><span style="font-size:14px;color:var(--t2)">${left} to call</span>
-     <div class="seg2 mini" style="margin-left:auto"><button class="${S.type==='seller'?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button></div>
+     <div class="seg2 mini" style="margin-left:auto"><button class="${S.type==='seller'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button>${subs.some(x=>x[0]===SOL_GROUP)?`<button class="${S.lsub===SOL_GROUP?'on':''}" onclick="S.lsub=SOL_GROUP;drawList()">Solicitors <span style="opacity:.7">${(subs.find(x=>x[0]===SOL_GROUP)||[])[1]}</span></button>`:''}</div>
      <button class="b2 pri hide-phone" style="height:40px" onclick="startSub()">${ic2('phone',18)}Start ${esc(S.lsub)}<span class="key2">Enter</span></button></div>
     <div class="lg3 h"><span></span><span>Name</span><span>Why they're on the list</span><span>Last bought</span><span>Last contact</span><span></span></div>
-    <div class="lr2" id="lrows2">${rows.length?rows.map(r=>{ const y=yrsSince(r.last_sale_date), id=r.property_id, ws=r.callback?[['cal','Call back '+dayMon(r.callback_at),'Note']]:whyRows(r).slice(0,3);
+    <div class="lr2" id="lrows2">${rows.length?rows.map((r,ix)=>{ const div=r.today_outcome&&(ix===0||!rows[ix-1].today_outcome)?'<div class="div3">Called today</div>':''; const y=yrsSince(r.last_sale_date), id=r.property_id, ws=r.callback?[['cal','Call back '+dayMon(r.callback_at),'Note']]:whyRows(r).slice(0,3);
       const ph=(r.signals||[]).includes('probate')&&!(r.solicitor&&r.phone)?null:r.phone, u=aerialUrl(r,PH_SMALL[0],PH_SMALL[1]);
       const rooms=[r.bedrooms>0?r.bedrooms+' bd':'',r.baths>0?r.baths+' ba':'',r.cars>0?r.cars+' car':''].filter(Boolean).join(' · ');
       const bought=r.last_sale_date?`<b>${r.last_sale_price?esc(price2(r.last_sale_price)):'Price n/a'}</b><span>${String(r.last_sale_date).slice(0,4)}${y!=null?' · '+y+' yrs ago':''}</span>`:'<span>No sale on record</span>';
-      return `<div class="lg3${r.today_outcome?' done':''}" onclick="open2(${id})">
+      return div+`<div class="lg3${r.today_outcome?' done':''}" onclick="open2(${id})">
       <div class="th3">${u?`<img src="${u}" alt="" loading="lazy" onerror="this.remove()">`:''}</div>
       <div class="nm3"><b>${esc(people(r.owner_name)[0]||'Owner unknown')}</b><span>${esc(r.street_address||'')}${S.lsub===SOL_GROUP&&r.suburb?', '+esc(r.suburb):''}</span></div>
       <div class="why3">${(()=>{ const all=ws.map(w=>w[1]), dk=all.filter(t=>!/^Owned /.test(t)), d=dk.length?dk:(all.length?['Long time owner']:[]);
