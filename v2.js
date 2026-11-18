@@ -284,8 +284,11 @@ function drawCall2(){
 const _pf=new Set();
 function prefetchPhotos(curId){
   const sz=desk2()?PH_BIG:PH_SMALL;
-  queue().filter(x=>!x.today_outcome&&!S.skipped.has(x.property_id)&&x.property_id!==curId).slice(0,4).forEach(x=>{
-    const u=aerialUrl(x,sz[0],sz[1]); if(!u||_pf.has(u)) return; _pf.add(u); const im=new Image(); im.decoding='async'; im.src=u; });
+  const next=queue().filter(x=>!x.today_outcome&&!S.skipped.has(x.property_id)&&x.property_id!==curId);
+  const load=x=>{ const u=aerialUrl(x,sz[0],sz[1]); if(!u||_pf.has(u)) return; _pf.add(u); const im=new Image(); im.decoding='async'; im.src=u; };
+  next.slice(0,6).forEach(load);
+  // the rest of the next 30 load quietly when the phone is idle, and the phone keeps them, so they show instantly later
+  clearTimeout(window._pfIdle); window._pfIdle=setTimeout(()=>{ const go=()=>next.slice(6,30).forEach(load); window.requestIdleCallback?requestIdleCallback(go,{timeout:4000}):go(); },1500);
 }
 matchMedia('(min-width:900px)').addEventListener('change',()=>{ if(S.tab==='calls'&&S.view!=='list'&&!S.searching&&!$("#ov").classList.contains("show")) drawList(); });
 function typing2(on){ if(desk2()) return; if(on){ document.body.classList.add('typing'); placeAcc2(); } else setTimeout(()=>{ if(document.activeElement?.id!=='pnote2') document.body.classList.remove('typing'); },120); }

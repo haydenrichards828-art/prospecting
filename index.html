@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=10">
+<link rel="stylesheet" href="v2.css?v=11">
 </head>
 <body>
 <div id="app"></div>
@@ -319,7 +319,7 @@ async function api(action, body={}) {
   try { r = await fetch(API, {method:"POST", headers:{"Content-Type":"application/json","x-session":S.token||""}, body:JSON.stringify({action,...body})}); }
   catch { throw new Error("Can't reach the server. Check your signal."); }
   const j = await r.json().catch(()=>({error:"Server error"}));
-  if (r.status === 401 && action !== "login") { store.del("dp_token"); S.token=null; render(); throw new Error("Signed out"); }
+  if (r.status === 401 && action !== "login") { store.del("dp_token"); store.del("dp_calls"); S.token=null; render(); throw new Error("Signed out"); }
   if (!r.ok) throw new Error(j.error || "Something went wrong");
   return j;
 }
@@ -408,23 +408,31 @@ async function login(e){
   try { const r = await api("login",{password:pw}); S.token=r.token; store.set("dp_token",r.token); loadCallbacks(); render(); }
   catch(err){ $("#err").textContent = err.message; }
 }
-async function logout(){ try{await api("logout");}catch{} store.del("dp_token"); S.token=null; render(); }
+async function logout(){ try{await api("logout");}catch{} store.del("dp_token"); store.del("dp_calls"); S.token=null; render(); }
 
 async function loadCallbacks(){ try { S.callbacks = (await api("callbacks")).rows || []; } catch {} }
 
 async function viewCalls(){
   // Already have today's list? Show it instantly and refresh quietly behind it
   if (S.rows && S.ov && S.rowsType===S.type) { paintCalls(); refreshCalls(); return; }
+  if (loadCallsCache()) { paintCalls(); refreshCalls(); return; }
   await refreshCalls(true);
 }
 async function refreshCalls(first){
   const type=S.type, [l, ov] = await Promise.all([api("list",{type}), api("today"), loadCallbacks()]);
   const sig=JSON.stringify([l.rows?.length, (l.rows||[]).map(r=>r.property_id+(r.today_outcome||"")).join(), ov.today_calls, (S.callbacks||[]).length]);
-  S.rows = l.rows || []; S.rowsType=type; S.ov = ov; S.holidays = new Set(ov.holidays||[]);
+  S.rows = l.rows || []; S.rowsType=type; S.ov = ov; S.holidays = new Set(ov.holidays||[]); saveCallsCache();
   if (S.tab!=="calls" || S.type!==type) return;
   if (first || sig!==S.callsSig) { S.callsSig=sig; if (!first && ($("#ov").classList.contains("show") || /INPUT|TEXTAREA/.test(document.activeElement?.tagName||""))) { drawProg(); return; } paintCalls(); }
   else drawProg();
 }
+// Today's list kept on the phone, so opening the app shows it straight away while the fresh copy loads behind it
+function saveCallsCache(){ if(!S.rows||!S.ov||!S.token||DEMO) return; try{ localStorage.setItem("dp_calls", JSON.stringify({day:todayKey(), tok:S.token.slice(-8), type:S.rowsType, rows:S.rows, ov:S.ov, cb:S.callbacks||[]})); }catch{ try{ localStorage.removeItem("dp_calls"); }catch{} } }
+function loadCallsCache(){ try{ const c=JSON.parse(localStorage.getItem("dp_calls")||"null");
+    if(!c||c.day!==todayKey()||c.type!==S.type||!S.token||c.tok!==S.token.slice(-8)) return false;
+    S.rows=c.rows; S.rowsType=c.type; S.ov=c.ov; S.callbacks=c.cb; S.holidays=new Set(c.ov.holidays||[]); return true; }catch{ return false; } }
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden") saveCallsCache(); });
+addEventListener("pagehide", saveCallsCache);
 function paintCalls(){
   const ov=S.ov;
   const ready = ov.ready_texts||0;
@@ -927,7 +935,7 @@ function drawDrops(){
   if (!all.length) { $("#main").innerHTML=`<div class="empty"><i class="ti ti-mailbox"></i>No houses without a phone number yet.<br>They appear here once properties are imported.</div>`; return; }
   const head=`<div class="top">${seg("dview",[["map","Map"],["list","List"]],"drawDrops()")}${S.dview==="map"?seg("dlayer",[["pins","Pins"],["heat","Heat"],["streets","Streets"]],"drawDropLayer()"):`<button class="iconbtn" onclick="window.print()" title="Print" aria-label="Print"><i class="ti ti-printer"></i></button><button class="iconbtn" onclick="downloadDrops()" title="Download" aria-label="Download"><i class="ti ti-download"></i></button>`}</div>
     <div class="chips"><span class="muted">Top</span>${[[0,"All"],[1000,"1000"],[500,"500"],[250,"250"],[100,"100"],[50,"50"]].map(([n,l])=>`<button class="${S.dtop===n?"on":""}" onclick="setTop(${n})">${l}</button>`).join("")}</div>
-    <p class="muted" style="margin:0 0 8px;font-size:13px">${S.dtop?`Showing the top ${Math.min(S.dtop,left.length)} of ${left.length} houses to drop`:`${left.length} houses to drop · ${all.length-left.length} dropped in the last ${DROP_DAYS} days`}${onMap<all.length?` · ${all.length-onMap} not on the map yet`:""}</p>`;
+    `;
   if (S.dview==="list") { $("#main").innerHTML=head+dropListHTML(); return; }
   document.body.classList.add("dwide");
   $("#main").innerHTML = head + `<div class="dsplit"><div id="dmap" class="dmap"><div class="empty" style="padding:40px 0"><i class="ti ti-loader-2"></i>Loading map</div></div>
@@ -1622,10 +1630,10 @@ async function importCSV(){
   catch(e){ $("#ir").innerHTML=base+"<br>"+esc(e.message); }
 }
 
-window.__boot=()=>{ if (S.token) loadCallbacks().then(render); else render(); };
+window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=19"></script>
+<script src="v2.js?v=20"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

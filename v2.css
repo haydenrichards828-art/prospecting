@@ -307,3 +307,6 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .sugg2 button:hover{background:#20262e!important}
 #demobar{position:relative;z-index:5;height:24px;display:flex;align-items:center;justify-content:center;gap:8px;background:#f5b942;color:#1a1300;font:600 12px/1 Inter,system-ui,sans-serif;padding-top:env(safe-area-inset-top,0px);white-space:nowrap;overflow:hidden}
 #demobar a{color:#1a1300;text-decoration:underline}
+
+/* The card drop map keeps its layers to itself, so menus and sheets always sit on top of it */
+#dmap{position:relative;z-index:0;isolation:isolate}
