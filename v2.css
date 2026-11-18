@@ -359,3 +359,17 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .prop2{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
 .two2 .why2 .rt2{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:8px}.two2>div{gap:6px}
 .two2 .why2 .rt2{flex-direction:row}
+
+/* Call screen layout: photo with sales beside it, history in the middle, the house facts along the bottom */
+.prop2{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);align-items:start}
+.sales2{display:flex;flex-direction:column;gap:10px;min-width:0;padding-top:2px}
+.facts2{flex:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:clamp(10px,1.8vh,16px) var(--px);border-top:1px solid var(--line2);background:var(--panel)}
+.facts2 .attr2 b{font-size:20px;line-height:24px}.facts2 .attr2 span{font-size:13px;color:var(--t2)}
+/* Why they're on the list, on the left under the number */
+.whyl2{display:flex;flex-direction:column;gap:8px}
+.wl2{display:flex;flex-wrap:wrap;gap:8px}
+.wc2{display:flex;align-items:center;gap:10px;padding:7px 14px 7px 7px;border-radius:12px;background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 40%,transparent)}
+.wc2 .ti2{width:32px;height:32px;border-radius:9px;background:var(--c);display:grid;place-items:center;flex:none}
+.wc2 b{display:block;font-size:15px;line-height:19px;color:var(--t1)}
+.wc2 em{display:block;font-style:normal;font-size:12px;font-weight:700;color:var(--t)}
+#demobar ~ #shell{height:calc(100dvh - 24px)}

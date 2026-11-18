@@ -249,19 +249,17 @@ function drawCall2(){
     <div><h1 class="nm2">${esc(nm)}</h1>${ppl.length>1?`<div class="also2">Also on file: ${ppl.slice(1).map(esc).join(', ')}</div>`:''}<button class="ad2 cp2" onclick="copyAddr(${id})" title="Copy address for RP Data">${ic2('pin',21)}<span>${addr}</span><span class="cpl">Copy</span></button>${dignamLine(r)}</div>
     ${tag}${warnBox(r)}
     ${numBtn(r,'num2')}
+    ${why.length?`<div class="whyl2"><span class="lab2">Why they're on the list</span><div class="wl2">${why.slice(0,4).map(([i,t,l])=>`<div class="wc2" style="--c:${LVL2[l][0]};--t:${LVL2[l][1]}"><span class="ti2">${ic2(i,18,'#fff')}</span><span><b>${esc(t)}</b><em>${l}</em></span></div>`).join('')}</div></div>`:''}
     <label class="nw2"><span class="h"><span class="lab2">Note <span class="nsaved" style="font-weight:500;color:var(--t3)">${note?'· saved':''}</span></span><span class="kb2">N</span></span>
      <textarea class="note2" id="note2" data-note placeholder="Type while you talk" oninput="setNote(${id},this.value)">${esc(note)}</textarea></label>
     ${barHTML2(id)}
     <div class="ends2"><button onclick="skip2(${id})">${ic2('skip',16)}Skip<span class="k kb2">S</span></button><button onclick="moreSheet2(${id})">${ic2('more',16)}More<span class="k kb2">M</span></button></div>
    </section>
    <section class="cr2">
-    <div class="prop2">${photo2(r,'height:clamp(150px,27vh,280px);cursor:zoom-in',true,desk2()).replace('class="photo2"',`class="photo2" onclick="if(!event.target.closest('.sv'))bigPhoto(${id})"`)}
-     <div class="attrs2">${attrs.map(([i,v,l])=>`<div class="attr2">${ic2(i,20,'var(--t2)')}<div><b>${esc(v)}</b><span>${l}</span></div></div>`).join('')}</div></div>
-    <div class="two2">
-     <div><span class="lab2">Sales history</span>${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):'<p class="emptyline" style="margin:0">No sales on record</p>'}</div>
-     <div><span class="lab2">Why ${ppl.length>1?'they are':'they are'} on the list</span>${why.slice(0,4).map(([i,t,l])=>`<div class="why2"><span class="tile" style="width:36px;height:36px;border-radius:10px;background:${LVL2[l][0]}">${ic2(i,17,'#fff')}</span><span class="rt2"><b>${esc(t)}</b><span style="color:${LVL2[l][1]}">${l}</span></span></div>`).join('')||'<p class="emptyline" style="margin:0">No reason recorded</p>'}</div>
-    </div>
+    <div class="prop2">${photo2(r,'height:clamp(170px,30vh,320px);cursor:zoom-in',true,desk2()).replace('class="photo2"',`class="photo2" onclick="if(!event.target.closest('.sv'))bigPhoto(${id})"`)}
+     <div class="sales2"><span class="lab2">Sales history</span>${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):'<p class="emptyline" style="margin:0">No sales on record</p>'}</div></div>
     <div class="calls2"><span class="lab2">Calls and Dignam history</span>${callCards2(r)}</div>
+    <div class="facts2">${attrs.map(([i,v,l])=>`<div class="attr2">${ic2(i,22,'var(--t2)')}<div><b>${esc(v)}</b><span>${l}</span></div></div>`).join('')}</div>
    </section>
   </div>
   <div class="pcall2">
