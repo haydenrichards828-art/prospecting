@@ -113,8 +113,10 @@ function callCards2(r){
 function aerialUrl(r,w=640,h=440){ if(r.lat==null||r.lng==null) return null; const la=+r.lat, lo=+r.lng, vs=0.00055, hs=vs*(w/h)/0.829;
   return `https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/export?bbox=${(lo-hs).toFixed(6)},${(la-vs).toFixed(6)},${(lo+hs).toFixed(6)},${(la+vs).toFixed(6)}&bboxSR=4326&imageSR=3857&size=${w},${h}&format=jpg&f=image`; }
 const svUrl=r=>r.lat!=null?`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${(+r.lat).toFixed(6)},${(+r.lng).toFixed(6)}`:`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rpAddress(r.street_address,r.suburb,r.postcode))}`;
-function photo2(r,style,big){ const u=aerialUrl(r);
-  return `<div class="photo2" style="${style||''}" role="img" aria-label="Aerial photo of ${esc(r.street_address||'the house')}">${u?`<img src="${u}" alt="" loading="lazy" onerror="this.remove()"><span class="pinm"></span>`:`<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3)">${ic2('house',big?28:18)}</span>`}
+// Sized to where it shows: a small square on the phone, a wide photo on a computer. Only the one on screen loads.
+const PH_SMALL=[240,240], PH_BIG=[640,440];
+function photo2(r,style,big,on=true){ const sz=big?PH_BIG:PH_SMALL, u=aerialUrl(r,sz[0],sz[1]);
+  return `<div class="photo2" style="${style||''}" role="img" aria-label="Aerial photo of ${esc(r.street_address||'the house')}">${u?`${on?`<img src="${u}" alt="" fetchpriority="high" decoding="async" onerror="this.remove()">`:''}<span class="pinm"></span>`:`<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3)">${ic2('house',big?28:18)}</span>`}
    ${big?`${u?'<span class="credit">Imagery © NSW Spatial Services</span>':''}<a class="sv" href="${svUrl(r)}" target="_blank" rel="noopener">${ic2('eye',15)}Street View</a>`:''}</div>`; }
 
 // ---------- shell ----------
@@ -215,7 +217,7 @@ function drawCall2(){
     <div class="ends2"><button onclick="skip2(${id})">${ic2('skip',16)}Skip<span class="k kb2">S</span></button><button onclick="moreSheet2(${id})">${ic2('more',16)}More<span class="k kb2">M</span></button></div>
    </section>
    <section class="cr2">
-    <div class="prop2">${photo2(r,'height:clamp(96px,24vh,240px)',true)}
+    <div class="prop2">${photo2(r,'height:clamp(96px,24vh,240px)',true,desk2())}
      <div class="attrs2">${attrs.map(([i,v,l])=>`<div class="attr2">${ic2(i,20,'var(--t2)')}<div><b>${esc(v)}</b><span>${l}</span></div></div>`).join('')}</div></div>
     <div class="two2">
      <div><span class="lab2">History</span>${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):'<p class="emptyline" style="margin:0">No sales on record</p>'}</div>
@@ -226,8 +228,8 @@ function drawCall2(){
   </div>
   <div class="pcall2">
    <div class="pb2">
-    <div class="ptyp2" style="align-items:center;gap:12px;flex:none;padding-bottom:4px">${photo2(r,'width:44px;height:44px;border-radius:11px')}<div style="min-width:0"><b style="font-size:18px;display:block">${esc(nm)}</b><span style="font-size:14px;color:var(--t2)">${addr}</span></div></div>
-    <div class="pid2"><div class="pidr2">${photo2(r,'',false).replace('class="photo2"',`class="photo2" onclick="details2(${id},'history')"`)}<div style="min-width:0"><h1>${esc(nm)}</h1><div class="a">${addr}</div></div></div>
+    <div class="ptyp2" style="align-items:center;gap:12px;flex:none;padding-bottom:4px">${photo2(r,'width:44px;height:44px;border-radius:11px',false,!desk2())}<div style="min-width:0"><b style="font-size:18px;display:block">${esc(nm)}</b><span style="font-size:14px;color:var(--t2)">${addr}</span></div></div>
+    <div class="pid2"><div class="pidr2">${photo2(r,'',false,!desk2()).replace('class="photo2"',`class="photo2" onclick="details2(${id},'history')"`)}<div style="min-width:0"><h1>${esc(nm)}</h1><div class="a">${addr}</div></div></div>
      ${icons.length?`<div class="icons2">${icons.map(([i,v])=>`<span>${ic2(i,18,'var(--t2)')}${esc(v)}</span>`).join('')}</div>`:''}</div>
     ${warnBox(r,true)}
     ${numBtn(r,'pnum2')}
@@ -241,8 +243,16 @@ function drawCall2(){
    <div class="pf2">${barHTML2(id)}<div class="ends2"><button onclick="skip2(${id})">${ic2('skip',16)}Skip</button><button onclick="moreSheet2(${id})">${ic2('more',16)}More</button></div></div>
   </div>`;
   const acc=$("#acc2"); if(acc) acc.innerHTML=`${barHTML2(id,true)}<button class="done" onmousedown="event.preventDefault()" onclick="document.activeElement.blur()">Done</button>`;
-  markShown(id);
+  markShown(id); prefetchPhotos(id);
 }
+// Load the next few people's photos in the background so they are already there when the card comes up
+const _pf=new Set();
+function prefetchPhotos(curId){
+  const sz=desk2()?PH_BIG:PH_SMALL;
+  queue().filter(x=>!x.today_outcome&&!S.skipped.has(x.property_id)&&x.property_id!==curId).slice(0,4).forEach(x=>{
+    const u=aerialUrl(x,sz[0],sz[1]); if(!u||_pf.has(u)) return; _pf.add(u); const im=new Image(); im.decoding='async'; im.src=u; });
+}
+matchMedia('(min-width:900px)').addEventListener('change',()=>{ if(S.tab==='calls'&&S.view!=='list'&&!S.searching&&!$("#ov").classList.contains("show")) drawList(); });
 function typing2(on){ if(desk2()) return; if(on){ document.body.classList.add('typing'); placeAcc2(); } else setTimeout(()=>{ if(document.activeElement?.id!=='pnote2') document.body.classList.remove('typing'); },120); }
 function placeAcc2(){ const v=window.visualViewport, a=$("#acc2"); if(!v||!a) return; const gap=window.innerHeight-(v.height+v.offsetTop); a.style.bottom=Math.max(0,gap)+'px'; }
 window.visualViewport&&visualViewport.addEventListener('resize',placeAcc2);
