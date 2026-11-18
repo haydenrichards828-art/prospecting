@@ -346,3 +346,4 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .cc2>div{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:10px;row-gap:2px;min-width:0}
 .cc2 .h{gap:8px;flex:none}.cc2 .h b{font-size:14px}.cc2 .h span{font-size:13px}
 .cc2 p{margin:0;font-size:14px;line-height:20px;flex:1 1 220px;min-width:0}
+.top2 .tsearch{margin-top:0;margin-bottom:0;align-self:center}
