@@ -301,3 +301,4 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .pidr2 .dl2 .pa{display:none}
 .tsep{width:1px;height:22px;background:var(--line2);align-self:center}
 @media (max-width:1279px){.pl2{display:none}.tsep{display:none}}
+.ti-trash{--i:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16'/%3E%3Cpath d='M10 11v6'/%3E%3Cpath d='M14 11v6'/%3E%3Cpath d='M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12'/%3E%3Cpath d='M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3'/%3E%3C/svg%3E")}

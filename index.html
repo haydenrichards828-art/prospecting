@@ -199,7 +199,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=7">
+<link rel="stylesheet" href="v2.css?v=8">
 </head>
 <body>
 <div id="app"></div>
@@ -1172,7 +1172,7 @@ function openLead(id, opts={}){
   const tel=l.phone?l.phone.replace(/[^\d+]/g,""):"";
   const mcard=x=>{ const t=x.t;
     return `<div class="mcard">${thumb(t,44)}<div style="flex:1;min-width:0"><b>${(S.newShown[l.id]||[]).includes(+t.id)?`<span class="newtag">New</span>`:""}${esc(t.address)}${t.suburb?`, ${esc(t.suburb)}`:""}</b><div class="muted" style="font-size:12px">${x.m.tier===2?"Other area · ":""}${esc(listingLine(t))}${x.m.unknown.length?` · check ${esc(x.m.unknown.join(", "))}`:""}</div></div>
-      ${t.url?`<a class="iconbtn" href="${esc(t.url)}" target="_blank" rel="noopener" aria-label="Open listing"><i class="ti ti-external-link"></i></a>`:""}${l.phone?`<a class="iconbtn" href="${smsLink(l.phone,pitch(l,t))}" aria-label="Text them this home"><i class="ti ti-message"></i></a>`:""}</div>`; };
+      ${t.url?`<a class="iconbtn" href="${esc(t.url)}" target="_blank" rel="noopener" aria-label="Open listing"><i class="ti ti-external-link"></i></a>`:""}${l.phone?`<a class="iconbtn" href="${smsLink(l.phone,pitch(l,t))}" aria-label="Text them this home"><i class="ti ti-message"></i></a>`:""}<button class="iconbtn" onclick="rejectMatch(${l.id},${+t.id})" aria-label="They don't like this home" title="They don't like this home"><i class="ti ti-trash"></i></button></div>`; };
   const b=l.buy||{}, bs=buySummary(b), ds=[l.motivation,l.source,l.timeframe,l.lead_type].filter(Boolean).join(" · ");
   const notes=l.notes||[], fmtN=n=>`<p class="lnote"><span class="muted">${new Date(n.at).toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"2-digit",timeZone:"Australia/Sydney"})}</span> ${esc(n.body)}</p>`;
   $("#sheet").classList.add("lsheet");
@@ -1543,7 +1543,7 @@ const ALIAS={
  last_name:["last_name","surname","lastname","family_name"],
  phone:["phone","mobile","mobile_phone","owner_phone","phone_number","contact_number","mobile_number","home_phone","ph","contact_phone"],
  owner_address:["owner_address","mailing_address","postal_address","owner_postal_address"],
- bedrooms:["bedrooms","beds","bed","no_of_bedrooms","bedroom"],
+ bedrooms:["bedrooms","beds","bed","no_of_bedrooms","bedroom"],baths:["bathrooms","baths","bath","no_of_bathrooms","bathroom"],cars:["car_spaces","car_spaces_total","cars","car","carspaces","parking","garages","garage","lock_up_garages","car_parks"],
  land_area:["land_area","land_size","land_size_m2","area","land","lot_size"],
  last_sale_date:["last_sale_date","sale_date","last_sold_date","sold_date","contract_date","date_sold","last_sold"],
  last_sale_price:["last_sale_price","sale_price","last_sold_price","sold_price","price"],
@@ -1581,7 +1581,7 @@ function mapRows(rows){
     if(!o.street && g("address")) Object.assign(o, Object.fromEntries(Object.entries(splitAddress(g("address"))).filter(([k,v])=>v && !o[k])));
     o.owner_name=g("owner_name")||[g("first_name"),g("last_name")].filter(Boolean).join(" ");
     o.phone=g("phone"); o.owner_address=g("owner_address");
-    o.bedrooms=num(g("bedrooms")).split(".")[0]; o.land_area=num(g("land_area"));
+    o.bedrooms=num(g("bedrooms")).split(".")[0]; o.baths=num(g("baths")).split(".")[0]; o.cars=num(g("cars")).split(".")[0]; o.land_area=num(g("land_area"));
     o.last_sale_date=toISO(g("last_sale_date")); o.last_sale_price=num(g("last_sale_price")); o.previous_sale_date=toISO(g("previous_sale_date"));
     const ll=g("is_landlord").toLowerCase(), llh=col.is_landlord!==undefined?heads[col.is_landlord]:"";
     o.is_landlord = llh==="owner_occupied" ? /^(n|no|false|0)$/.test(ll) : (/^(y|yes|true|1)$/.test(ll) || /invest|rent|tenant|non.?owner/.test(ll));
@@ -1619,7 +1619,7 @@ async function importCSV(){
 window.__boot=()=>{ if (S.token) loadCallbacks().then(render); else render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=14"></script>
+<script src="v2.js?v=16"></script>
 <script>window.__boot();</script>
 </body>
 </html>

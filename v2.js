@@ -12,7 +12,7 @@ const P2={
  skip:'M5 5l7 7-7 7M13 5l7 7-7 7', more:'M5 12h.01M12 12h.01M19 12h.01',
  tag:'M3 12V4h8l10 10-8 8zM7.5 8h.01', trend:'M3 17l6-6 4 4 8-8M15 7h6v6',
  bed:'M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7M3 14h18M7 9V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2',
- land:'M4 4h16v16H4zM4 10h5V4M15 20v-6h5', pin:'M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12M12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4',
+ land:'M4 4h16v16H4zM4 10h5V4M15 20v-6h5', bath:'M4 12h16v2a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM6 12V6a2 2 0 0 1 4 0', car:'M5 17h14M6 17l1.6-5.5h8.8L18 17M5 17v2M19 17v2M8 14.5h.01M16 14.5h.01', pin:'M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12M12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4',
  chev:'M9 6l6 6-6 6', back:'M15 6l-6 6 6 6', down:'M6 9l6 6 6-6', msg:'M4 5h16v11H8l-4 4zM8 10h8',
  star:'M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z', warn:'M12 3l10 18H2zM12 10v5M12 18h.01',
  ban:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M5.6 5.6l12.8 12.8', cal:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
@@ -230,13 +230,14 @@ function drawCall2(){
   const addr=`${esc(r.street_address||'')}${r.suburb?', '+esc(r.suburb):''}`, rpu=r.street_address||r.suburb?rpUrl(r.street_address,r.suburb,r.rp_link,r.postcode):null;
   const yrs=yrsSince(r.last_sale_date), why=whyRows(r), hist=histRows(r), g=callGroups(r);
   const left=all.filter(x=>!x.today_outcome&&!S.skipped.has(x.property_id));
-  const attrs=[r.bedrooms>0?['bed',r.bedrooms,'Bedrooms']:null,r.land_area?['land',Math.round(r.land_area)+' m²','Land']:null,yrs!=null?['clock',yrs+' years','Owned']:null,r.last_sale_price?['tag',price2(r.last_sale_price),'Last bought']:null,['trend',r.street_sales_12m||0,'Street sales this year']].filter(Boolean).slice(0,4);
+  const hasRooms=r.bedrooms>0||r.baths>0||r.cars>0;
+  const attrs=[['bed',r.bedrooms>0?r.bedrooms:'?','Bedrooms'],['bath',r.baths>0?r.baths:'?','Bathrooms'],['car',r.cars>0?r.cars:(r.cars===0?0:'?'),'Car spaces'],yrs!=null?['clock',yrs+' years','Owned']:['tag',r.last_sale_price?price2(r.last_sale_price):'?','Last bought']];
   const tag=`<div class="tag2" style="border-color:${R.c}77"><div class="s" style="background:${R.c}">${ic2(R.icon,26,'#fff')}${R.side}</div><div class="m" style="background:${R.c}1a"><b>${esc(R.head)}</b>${R.sub?`<span style="color:${R.t}">${esc(R.sub)}</span>`:''}</div></div>`;
   const tl=timeline(r), t0=tl[0], lastRow=t0?(t0.mine?(()=>{ const k=OC2[t0.o]||OC2.no_answer; return row2(k[0],k[2],`${LABEL[t0.o]||t0.o}${t0.n>1?' ×'+t0.n:''}, ${dayMonLong(t0.at)}`,`${tl.length} interaction${tl.length>1?'s':''} with Dignam`,chev2(),`details2(${id},'calls')`); })()
     :row2('#6366f1','msg',`${esc(t0.who||'Dignam')}, ${t0.at?monYear(t0.at.slice(0,10)):'no date'}`,`${tl.length} interaction${tl.length>1?'s':''} with Dignam`,chev2(),`details2(${id},'calls')`))
     :row2('#4b5565','phone',r.callback&&r.notes?'Call back note':'Not contacted','',chev2(),`details2(${id},'calls')`);
   const bought=hist.find(h=>h.lab==='Bought');
-  const icons=[r.bedrooms>0?['bed',r.bedrooms]:null,r.land_area?['land',Math.round(r.land_area)+' m²']:null,yrs!=null?['clock',yrs+' yrs']:null,r.street_sales_12m?['trend',r.street_sales_12m+' sold']:null].filter(Boolean);
+  const icons=[['bed',r.bedrooms>0?r.bedrooms:'?'],['bath',r.baths>0?r.baths:'?'],['car',r.cars>0?r.cars:(r.cars===0?0:'?')],yrs!=null?['clock',yrs+' yrs']:null].filter(Boolean);
   S.progLine={sub:r.callback?'call backs':(r.suburb||''),here:r.callback?left.filter(x=>x.callback).length:left.filter(x=>!x.callback&&x.suburb===r.suburb).length,total:left.length};
   drawProg();
   $("#main").innerHTML=failStrip()+hoursStrip()+`
@@ -305,7 +306,7 @@ function details2(id,tab){
   const body={calls:()=>callCards2(r),
    why:()=>`<div class="g2">${whyRows(r).map(([i,t,l])=>row2(LVL2[l][0],i,esc(t),`<span style="color:${LVL2[l][1]};font-weight:700">${l}</span>`)).join('')}</div><div class="g2" style="padding:14px 16px"><b style="display:block;margin-bottom:4px">${esc(R.head)}</b><span style="color:var(--t2)">${esc(R.sub)}</span></div>`,
    history:()=>`${photo2(r,'height:190px',true)}<div class="g2" style="padding:16px;display:flex;flex-direction:column;gap:14px">${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):'<span class="emptyline">No sales on record</span>'}</div>
-     <div class="g2">${[['land',r.land_area?Math.round(r.land_area)+' m²':'Not known','Land'],['clock',yrsSince(r.last_sale_date)!=null?yrsSince(r.last_sale_date)+' years':'Not known','Owned'],['trend',String(r.street_sales_12m||0),'Street sales this year']].map(([i,v,l])=>row2('#4b5565',i,esc(v),l)).join('')}</div>
+     <div class="g2">${[['bed',[r.bedrooms>0?r.bedrooms+' bed':null,r.baths>0?r.baths+' bath':null,r.cars>0?r.cars+' car':null].filter(Boolean).join(', ')||'Not known yet','Rooms'],['clock',yrsSince(r.last_sale_date)!=null?yrsSince(r.last_sale_date)+' years':'Not known','Owned'],['trend',String(r.street_sales_12m||0),'Street sales this year']].map(([i,v,l])=>row2('#4b5565',i,esc(v),l)).join('')}</div>
 `}[tab]();
   openSheet2(esc(people(r.owner_name)[0]||'Owner unknown'),`<div class="seg2">${[['calls','Calls'],['why','Why'],['history','Sales']].map(([k,l])=>`<button class="${k===tab?'on':''}" onclick="details2(${id},'${k}')">${l}</button>`).join('')}</div>${body}`);
 }
@@ -569,3 +570,11 @@ async function restore2(i){ const x=S._rm[i]; if(!x) return;
   try{ await api("restore_removed",{ref:x.ref}); }catch(e){ return toast(e.message); }
   toast('Back on the list from tomorrow'); removedSheet(); }
 window.viewPipeline=(function(orig){ return async function(){ await orig(); const m=$("#main"); if(m&&S.tab==='pipeline') m.insertAdjacentHTML('afterbegin','<div class="ph2"><h1>Appraisals and listings</h1></div>'); }; })(window.viewPipeline);
+
+// Homes a lead has said no to never show as matches again
+window.matchesFor=(function(orig){ return function(l){ const no=((l&&l.buy)||{}).no||[]; return orig(l).filter(x=>!no.includes(+x.t.id)); }; })(window.matchesFor);
+async function rejectMatch(leadId,listingId){ const l=(S.leads||[]).find(x=>x.id===leadId); if(!l) return;
+  const buy={...(l.buy||{})}; buy.no=[...new Set([...(buy.no||[]),listingId])];
+  const prev=l.buy; l.buy=buy; openLead(leadId,{keepScroll:true});
+  try{ await api("save_lead",{id:leadId,lead:{buy}}); toast("Removed. It won't show for them again",()=>{ l.buy=prev; api("save_lead",{id:leadId,lead:{buy:prev||{}}}).catch(()=>{}); openLead(leadId,{keepScroll:true}); }); }
+  catch(e){ l.buy=prev; openLead(leadId,{keepScroll:true}); toast("Couldn't save that. "+e.message); } }
