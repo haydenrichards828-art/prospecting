@@ -490,9 +490,12 @@ async function reportIssue(id,kind){
   const hide=["sold","on_market","dignam_listed","rented","recent_buyer"].includes(kind);
   if(hide){ S.skipped.add(id); toast("Thanks. Taken off the list"); } else toast("Thanks. Logged so it gets fixed");
   drawList(); }
+// Deceased estates are all calls to solicitors, so they sit together in one group wherever the house is
+const SOL_GROUP="Solicitors";
+function grp(r){ return (r.signals||[]).includes("probate") ? SOL_GROUP : (r.suburb||""); }
 function bySuburb(rows){
-  const best={}; rows.forEach(r=>{ const k=r.suburb||""; best[k]=Math.min(best[k]??1e9, r.rank??1e9); });
-  return [...rows].sort((a,b)=>(best[a.suburb||""]-best[b.suburb||""]) || String(a.suburb||"").localeCompare(String(b.suburb||"")) || (a.rank-b.rank));
+  const best={}; rows.forEach(r=>{ const k=grp(r); best[k]=Math.min(best[k]??1e9, r.rank??1e9); });
+  return [...rows].sort((a,b)=>(best[grp(a)]-best[grp(b)]) || grp(a).localeCompare(grp(b)) || (a.rank-b.rank));
 }
 function queue(){
   const cb = (S.callbacks||[]).filter(c=>!c.done).map(c=>({...c, rank:0, callback:true, reasons:[], signals:[], history:null}));
@@ -500,8 +503,8 @@ function queue(){
   return [...cb, ...bySuburb(S.rows.filter(r=>!ids.has(r.property_id)))];
 }
 // Suburb headings in the scrolling list
-function withHeads(rows, prev){ let last=prev?(prev.callback?"\u0001":prev.suburb||""):null; const cnt={}; (S._rest||rows).forEach(r=>{ if(!r.today_outcome&&!r.callback) cnt[r.suburb||""]=(cnt[r.suburb||""]||0)+1; });
-  return rows.map(r=>{ const k=r.callback?"\u0001":(r.today_outcome?"\u0002":(r.suburb||"")); let h="";
+function withHeads(rows, prev){ let last=prev?(prev.callback?"\u0001":prev.suburb||""):null; const cnt={}; (S._rest||rows).forEach(r=>{ if(!r.today_outcome&&!r.callback) cnt[grp(r)]=(cnt[grp(r)]||0)+1; });
+  return rows.map(r=>{ const k=r.callback?"\u0001":(r.today_outcome?"\u0002":grp(r)); let h="";
     if(k!==last){ h=k==="\u0001"?`<div class="subhead">Call backs</div>`:k==="\u0002"?`<div class="subhead">Called today</div>`:`<div class="subhead">${esc(k||"Suburb unknown")}<span>${cnt[k]||0} to call</span></div>`; last=k; }
     return h+cardHTML(r); }).join(""); }
 async function loadHealth(){ const el=$("#health"); if(!el) return;
@@ -1633,7 +1636,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=22"></script>
+<script src="v2.js?v=23"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

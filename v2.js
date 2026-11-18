@@ -239,7 +239,7 @@ function drawCall2(){
     :row2('#4b5565','phone',r.callback&&r.notes?'Call back note':'Not contacted','',chev2(),`details2(${id},'calls')`);
   const bought=hist.find(h=>h.lab==='Bought');
   const icons=[['bed',r.bedrooms>0?r.bedrooms:'?'],['bath',r.baths>0?r.baths:'?'],['car',r.cars>0?r.cars:(r.cars===0?0:'?')],yrs!=null?['clock',yrs+' yrs']:null].filter(Boolean);
-  S.progLine={sub:r.callback?'call backs':(r.suburb||''),here:r.callback?left.filter(x=>x.callback).length:left.filter(x=>!x.callback&&x.suburb===r.suburb).length,total:left.length};
+  S.progLine={sub:r.callback?'call backs':(grp(r)===SOL_GROUP?'solicitors':(r.suburb||'')),here:r.callback?left.filter(x=>x.callback).length:left.filter(x=>!x.callback&&grp(x)===grp(r)).length,total:left.length};
   drawProg();
   $("#main").innerHTML=failStrip()+hoursStrip()+`
   <div class="call2">
@@ -301,7 +301,7 @@ addEventListener('resize',()=>{ if(desk2()) document.body.classList.remove('typi
 function act2(id,o){ document.activeElement?.blur?.(); document.body.classList.remove('typing'); if(o==='call_back') return callbackSheet2(id); outcome(id,o); }
 function skip2(id){ if(S.pick===id) S.pick=null; skipCard(id); }
 window.record = (function(orig){ return async function(id,o,cb){ if(S.pick===id) S.pick=null; closeOv(); return orig(id,o,cb); }; })(window.record);
-window.queue = (function(orig){ return function(){ const a=orig().map(r=>{ if(!r.callback) return r; const m=(S.rows||[]).find(x=>x.property_id===r.property_id); return m?{...m,...r,reasons:m.reasons,signals:m.signals,history:m.history,rank:0}:r; }); if(!S.focusSub) return a; return [...a.filter(r=>r.callback),...a.filter(r=>!r.callback&&r.suburb===S.focusSub),...a.filter(r=>!r.callback&&r.suburb!==S.focusSub)]; }; })(window.queue);
+window.queue = (function(orig){ return function(){ const a=orig().map(r=>{ if(!r.callback) return r; const m=(S.rows||[]).find(x=>x.property_id===r.property_id); return m?{...m,...r,reasons:m.reasons,signals:m.signals,history:m.history,rank:0}:r; }); if(!S.focusSub) return a; return [...a.filter(r=>r.callback),...a.filter(r=>!r.callback&&grp(r)===S.focusSub),...a.filter(r=>!r.callback&&grp(r)!==S.focusSub)]; }; })(window.queue);
 function toggleDialer(){ setView(S.view==='list'?'call':'list'); }
 
 function details2(id,tab){
@@ -352,11 +352,11 @@ function pickSheet2(id){
 // ---------- the list: pick who to call ----------
 function drawList2(){
   const all=queue(), cbs=all.filter(r=>r.callback), rest=all.filter(r=>!r.callback);
-  const subs=[]; rest.forEach(r=>{ const k=r.suburb||'Suburb unknown'; let s=subs.find(x=>x[0]===k); if(!s) subs.push(s=[k,0,0]); s[2]++; if(!r.today_outcome) s[1]++; });
+  const subs=[]; rest.forEach(r=>{ const k=grp(r)||'Suburb unknown'; let s=subs.find(x=>x[0]===k); if(!s) subs.push(s=[k,0,0]); s[2]++; if(!r.today_outcome) s[1]++; });
   if(!all.length){ $("#main").innerHTML=`<div class="empty2"><b>No list yet for today</b>It builds itself at 4:30am. To build it now, go to Settings.</div>`; return; }
   const names=[...(cbs.length?['Call backs']:[]),...subs.map(s=>s[0])];
   if(!names.includes(S.lsub)) S.lsub=(S.focusSub&&names.includes(S.focusSub))?S.focusSub:names[0];
-  const rows=(S.lsub==='Call backs'?cbs:rest.filter(r=>(r.suburb||'Suburb unknown')===S.lsub)).slice().sort((a,b)=>(!!a.today_outcome-!!b.today_outcome));
+  const rows=(S.lsub==='Call backs'?cbs:rest.filter(r=>(grp(r)||'Suburb unknown')===S.lsub)).slice().sort((a,b)=>(!!a.today_outcome-!!b.today_outcome));
   const left=rows.filter(r=>!r.today_outcome).length;
   const last=r=>{ if(r.today_outcome){ const k=OC2[r.today_outcome]||OC2.no_answer; return `<span style="display:flex;gap:10px;align-items:center"><span style="font-size:14px;width:52px;color:var(--t2)">Today</span><span class="pill2" style="color:${k[1]};background:color-mix(in srgb, ${k[1]} 14%, transparent)">${esc(LABEL[r.today_outcome])}</span></span>`; }
     const g=callGroups(r); if(!g.length) return '<span style="font-size:14px;color:var(--t3)">Not contacted</span>'; const k=OC2[g[0].o]||OC2.no_answer;
@@ -370,7 +370,7 @@ function drawList2(){
     <div class="lg2 h"><span>Name</span><span>Why</span><span>Owned</span><span>Last call</span><span></span></div>
     <div class="lr2" id="lrows2">${rows.length?rows.map(r=>{ const R=reasonOf(r), st=strength2(r), y=yrsSince(r.last_sale_date);
       return `<div class="lg2${r.today_outcome?' done':''}" data-q="${esc([r.owner_name,r.street_address].join(' ').toLowerCase())}" onclick="open2(${r.property_id})">
-      <div class="nm"><b>${esc(people(r.owner_name)[0]||'Owner unknown')}</b><span>${esc(r.street_address||'')}</span><em class="hide-desk">${esc(r.callback?'Call back '+dayMon(r.callback_at):R.line)}</em></div>
+      <div class="nm"><b>${esc(people(r.owner_name)[0]||'Owner unknown')}</b><span>${esc(r.street_address||'')}${S.lsub===SOL_GROUP&&r.suburb?', '+esc(r.suburb):''}</span><em class="hide-desk">${esc(r.callback?'Call back '+dayMon(r.callback_at):R.line)}</em></div>
       <div class="c-why" style="display:flex;gap:12px;align-items:center;font-size:15px;min-width:0"><span class="str2">${[0,1,2].map(j=>`<i style="${j<st?'background:var(--accT)':''}"></i>`).join('')}</span><span style="min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.callback?'Call back '+dayMon(r.callback_at):R.line)}</span></div>
       <b class="c-own" style="font-size:15px">${y!=null?y+' yrs':''}</b><div class="c-last">${last(r)}</div>
       <button class="ob2 hide-phone">Open${ic2('chev',16)}</button><span class="hide-desk">${chev2()}</span></div>`; }).join(''):'<p class="emptyline" style="padding:28px">Nobody left here today.</p>'}</div>
