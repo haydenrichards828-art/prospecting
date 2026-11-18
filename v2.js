@@ -305,7 +305,7 @@ function details2(id,tab){
    why:()=>`<div class="g2">${whyRows(r).map(([i,t,l])=>row2(LVL2[l][0],i,esc(t),`<span style="color:${LVL2[l][1]};font-weight:700">${l}</span>`)).join('')}</div><div class="g2" style="padding:14px 16px"><b style="display:block;margin-bottom:4px">${esc(R.head)}</b><span style="color:var(--t2)">${esc(R.sub)}</span></div>`,
    history:()=>`${photo2(r,'height:190px',true)}<div class="g2" style="padding:16px;display:flex;flex-direction:column;gap:14px">${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):'<span class="emptyline">No sales on record</span>'}</div>
      <div class="g2">${[['land',r.land_area?Math.round(r.land_area)+' m²':'Not known','Land'],['clock',yrsSince(r.last_sale_date)!=null?yrsSince(r.last_sale_date)+' years':'Not known','Owned'],['trend',String(r.street_sales_12m||0),'Street sales this year']].map(([i,v,l])=>row2('#4b5565',i,esc(v),l)).join('')}</div>
-     ${(r.street_address||r.suburb)?`<a class="b2" href="${esc(rpUrl(r.street_address,r.suburb,r.rp_link,r.postcode))}" target="_blank" rel="noopener" data-addr="${esc(rpAddress(r.street_address,r.suburb,r.postcode))}" onclick="rpCopy(this)">Open in RP Data</a>`:''}`}[tab]();
+`}[tab]();
   openSheet2(esc(people(r.owner_name)[0]||'Owner unknown'),`<div class="seg2">${[['calls','Calls'],['why','Why'],['history','Sales']].map(([k,l])=>`<button class="${k===tab?'on':''}" onclick="details2(${id},'${k}')">${l}</button>`).join('')}</div>${body}`);
 }
 function moreSheet2(id){
@@ -399,7 +399,6 @@ document.addEventListener('keydown',e=>{
   else if(k==='n') $(desk2()?'#note2':'#pnote2')?.focus();
   else if(k==='c'){ const a=$('.num2[href^="tel:"]'); if(a) a.click(); }
   else if(k==='a') copyAddr(id);
-  else if(k==='r'&&rpu0(r)) window.open(rpu0(r),'_blank','noopener');
   else return;
   e.preventDefault();
 });
@@ -532,3 +531,6 @@ window.demoApi=(function(orig){ return function(action,body){ const r=orig(actio
     r.periods={week:wk,month:['2026-06-01','2026-07-01','2026-08-01','2026-09-01','2026-10-01','2026-11-01'].map((s,i)=>({start:s,n:[1520,1610,1700,1820,1940,980][i]})),quarter:['2026-01-01','2026-04-01','2026-07-01','2026-10-01'].map((s,i)=>({start:s,n:[4100,4700,5200,2920][i]}))};
     r.suburbs=[{suburb:'Thirroul',n:6},{suburb:'Austinmer',n:4},{suburb:'Bulli',n:3},{suburb:'Woonona',n:2}]; }
   return r; }; })(window.demoApi);
+
+// No RP Data buttons anywhere: the address copies instead
+function rpBtn(){ return ''; }
