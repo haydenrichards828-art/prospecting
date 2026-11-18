@@ -103,8 +103,14 @@ function callGroups(r){
     else out.push({o:x.outcome,at:x.at,note:x.notes||'',n:1}); });
   return out.slice(0,8);
 }
+function dignamLast(r){ const ns=r.crm_notes||[]; if(!ns.length) return null;
+  const d=ns.filter(n=>n.on).sort((a,b)=>String(b.on).localeCompare(String(a.on)))[0], own=(ns.find(n=>n.owner)||{}).owner;
+  return {when:d?monYear(d.on):null, by:d&&d.by, owner:own&&!/^Dignam Real Estate/i.test(own)?own:null, recent:!!d&&(Date.now()-new Date(d.on))<365*864e5}; }
+function dignamLine(r){ const x=dignamLast(r); if(!x) return '';
+  const t=x.when?`Last Dignam contact ${x.when}${x.by?', '+x.by:''}`:'In the Dignam CRM, no contact date';
+  return `<div class="dl2" style="color:${x.recent?'var(--cbT)':'var(--t2)'}">${ic2('users',15)}<span>${esc(t)}${x.owner&&x.owner!==x.by?` · Primary agent ${esc(x.owner)}`:''}</span></div>`; }
 function officeNotes(r){ const ns=(r.crm_notes||[]).filter(n=>n.comments||n.last); if(!ns.length) return '';
-  return ns.map(n=>`<div class="cc2"><i style="background:#6366f1"></i><div><div class="h"><b style="color:#c7d2fe">Office notes</b><span class="lab2">${esc(n.name||'AgentBox')}${n.lc?' · last contacted '+esc(n.lc):''}</span></div>${n.comments?`<p>${esc(n.comments)}</p>`:''}${n.last?`<p style="color:var(--t2)">${esc(n.last)}</p>`:''}</div></div>`).join(''); }
+  return ns.map(n=>`<div class="cc2"><i style="background:#6366f1"></i><div><div class="h"><b style="color:#c7d2fe">Office notes</b><span class="lab2">${esc(n.owner||n.name||'AgentBox')}${n.on?' · last contact '+esc(monYear(n.on)):''}</span></div>${n.comments?`<p>${esc(n.comments)}</p>`:''}${n.last?`<p style="color:var(--t2)">${esc(n.last)}</p>`:''}</div></div>`).join(''); }
 function callCards2(r){
   const g=callGroups(r), cbn=r.callback&&r.notes?`<div class="cc2"><i style="background:var(--cb)"></i><div><div class="h"><b style="color:var(--cbT)">Call back note</b><span class="lab2">${esc(dayMon(r.callback_at))}</span></div><p>${esc(r.notes)}</p></div></div>`:'';
   if(!g.length) return cbn+((cbn||officeNotes(r))?'':`<p class="emptyline" style="margin:0">Never called. This is the first time.</p>`)+officeNotes(r);
@@ -210,7 +216,7 @@ function drawCall2(){
   $("#main").innerHTML=failStrip()+hoursStrip()+`
   <div class="call2">
    <section class="cl2">
-    <div><h1 class="nm2">${esc(nm)}</h1>${ppl.length>1?`<div class="also2">Also on file: ${ppl.slice(1).map(esc).join(', ')}</div>`:''}<button class="ad2 cp2" onclick="copyAddr(${id})" title="Copy address for RP Data">${ic2('pin',21)}<span>${addr}</span><span class="cpl">Copy</span></button></div>
+    <div><h1 class="nm2">${esc(nm)}</h1>${ppl.length>1?`<div class="also2">Also on file: ${ppl.slice(1).map(esc).join(', ')}</div>`:''}<button class="ad2 cp2" onclick="copyAddr(${id})" title="Copy address for RP Data">${ic2('pin',21)}<span>${addr}</span><span class="cpl">Copy</span></button>${dignamLine(r)}</div>
     ${tag}${warnBox(r)}
     ${numBtn(r,'num2')}
     <label class="nw2"><span class="h"><span class="lab2">Note <span class="nsaved" style="font-weight:500;color:var(--t3)">${note?'· saved':''}</span></span><span class="kb2">N</span></span>
@@ -231,7 +237,7 @@ function drawCall2(){
   <div class="pcall2">
    <div class="pb2">
     <div class="ptyp2" style="align-items:center;gap:12px;flex:none;padding-bottom:4px">${photo2(r,'width:44px;height:44px;border-radius:11px',false,!desk2())}<div style="min-width:0"><b style="font-size:18px;display:block">${esc(nm)}</b><span style="font-size:14px;color:var(--t2)">${addr}</span></div></div>
-    <div class="pid2"><div class="pidr2">${photo2(r,'',false,!desk2()).replace('class="photo2"',`class="photo2" onclick="bigPhoto(${id})"`)}<div style="min-width:0"><h1>${esc(nm)}</h1><button class="a cp2" onclick="copyAddr(${id})">${addr}<span class="cpl">Copy</span></button></div></div>
+    <div class="pid2"><div class="pidr2">${photo2(r,'',false,!desk2()).replace('class="photo2"',`class="photo2" onclick="bigPhoto(${id})"`)}<div style="min-width:0"><h1>${esc(nm)}</h1><button class="a cp2" onclick="copyAddr(${id})">${addr}<span class="cpl">Copy</span></button>${dignamLine(r)}</div></div>
      ${icons.length?`<div class="icons2">${icons.map(([i,v])=>`<span>${ic2(i,18,'var(--t2)')}${esc(v)}</span>`).join('')}</div>`:''}</div>
     ${warnBox(r,true)}
     ${numBtn(r,'pnum2')}
@@ -285,9 +291,14 @@ function moreSheet2(id){
 }
 function wrongSheet2(id){
   const r=queue().find(x=>x.property_id===id)||{};
-  openSheet2('What is wrong?',`<p style="margin:0 4px;font-size:15px;line-height:21px;color:var(--t2)">Some of these take ${esc(firstName(r.owner_name))} off today's list. Every one is logged so the cause gets fixed.</p>
-   <div class="g2">${WRONG.map(([k,l])=>`<button class="r2" style="grid-template-columns:1fr" onclick="closeOv();reportIssue(${id},'${k}')"><span class="rt2"><b>${esc(l)}</b></span></button>`).join('')}</div>`,`moreSheet2(${id})`);
+  openSheet2('What is wrong?',`<p style="margin:0 4px;font-size:15px;line-height:21px;color:var(--t2)">Tap one and ${esc(firstName(r.owner_name))} is skipped straight away. Anything in the note box is sent with it.</p>
+   <div class="g2">${WRONG.map(([k,l])=>`<button class="r2" style="grid-template-columns:1fr" onclick="wrong2(${id},'${k}')"><span class="rt2"><b>${esc(l)}</b><span>${ISSUE_RULE[k]||''}</span></span></button>`).join('')}</div>`,`moreSheet2(${id})`);
 }
+const ISSUE_RULE={sold:'Off the list for 12 months',on_market:'Off the list for 4 months',dignam_listed:'Off the list for 6 months',rented:'Off for 12 months, then on the landlord list',
+  recent_buyer:'Off the list for 12 months',wrong_names:'Off the list for 3 months while the names get fixed',wrong_reason:'Skipped today, back tomorrow, reason gets checked',other:'Skipped today, back tomorrow'};
+function wrong2(id,k){ closeOv(); if(S.pick===id) S.pick=null; S.skipped.add(id); drawList();
+  toast(`${(WRONG.find(w=>w[0]===k)||[,'Noted'])[1]}. ${ISSUE_RULE[k]||'Skipped'}`);
+  api("report_issue",{property_id:id,kind:k,note:notes[id]||null}).catch(e=>{ S.skipped.delete(id); drawList(); toast("Couldn't save that. "+e.message); }); }
 function dncSheet2(id){
   const r=queue().find(x=>x.property_id===id)||{};
   openSheet2('Do not call',`<span class="tile" style="width:48px;height:48px;border-radius:14px;background:var(--ns);align-self:center">${ic2('ban',24,'#fff')}</span>
@@ -489,7 +500,7 @@ window.demoApi=(function(orig){ return function(action,body){ const r=orig(actio
       const by=2026-yrs, p=Math.round((350+(i*37)%600)*1000); x.last_sale_date=`${by}-0${1+i%9}-1${i%9}`; x.last_sale_price=p; x.sales=[{d:x.last_sale_date,price:p},...(i%3===0?[{d:`${by-9}-05-02`,price:Math.round(p*0.55)}]:[])];
       x.withdrawn=(x.signals||[]).includes('withdrawn')?[{d:`2026-0${5+i%4}-12`,kind:'withdrawn'}]:null; if(x.withdrawn) x.reasons=x.reasons.map(s=>/Withdrawn/.test(s)?`Listing withdrawn or expired ${MONS[4+i%4]} 2026, not sold since`:s);
       if(i%6===1) x.history=[{at:new Date(Date.now()-864e5*9).toISOString(),outcome:'no_answer',notes:null},{at:new Date(Date.now()-864e5*16).toISOString(),outcome:'no_answer',notes:null},{at:new Date(Date.now()-864e5*60).toISOString(),outcome:'not_interested',notes:'Said maybe next year once the kids finish school. Asked us to try again in spring.'}];
-      if(i%4===1) x.crm_notes=[{name:x.owner_name,comments:'9/8/17 RG. Called, no plans to move. Kids still at school, maybe in a few years.',last:'05 Aug 2019: left message about sale in the street (Added by: Blake)',lc:'15/05/18'}];
+      if(i%4===1) x.crm_notes=[{name:x.owner_name,comments:'9/8/17 RG. Called, no plans to move. Kids still at school, maybe in a few years.',last:'05 Aug 2019: left message about sale in the street (Added by: Blake Torresan)',on:'2019-08-05',by:'Blake Torresan',owner:'Adam McMahon'}];
       if(i%10===4) x.reasons.push(`Neighbour at ${(i*3)%90+3} ${x.street_address.replace(/^\S+\s/,'')} sold for $1.${2+i%6}m (1${i%9} Oct)`); }); }
   if(action==='overview'&&r){ const wk=[...Array(8)].map((_,i)=>{ const d=new Date(Date.now()-(7-i)*7*864e5); return {start:d.toISOString().slice(0,10),n:[380,412,455,430,470,498,440,120+(D?.calls||0)][i]}; });
     r.periods={week:wk,month:['2026-06-01','2026-07-01','2026-08-01','2026-09-01','2026-10-01','2026-11-01'].map((s,i)=>({start:s,n:[1520,1610,1700,1820,1940,980][i]})),quarter:['2026-01-01','2026-04-01','2026-07-01','2026-10-01'].map((s,i)=>({start:s,n:[4100,4700,5200,2920][i]}))};

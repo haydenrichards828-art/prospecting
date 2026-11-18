@@ -199,7 +199,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=4">
+<link rel="stylesheet" href="v2.css?v=5">
 </head>
 <body>
 <div id="app"></div>
@@ -1496,7 +1496,7 @@ async function viewSettings(){
    <details class="sec" id="healthsec" ontoggle="if(this.open) loadHealth()"><summary>List health</summary><div id="health" class="muted">Loading…</div></details>
    <details class="sec" open><summary>Import data</summary><div>
     <p class="muted" style="margin-top:0">Export a CSV from Pricefinder, RP Data or the CRM. Columns are matched automatically and you see how it was read first.</p>
-    <select id="ik" onchange="S.pending=null;previewCSV()"><option value="properties">Pricefinder or RP Data export</option><option value="crm">Dignam CRM contacts</option><option value="probate">Probate or estate notices</option><option value="withdrawn">Withdrawn or expired listings</option><option value="on_market">Currently for sale (RP Data)</option><option value="dncr">DNCR wash results</option><option value="crm_notes">Office notes from contact reports (file from Claude)</option></select>
+    <select id="ik" onchange="S.pending=null;previewCSV()"><option value="properties">Pricefinder or RP Data export</option><option value="crm">Dignam CRM contacts</option><option value="probate">Probate or estate notices</option><option value="withdrawn">Withdrawn or expired listings</option><option value="on_market">Currently for sale (RP Data)</option><option value="dncr">DNCR wash results</option><option value="crm_notes">Office notes and last Dignam contact (file from Claude)</option></select>
     <input type="file" id="if" accept=".csv,.json" style="margin-top:8px" onchange="S.pending=null;previewCSV()"><button class="primary" style="margin-top:10px;width:100%" onclick="importCSV()"><i class="ti ti-upload"></i>Import</button><p class="muted" id="ir"></p></div></details>
    <details class="sec"><summary>Import leads from Google Sheets</summary><div>
     <p class="muted" style="margin-top:0">Share the sheet as "Anyone with the link can view", then paste the link. Reads the Master Leads, Appraisal and Listed tabs. Anyone already in Leads is skipped.</p>
@@ -1595,7 +1595,7 @@ function mapRows(rows){
 async function previewCSV(){
   const file=$("#if").files[0]; if(!file) return;
   if($("#ik").value==="crm_notes"){ let d=[]; try{ d=JSON.parse(await file.text()); }catch{ $("#ir").textContent="That isn't the office notes file"; return; }
-    S.pending=(Array.isArray(d)?d:[]).filter(x=>x&&x.street&&(x.comments||x.last_notes)); $("#ir").innerHTML=`<b>${S.pending.length.toLocaleString()} notes found.</b> Tap Import to match them to houses.`; return; }
+    S.pending=(Array.isArray(d)?d:[]).filter(x=>x&&x.street&&(x.comments||x.last_notes||x.last_contacted)); $("#ir").innerHTML=`<b>${S.pending.length.toLocaleString()} notes found.</b> Tap Import to match them to houses.`; return; }
   let rows=parseCSV(await file.text());
   // RP Data exports start with a few lines describing the search; the real header is the first wide row
   const hi=rows.findIndex(r=>r.filter(c=>String(c).trim()).length>=4); if(hi>0) rows=rows.slice(hi);
@@ -1619,7 +1619,7 @@ async function importCSV(){
 window.__boot=()=>{ if (S.token) loadCallbacks().then(render); else render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=6"></script>
+<script src="v2.js?v=7"></script>
 <script>window.__boot();</script>
 </body>
 </html>

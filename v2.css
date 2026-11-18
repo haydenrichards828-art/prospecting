@@ -295,3 +295,6 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 
 .cr2{overflow:hidden}.prop2,.two2{flex:none}
 @media (min-width:900px){#sheet.wide2{max-width:900px;width:92vw}}
+
+.dl2{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:6px}.dl2 svg{flex:none}
+.pidr2 .dl2{font-size:13px}
