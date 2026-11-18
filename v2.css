@@ -438,3 +438,6 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .lg3 .lc3 .pill2{background:none!important;padding:0;font-size:14px}
 .why3 b{color:var(--t1);font-weight:600}.why3 .wm3{display:none}
 @media (max-width:899px){.why3 .wd3{display:none}.why3 .wm3{display:inline}}
+.lg3{grid-template-columns:52px minmax(0,1.1fr) minmax(0,1.7fr) 150px 200px 84px}
+@media (max-width:1250px){.lg3{grid-template-columns:48px minmax(0,1fr) minmax(0,1.4fr) 140px 180px 70px}}
+@media (max-width:899px){.lg3{grid-template-columns:52px minmax(0,1fr) 44px}}

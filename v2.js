@@ -375,7 +375,7 @@ function drawList2(){
     <div class="lh2"><h1>${esc(S.lsub)}</h1><span style="font-size:14px;color:var(--t2)">${left} to call</span>
      <div class="seg2 mini" style="margin-left:auto"><button class="${S.type==='seller'?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button></div>
      <button class="b2 pri hide-phone" style="height:40px" onclick="startSub()">${ic2('phone',18)}Start ${esc(S.lsub)}<span class="key2">Enter</span></button></div>
-    <div class="lg3 h"><span></span><span>Name</span><span>Why they're on the list</span><span>Home</span><span>Last bought</span><span>Last contact</span><span></span></div>
+    <div class="lg3 h"><span></span><span>Name</span><span>Why they're on the list</span><span>Last bought</span><span>Last contact</span><span></span></div>
     <div class="lr2" id="lrows2">${rows.length?rows.map(r=>{ const y=yrsSince(r.last_sale_date), id=r.property_id, ws=r.callback?[['cal','Call back '+dayMon(r.callback_at),'Note']]:whyRows(r).slice(0,3);
       const ph=(r.signals||[]).includes('probate')&&!(r.solicitor&&r.phone)?null:r.phone, u=aerialUrl(r,PH_SMALL[0],PH_SMALL[1]);
       const rooms=[r.bedrooms>0?r.bedrooms+' bd':'',r.baths>0?r.baths+' ba':'',r.cars>0?r.cars+' car':''].filter(Boolean).join(' · ');
@@ -386,7 +386,6 @@ function drawList2(){
       <div class="why3">${(()=>{ const all=ws.map(w=>w[1]), dk=all.filter(t=>!/^Owned /.test(t)), d=dk.length?dk:(all.length?['Long time owner']:[]);
         const fmt=a=>a.length?`<b>${esc(a[0])}</b>${a.length>1?', '+a.slice(1).map(esc).join(', '):''}`:'';
         return `<span class="wd3">${fmt(d)}</span><span class="wm3">${fmt(all)}</span>`; })()}</div>
-      <div class="hm3">${rooms?esc(rooms):'<span>Rooms unknown</span>'}</div>
       <div class="bt3">${bought}</div>
       <div class="lc3">${lastC(r)}</div>
       <div class="ac3">${ph&&!r.today_outcome?`<button class="cl3" aria-label="Call ${esc(people(r.owner_name)[0]||'')}" onclick="event.stopPropagation();open2(${id});if(callingAllowed())openUrl('tel:'+${JSON.stringify(String(ph).replace(/\s/g,''))}.replace(/[^0-9+]/g,''))">${ic2('phone',18,'#fff')}</button>`:''}<span class="ch3">${chev2()}</span></div></div>`; }).join(''):'<p class="emptyline" style="padding:28px">Nobody left here today.</p>'}</div>
