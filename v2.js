@@ -588,7 +588,36 @@ async function removedSheet(){
 async function restore2(i){ const x=S._rm[i]; if(!x) return;
   try{ await api("restore_removed",{ref:x.ref}); }catch(e){ return toast(e.message); }
   toast('Back on the list from tomorrow'); removedSheet(); }
-window.viewPipeline=(function(orig){ return async function(){ await orig(); const m=$("#main"); if(m&&S.tab==='pipeline') m.insertAdjacentHTML('afterbegin','<div class="ph2"><h1>Appraisals and listings</h1></div>'); }; })(window.viewPipeline);
+// ---------- Appraisals and listings: one tab per stage, tidy rows like the call list ----------
+const PST={appraisal:['Appraisals','Booked','appraisal_at'],listed:['Listed','Listed','listed_at'],sold:['Sold','Sold','sold_at'],lost:['Lost','Lost','lost_at']};
+const PNEXT={appraisal:[['listed','Mark listed'],['lost','Lost']],listed:[['sold','Mark sold'],['lost','Lost']],sold:[],lost:[['appraisal','Reopen']]};
+window.viewPipeline=async function(){
+  const rows=(await api("pipeline")).rows||[]; S.pipe=rows;
+  const cnt=k=>rows.filter(x=>x.stage===k).length;
+  if(!PST[S.pst]) S.pst=cnt('appraisal')||!cnt('listed')?'appraisal':'listed';
+  const list=rows.filter(x=>x.stage===S.pst);
+  const when=x=>{ const d=x[PST[x.stage][2]]||x.updated_at; return d?new Date(d).toLocaleDateString('en-AU',{timeZone:'Australia/Sydney',weekday:'short',day:'numeric',month:'short'}):''; };
+  $("#main").innerHTML=`<div class="pp2">
+   <div class="lh2 pph2"><h1>Appraisals and listings</h1>
+    <div class="seg2 mini">${Object.entries(PST).map(([k,v])=>`<button class="${S.pst===k?'on':''}" onclick="S.pst='${k}';viewPipeline()">${v[0]} <span style="opacity:.65">${cnt(k)}</span></button>`).join('')}</div>
+    <button class="b2 pri" style="height:40px;margin-left:auto" onclick="openAddPipe()" aria-label="Add appraisal or listing">${ic2('plus',18)}<span class="addt">Add</span></button></div>
+   <div class="lg4 h"><span></span><span>Owner</span><span>${PST[S.pst][1]}</span><span>Last bought</span><span></span></div>
+   ${list.length?list.map(x=>{ const u=aerialUrl(x,PH_SMALL[0],PH_SMALL[1]), id=x.property_id;
+     return `<div class="lg4" onclick="pipeSheet(${id})">
+      <div class="th3">${u?`<img src="${u}" alt="" loading="lazy" onerror="this.remove()">`:''}</div>
+      <div class="nm3"><b>${esc(people(x.owner_name)[0]||'Owner unknown')}</b><span>${esc(x.street_address||'')}${x.suburb?', '+esc(x.suburb):''}</span>${x.notes?`<em class="pn4">${esc(x.notes)}</em>`:''}</div>
+      <div class="bt3"><b>${esc(when(x))}</b><span>From ${esc((SOURCES[x.source||'calls']||'calls').toLowerCase())}</span></div>
+      <div class="bt3 pb4">${x.last_sale_date?`<b>${x.last_sale_price?esc(price2(x.last_sale_price)):'Price n/a'}</b><span>${String(x.last_sale_date).slice(0,4)}</span>`:'<span>No sale on record</span>'}</div>
+      <div class="ac4">${PNEXT[x.stage].map(([s2,l],i)=>`<button class="b2 ${i===0&&s2!=='lost'?'go4':''}" onclick="event.stopPropagation();setStage(${id},'${s2}')">${l}</button>`).join('')}${x.phone?`<button class="cl3" aria-label="Call" onclick="event.stopPropagation();if(callingAllowed())openUrl('tel:'+${JSON.stringify(String(x.phone))}.replace(/[^0-9+]/g,''))">${ic2('phone',18,'#fff')}</button>`:''}</div></div>`; }).join('')
+   :`<div class="empty2"><b>No ${PST[S.pst][0].toLowerCase()} yet</b>${S.pst==='appraisal'?'Book one from the call list and it shows up here.':''}</div>`}
+  </div>`;
+};
+function pipeSheet(id){ const x=(S.pipe||[]).find(r=>r.property_id===id); if(!x) return;
+  openSheet2(esc(people(x.owner_name)[0]||x.street_address||'Property'),`<p class="hint2">${esc(x.street_address||'')}${x.suburb?', '+esc(x.suburb):''}</p>
+   <div class="g2">${PNEXT[x.stage].map(([s2,l])=>row2(s2==='lost'?'var(--ns)':s2==='appraisal'?'#4b5565':'var(--ap)',s2==='lost'?'x':'check',l,'',chev2(),`closeOv();setStage(${id},'${s2}')`)).join('')}
+    ${row2('#4b5565','msg',x.notes?'Edit note':'Add a note',x.notes?esc(x.notes):'',chev2(),`closeOv();stageNote(${id})`)}
+    ${row2('#4b5565','tag','Came from',esc(SOURCES[x.source||'calls']),chev2(),`pickSource(${id},'${x.source||'calls'}')`)}
+    ${x.phone?row2('var(--ap)','phone','Call '+esc(x.phone),'',chev2(),`if(callingAllowed())openUrl('tel:${esc(String(x.phone).replace(/[^0-9+]/g,''))}')`):''}</div>`); }
 
 // Homes a lead has said no to never show as matches again
 window.matchesFor=(function(orig){ return function(l){ const no=((l&&l.buy)||{}).no||[]; return orig(l).filter(x=>!no.includes(+x.t.id)); }; })(window.matchesFor);
@@ -690,3 +719,14 @@ async function saveTpl(id){ const body=$("#tb"+id).value; if(!/stop/i.test(body)
 async function delTpl(id){ if(!(await uiAsk("Delete this template?", {ok:"Delete"}))) return; await api("delete_template",{id}); S.templates=(await api("templates")).rows||[]; setTemplates(); }
 
 async function regen2(){ if(!(await uiAsk("Rebuild today's list now? It takes about a minute.",{ok:'Rebuild'}))) return; regen(); }
+function openAddPipe(){
+  S.addp={stage:"appraisal",source:"card_drop"};
+  const pick=(key,opts,cls)=>`<div class="opts3 ${cls}" id="ap_${key}">${opts.map(([k,l])=>`<button type="button" class="${S.addp[key]===k?'on':''}" onclick="S.addp.${key}='${k}';document.querySelectorAll('#ap_${key} button').forEach(b=>b.classList.toggle('on',b===this))">${l}</button>`).join('')}</div>`;
+  openSheet2('Add appraisal or listing',`<div class="fg2 ap4"><label><span>No.</span><input id="ap_no" inputmode="text"></label><label><span>Street</span><input id="ap_st"></label></div>
+   <div class="fg2 one" style="margin-top:10px"><label><span>Suburb</span><input id="ap_sub"></label></div>
+   <div class="fg2 two4" style="margin-top:10px"><label><span>Owner</span><input id="ap_own" placeholder="Optional"></label><label><span>Phone</span><input id="ap_ph" inputmode="tel" placeholder="Optional"></label></div>
+   <div class="sth2" style="margin-left:0">Stage</div>${pick('stage',[["appraisal","Appraisal booked"],["listed","Listed"]],'c2')}
+   <div class="sth2" style="margin-left:0">Came from</div>${pick('source',Object.entries(SOURCES).filter(([k])=>k!=="calls"),'c3')}
+   <button class="b2 pri wide2b" id="ap_go" onclick="saveAddPipe()">Add</button>`);
+  setTimeout(()=>$("#ap_no")?.focus(),60);
+}
