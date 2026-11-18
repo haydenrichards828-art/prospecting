@@ -374,7 +374,7 @@ function openSearchProp(pid, inList){
   const tel=d.phone?String(d.phone).replace(/[^\d+]/g,""):"";
   $("#sheet").innerHTML=`<div class="lhead"><div style="flex:1;min-width:0"><h3>${esc(d.name||"Owner unknown")}</h3><div class="muted lsub">${esc([d.addr,d.suburb].filter(Boolean).join(", "))}</div></div>${rpBtn(d.addr,d.suburb,null,"rpb big")}<button class="lact ghost" onclick="closeOv()" aria-label="Close"><i class="ti ti-x"></i></button></div>
    ${d.why?`<p class="muted" style="margin:6px 0 0;font-size:14px">${esc(d.why)}</p>`:""}${d.out?`<p style="margin:6px 0 0;color:var(--good)">Called today: ${esc(LABEL[d.out])}</p>`:""}
-   ${tel?`<a class="phone" href="tel:${esc(tel)}"><i class="ti ti-phone"></i>${esc(String(d.phone).replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`:`<p class="muted">No phone number yet</p>`}
+   ${tel?`<a class="phone" onclick="return hoursOk(event)" href="tel:${esc(tel)}"><i class="ti ti-phone"></i>${esc(String(d.phone).replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`:`<p class="muted">No phone number yet</p>`}
    <div style="display:grid;grid-template-columns:${tel?"1fr 1fr":"1fr"};gap:8px;margin-top:8px">${tel?`<a class="btnlike" href="${smsLink(d.phone,"")}"><i class="ti ti-message"></i>Text</a>`:""}<button class="primary" onclick="searchMakeLead(${pid})"><i class="ti ti-user-plus"></i>${d.lead?"Open lead":"Make lead"}</button></div>`;
   $("#ov").classList.add("show");
 }
@@ -500,7 +500,7 @@ function drawList(){
   if (S.dialer && !S.q.trim()) {
     const left = all.filter(r=>!r.today_outcome && !S.skipped.has(r.property_id));
     if (!left.length) { $("#list").innerHTML = `<div class="empty"><i class="ti ti-confetti"></i>That's everyone for today.${S.skipped.size?`<br><button style="margin-top:10px" onclick="S.skipped.clear();drawList()">Go back to ${S.skipped.size} skipped</button>`:""}</div>`; return; }
-    $("#list").innerHTML = `<div class="dialer">${cardHTML(left[0])}
+    $("#list").innerHTML = hoursBanner()+`<div class="dialer">${cardHTML(left[0])}
       <div class="skiprow"><span class="muted" style="font-size:13px">${left[0].callback?"Call back":esc(left[0].suburb||"")}${left[0].callback?"":` · ${left.filter(r=>!r.callback&&r.suburb===left[0].suburb).length} left here`} · ${left.length} to go</span><button onclick="skipCard(${left[0].property_id})"><i class="ti ti-player-skip-forward"></i>Skip<kbd>S</kbd></button></div>
       </div>`;
     markShown(left[0].property_id);
@@ -513,7 +513,7 @@ function drawList(){
   // Continuous scroll: 50 cards at a time, more load as you near the bottom. S.page counts loaded chunks.
   const per=50, shown=Math.min(rows.length, (S.page+1)*per);
   S._rest = rows;
-  $("#list").innerHTML = ``
+  $("#list").innerHTML = hoursBanner()
     + withHeads(rows.slice(0,shown)) + (shown<rows.length?`<div id="more" class="muted" style="text-align:center;padding:16px">Loading more…</div>`:"");
   S._rest = rows; if (S._io) S._io.disconnect();
   const m=$("#more"); if (!m) return;
@@ -548,9 +548,9 @@ function cardHTML(r){
    <div class="addr">${esc(r.street_address)}, ${esc(r.suburb)}${r.bedrooms?` · ${r.bedrooms} bed`:""}${rpBtn(r.street_address,r.suburb,r.rp_link)}${listingBtn(r.street_address,r.suburb)}</div>
    ${r.callback&&r.notes?`<div class="why">${esc(r.notes)}</div>`:`<div class="why">${esc(whyLine(r))}</div>`}
    ${r.fire_zone||r.flood_zone?`<div class="hz">${r.fire_zone?`<span class="hzt fire"><i class="ti ti-flame"></i>${r.fire_zone==="Vegetation Buffer"?"Bushfire prone (bush edge)":"Bushfire prone (in bushland)"}</span>`:""}${r.flood_zone?`<span class="hzt flood"><i class="ti ti-droplet"></i>Flood planning area</span>`:""}</div>`:""}
-   ${probate&&r.solicitor&&r.phone?`<div class="banner warn" style="margin:10px 0 6px"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> This number is the <b>solicitor</b>, not the family: ${esc(r.solicitor)}.</div></div><a class="phone" href="tel:${esc(r.phone)}"><i class="ti ti-scale"></i>Solicitor ${esc(/^0[2378]/.test(r.phone)?r.phone.replace(/^(\d{2})(\d{4})(\d{4})$/,"$1 $2 $3"):r.phone.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`
+   ${probate&&r.solicitor&&r.phone?`<div class="banner warn" style="margin:10px 0 6px"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> This number is the <b>solicitor</b>, not the family: ${esc(r.solicitor)}.</div></div><a class="phone" onclick="return hoursOk(event)" href="tel:${esc(r.phone)}"><i class="ti ti-scale"></i>Solicitor ${esc(/^0[2378]/.test(r.phone)?r.phone.replace(/^(\d{2})(\d{4})(\d{4})$/,"$1 $2 $3"):r.phone.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`
      : probate?`<div class="banner warn" style="margin:10px 0 0"><i class="ti ti-feather"></i><div><b>Deceased estate.</b> Don't call the family. Contact the solicitor${sol?" ("+esc(sol.slice(16,-1))+")":""} or write a letter.<br><button class="ghost" style="margin-top:8px" onclick="addSolicitor(${id})"><i class="ti ti-scale"></i>Add solicitor's number</button></div></div>`
-     : r.phone?`<a class="phone" href="tel:${esc(r.phone)}"><i class="ti ti-phone"></i>${esc(r.phone.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`:`<div class="nophone">No phone number yet</div>`}
+     : r.phone?`<a class="phone" onclick="return hoursOk(event)" href="tel:${esc(r.phone)}"><i class="ti ti-phone"></i>${esc(r.phone.replace(/^(\d{4})(\d{3})(\d{3})$/,"$1 $2 $3"))}</a>`:`<div class="nophone">No phone number yet</div>`}
    ${r.today_outcome?`<div class="why" style="color:var(--good)"><i class="ti ti-check"></i> ${LABEL[r.today_outcome]}</div>`:""}
    <div class="acts" style="grid-template-columns:repeat(6,1fr)">
     <button style="grid-column:span 3" onclick="outcome(${id},'no_answer')"><i class="ti ti-phone-off"></i>No answer<kbd>1</kbd></button>
@@ -567,7 +567,11 @@ function cardHTML(r){
 }
 function sydInput(d){ const p=Object.fromEntries(new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(d).map(x=>[x.type,x.value])); return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`; }
 function sydToISO(v){ const [d,t]=v.split("T"), [y,m,dd]=d.split("-").map(Number), [h,mi]=t.split(":").map(Number); let ts=Date.UTC(y,m-1,dd,h,mi); for(let i=0;i<2;i++){ const p=sydInput(new Date(ts)); const [d2,t2]=p.split("T"),[y2,m2,dd2]=d2.split("-").map(Number),[h2,mi2]=t2.split(":").map(Number); ts+=Date.UTC(y,m-1,dd,h,mi)-Date.UTC(y2,m2-1,dd2,h2,mi2);} return new Date(ts).toISOString(); }
-let notes = {};
+// Notes wait here until you tap an outcome. They're kept on the device, so switching to the Phone app
+// (which can reload the page) or closing the app never loses a note you've typed.
+const notes = new Proxy((()=>{ try{ return JSON.parse(localStorage.getItem("dp_notes")||"{}"); }catch{ return {}; } })(), {
+  set(t,k,v){ t[k]=v; try{ localStorage.setItem("dp_notes",JSON.stringify(t)); }catch{} return true; },
+  deleteProperty(t,k){ delete t[k]; try{ localStorage.setItem("dp_notes",JSON.stringify(t)); }catch{} return true; } });
 async function addNote(id){ const n = await uiAsk("Note for this call (saved with the next outcome you tap)", {input: notes[id]||"", ok:"Save note"}); if (n!==null) { if (n.trim()) notes[id]=n.trim(); else delete notes[id]; if (S.tab==="calls") drawList(); toast(n.trim()?"Note added":"Note removed"); } }
 // Saves a solicitor's office number against the probate notice; every estate that firm handles then dials them
 async function addSolicitor(id){
@@ -575,7 +579,7 @@ async function addSolicitor(id){
   const phone=prompt("Solicitor's office phone number:"); if(!phone) return;
   try{ await api("set_solicitor",{property_id:id,firm,phone}); toast("Solicitor saved"); await refreshCalls(); paintCalls(); }catch(e){ toast(e.message); }
 }
-function dialTo(phone){ const cur=queue().find(r=>r.phone===phone); if(cur){ markDial(cur.property_id); if(!S.tm.shown) S.tm.shown=S.tm.dial; } window.location.href = "tel:" + phone; }
+function dialTo(phone){ if(!hoursOk()) return; const cur=queue().find(r=>r.phone===phone); if(cur){ markDial(cur.property_id); if(!S.tm.shown) S.tm.shown=S.tm.dial; } window.location.href = "tel:" + phone; }
 // Silent workflow tracking, used to find wasted time and make the app faster. Nothing shows on screen.
 // It keeps what was clicked (by its label), how long since the last click, how far the mouse travelled,
 // what the mouse paused over first, screen changes and typing time. It never keeps what was typed.
@@ -698,6 +702,9 @@ function callDayOk(i){ return i.dow!==7 && !(S.holidays||new Set()).has(i.key); 
 function callingAllowed(d=new Date()){ const i=sydInfo(d); if(!callDayOk(i)) return false; return i.mins>=540 && i.mins < (i.dow===6?1020:1200); }
 function nextCallDay(offsetDays){ for(let k=offsetDays;k<offsetDays+10;k++){ const i=sydInfo(new Date(Date.now()+k*864e5)); if(!(S.holidays||new Set()).has(i.key)) return {k,...i}; } return {k:offsetDays,...sydInfo(new Date(Date.now()+offsetDays*864e5))}; }
 function nextWindowText(){ for(let k=0;k<10;k++){ const i=sydInfo(new Date(Date.now()+k*864e5)); if(!callDayOk(i)) continue; if(k===0 && i.mins >= (i.dow===6?1020:1200)) continue; return k===0 ? "today at 9am" : k===1 ? "tomorrow at 9am" : `${i.wd} at 9am`; } return "on the next business day"; }
+function hoursBanner(){ if(callingAllowed()) return ""; return `<div class="banner warn" style="margin:0 0 10px"><i class="ti ti-clock-pause"></i><div><b>Outside legal calling hours.</b> Telemarketing calls are allowed weekdays 9am to 8pm and Saturdays 9am to 5pm, never Sundays or public holidays. Next window: ${nextWindowText()}. Only call now if the person asked you to call at this time.</div></div>`; }
+// Every dial goes through here: outside the legal hours it asks first (a person who asked for a call at this time is fine)
+function hoursOk(e){ if(callingAllowed()) return true; const ok=confirm("It's outside legal calling hours. Only call now if this person asked you to call at this time. Call anyway?"); if(!ok&&e){ e.preventDefault(); e.stopPropagation(); } return ok; }
 function callbackPicks(){
   const a=nextCallDay(1), b=a, c=nextCallDay(7);
   const lab=(d,h)=>`${d.k===1?"Tomorrow":d.wd} ${h>12?h-12+"pm":h+"am"}`;
@@ -746,7 +753,7 @@ async function viewCallbacks(){
   await loadCallbacks();
   $("#main").innerHTML = `<h2>Callbacks due</h2><p class="muted">Everyone you scheduled a callback with for today or earlier.</p>
    ${S.callbacks.length? S.callbacks.map(c=>`<div class="card"><div class="row"><div><div class="name">${esc(c.owner_name||"Owner unknown")}</div><div class="addr">${esc(c.street_address)}, ${esc(c.suburb)}</div></div><div class="score">Due<b style="font-size:14px">${fmt(c.callback_at)}</b></div></div>
-    ${c.phone?`<a class="phone" href="tel:${esc(c.phone)}"><i class="ti ti-phone"></i>${esc(c.phone)}</a>`:""}${c.notes?`<p class="muted" style="margin:4px 0">${esc(c.notes)}</p>`:""}
+    ${c.phone?`<a class="phone" onclick="return hoursOk(event)" href="tel:${esc(c.phone)}"><i class="ti ti-phone"></i>${esc(c.phone)}</a>`:""}${c.notes?`<p class="muted" style="margin:4px 0">${esc(c.notes)}</p>`:""}
     <div class="acts">${Object.keys(LABEL).map(o=>`<button class="${o==="appraisal"?"appr":o==="do_not_call"?"dnc":""}" onclick="outcome(${c.property_id},'${o}')"><i class="ti ${ICON[o]}"></i>${LABEL[o]}</button>`).join("")}</div>
     <div class="inline" id="cb${c.property_id}"><input type="datetime-local" id="cbt${c.property_id}"><button class="primary" onclick="saveCallback(${c.property_id})">Save</button></div></div>`).join("")
    : `<div class="empty"><i class="ti ti-calendar-check"></i>No callbacks due. Nice work.</div>`}`;
@@ -1321,7 +1328,7 @@ async function viewPipeline(){
       <div class="name">${esc(x.owner_name||"Owner unknown")}</div><div class="addr">${esc(x.street_address)}, ${esc(x.suburb)} · ${fmt(x.updated_at)}</div>
       <button class="srcchip" onclick="pickSource(${x.property_id},'${x.source||"calls"}')"><i class="ti ti-tag"></i>${SOURCES[x.source||"calls"]}</button>
       ${x.notes?`<div class="why">${esc(x.notes)}</div>`:""}
-      ${x.phone?`<a class="phone" href="tel:${esc(x.phone)}"><i class="ti ti-phone"></i>${fmtPh(x.phone)}</a>`:""}
+      ${x.phone?`<a class="phone" onclick="return hoursOk(event)" href="tel:${esc(x.phone)}"><i class="ti ti-phone"></i>${fmtPh(x.phone)}</a>`:""}
       <div class="acts" style="grid-template-columns:repeat(${NEXT[x.stage].length+1},1fr)">${NEXT[x.stage].map(([s2,l,c])=>`<button class="${c}" onclick="setStage(${x.property_id},'${s2}')">${l}</button>`).join("")}<button onclick="stageNote(${x.property_id})"><i class="ti ti-notes"></i>Note</button></div></div>`).join("")).join("")
    : `<div class="empty"><i class="ti ti-chart-arrows"></i>No appraisals yet.<br><span class="muted">Book one from the call list and it lands here.</span></div>`+addBtn;
 }
