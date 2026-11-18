@@ -581,5 +581,19 @@ async function rejectMatch(leadId,listingId){ const l=(S.leads||[]).find(x=>x.id
 // New lead: their details first, then what they want to buy
 window.openLead=(function(orig){ return function(id,opts){ const r=orig(id,opts);
   [['d_lead_type','Lead type'],['d_source','Source'],['d_timeframe','Timeframe']].forEach(([k,t])=>{ const o=$('#'+k)?.querySelector('option[value=""]'); if(o) o.textContent=t; });
+  setTimeout(subPick,0);
   if(!id){ const d=$("#deditor"), w=$("#wview_box"); if(d&&w&&w.parentNode){ w.parentNode.insertBefore(d,w); if(!d.querySelector('.wlabel')) d.insertAdjacentHTML('afterbegin','<div class="wlabel">Their details</div>'); } }
   return r; }; })(window.openLead);
+
+// Suburb picker in our own style instead of the browser's white dropdown
+function subPick(){ document.querySelectorAll('#sheet input[list="sublist"]').forEach(inp=>{
+  inp.removeAttribute('list'); inp.setAttribute('autocomplete','off'); const isAdd=inp.id==='b_sub_add';
+  const box=document.createElement('div'); box.className='sugg2'; inp.insertAdjacentElement('afterend',box);
+  const show=()=>{ const q=inp.value.trim().toLowerCase(); const xs=SUBURBS.filter(x=>!q||x.toLowerCase().includes(q)).slice(0,8);
+    box.innerHTML=xs.map(x=>`<button type="button" data-s="${esc(x)}">${esc(x)}</button>`).join(''); box.style.display=xs.length&&document.activeElement===inp?'block':'none'; };
+  box.addEventListener('mousedown',e=>e.preventDefault());
+  box.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; inp.value=b.dataset.s; box.style.display='none';
+    if(isAdd){ addSub(inp); inp.value=''; inp.focus(); } inp.dispatchEvent(new Event('input',{bubbles:true})); });
+  inp.addEventListener('input',show); inp.addEventListener('focus',show); inp.addEventListener('blur',()=>setTimeout(()=>box.style.display='none',100));
+  if(isAdd){ inp.removeAttribute('onchange'); inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); const f=box.querySelector('button'); if(f){ inp.value=f.dataset.s; } addSub(inp); inp.value=''; show(); } }); }
+}); }
