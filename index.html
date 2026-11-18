@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=27">
+<link rel="stylesheet" href="v2.css?v=28">
 </head>
 <body>
 <div id="app"></div>
@@ -790,7 +790,7 @@ async function openMessage(id, ctx){
   $("#sheet").innerHTML = `<div class="msg2"><h3>Send a message</h3>
    <label>Template</label><select id="mt">${S.templates.map(t=>`<option value="${t.id}" ${t.id===t0.id?"selected":""}>${esc(t.name)}</option>`).join("")}</select>
    <div id="extra"></div>
-   <label>Preview</label><div class="preview" id="mp">Loading</div>
+   <label>Message <span style="font-weight:500;color:var(--t3)">· edit it for this person if you like</span></label><textarea class="preview" id="mp" rows="4">Loading</textarea><div id="mpn" class="muted" style="font-size:13px;margin-top:4px"></div>
    <label>When</label><div class="opts2 c4" id="mw"></div><div id="mc"></div>
    <div style="display:flex;gap:8px;margin-top:12px"><button class="ghost" style="flex:1" onclick="closeOv()">Cancel</button><button class="primary" style="flex:2" id="msend"><i class="ti ti-send"></i>Schedule message</button></div></div>`;
   // Four choices cover what actually gets used: now, first thing tomorrow, a week out, or a set time
@@ -813,22 +813,27 @@ async function openMessage(id, ctx){
     const c=$("#xc_d"); if(c) c.oninput=()=>{ cbV=c.value; $("#xc").value=nice(cbV); prev(); }; };
   const args = ()=>({property_id:id,template_id:+$("#mt").value,appt_date:$("#xa")?.value||"{appt_date}",callback_date:$("#xc")?.value||"{callback_date}"});
   let pv={};
-  const prev = async()=>{ try{ const r=await api("preview_message",args()); pv=r; $("#mp").textContent=r.body + (r.phone?"":"\n\n(No phone number yet, this will send once one is added)"); }catch(e){$("#mp").textContent=e.message;} };
+  // The template fills the message in; anything typed here changes only this one text, never the template
+  let edited=false;
+  const prev = async()=>{ try{ const r=await api("preview_message",args()); pv=r; if(!edited) $("#mp").value=r.body; $("#mpn").textContent=r.phone?"":"No phone number yet, this will send once one is added."; }catch(e){ if(!edited) $("#mp").value=e.message; } };
+  const bodyNow = ()=>{ let t=$("#mp").value.trim(); if(t && !/\bSTOP\b/i.test(t)) t=(/[.!?]$/.test(t)?t:t+".")+" Reply STOP to opt out."; return t; };
   // Sending now, inside texting hours, with a number: open the phone's Messages straight away instead of queueing it
   const direct = ()=>{ const i=sydInfo(new Date()), st=(S.ovFull?.settings?.quiet_start||"08:00").slice(0,5), en=(S.ovFull?.settings?.quiet_end||"20:00").slice(0,5), hm=new Intl.DateTimeFormat("en-GB",{timeZone:"Australia/Sydney",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date());
     return when==="now" && i.dow!==7 && !(S.holidays&&S.holidays.has(i.key)) && hm>=st && hm<en; };
   const label = ()=>{ const w=(WHEN2.find(x=>x[0]===when)||[])[2]||''; $("#msend").innerHTML = direct()?'<i class="ti ti-message"></i>Open in Messages':'<i class="ti ti-send"></i>'+(when==='now'?'Send when texting hours open':when==='custom'?'Schedule message':'Send '+w); };
-  $("#mt").onchange=()=>{ when=okWhen(tmpl().default_delay||"now"); drawWhen(); drawExtra(); prev(); };
+  $("#mt").onchange=()=>{ edited=false; when=okWhen(tmpl().default_delay||"now"); drawWhen(); drawExtra(); prev(); };
+  $("#mp").oninput=()=>{ edited=true; };
   drawWhen(); drawExtra(); prev();
   $("#msend").onclick = async()=>{
     const a=args(); if (($("#xa") && !$("#xa").value.trim()) || ($("#xc") && !$("#xc").value.trim())) return toast("Fill in the date fields first");
     if (when==="custom" && !$("#mcd").value) return toast("Pick a send time");
-    if (direct() && pv.phone && pv.body) {   // must open inside the tap or the phone blocks it
-      openUrl(smsLink(pv.phone, pv.body)); closeOv();
-      api("schedule_message",{...a,when,consent:!!$("#consent")?.checked,sent_now:true}).catch(()=>{});
+    const body=bodyNow(); if(!body) return toast("Write a message first");
+    if (direct() && pv.phone && body) {   // must open inside the tap or the phone blocks it
+      openUrl(smsLink(pv.phone, body)); closeOv();
+      api("schedule_message",{...a,body,when,consent:!!$("#consent")?.checked,sent_now:true}).catch(()=>{});
       return;
     }
-    try { const r = await api("schedule_message",{...a,when,custom_at:when==="custom"?sydToISO($("#mcd").value):null,consent:!!$("#consent")?.checked}); closeOv(); toast("Scheduled for "+fmt(r.send_at)); } catch(e){ toast(e.message); }
+    try { const r = await api("schedule_message",{...a,body,when,custom_at:when==="custom"?sydToISO($("#mcd").value):null,consent:!!$("#consent")?.checked}); closeOv(); toast("Scheduled for "+fmt(r.send_at)); } catch(e){ toast(e.message); }
   };
   $("#ov").classList.add("show");
 }
@@ -1648,7 +1653,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=37"></script>
+<script src="v2.js?v=38"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>
