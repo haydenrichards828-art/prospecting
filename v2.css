@@ -328,3 +328,6 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 @media (max-height:700px){#sheet.lsheet .lsave button{min-height:42px}#sheet.lsheet .lsave{padding-top:6px}.lsheet .chipgrid.sm button{min-height:26px}.lsheet .lrow2,.lsheet .lrow3{margin-top:5px}}
 @media (max-height:700px){.lsheet .wlabel{font-size:11px;margin-bottom:0}}
 .lsheet .wsub{align-items:center}.lsheet .wsub input{margin:0!important;width:100%}
+/* No frame around the app: it fills the whole window edge to edge */
+#shell{padding:0}
+#shell .panel{border:0;border-radius:0}
