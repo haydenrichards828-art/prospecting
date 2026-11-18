@@ -255,7 +255,7 @@ function drawCall2(){
     <div class="ends2"><button onclick="skip2(${id})">${ic2('skip',16)}Skip<span class="k kb2">S</span></button><button onclick="moreSheet2(${id})">${ic2('more',16)}More<span class="k kb2">M</span></button></div>
    </section>
    <section class="cr2">
-    <div class="prop2">${photo2(r,'height:clamp(90px,17vh,170px);cursor:zoom-in',true,desk2()).replace('class="photo2"',`class="photo2" onclick="if(!event.target.closest('.sv'))bigPhoto(${id})"`)}
+    <div class="prop2">${photo2(r,'height:clamp(150px,27vh,280px);cursor:zoom-in',true,desk2()).replace('class="photo2"',`class="photo2" onclick="if(!event.target.closest('.sv'))bigPhoto(${id})"`)}
      <div class="attrs2">${attrs.map(([i,v,l])=>`<div class="attr2">${ic2(i,20,'var(--t2)')}<div><b>${esc(v)}</b><span>${l}</span></div></div>`).join('')}</div></div>
     <div class="two2${hist.length?'':' one2'}">
      ${hist.length?'':'<!--'}<div><span class="lab2">Sales</span>${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):''}</div>${hist.length?'':'-->'}
