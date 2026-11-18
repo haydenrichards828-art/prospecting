@@ -208,9 +208,9 @@ function drawCall2(){
   $("#main").innerHTML=failStrip()+hoursStrip()+`
   <div class="call2">
    <section class="cl2">
-    <div><h1 class="nm2">${esc(nm)}</h1>${ppl.length>1?`<div class="also2">Also on file: ${ppl.slice(1).map(esc).join(', ')}</div>`:''}<div class="ad2">${ic2('pin',21)}${addr}</div></div>
+    <div><h1 class="nm2">${esc(nm)}</h1>${ppl.length>1?`<div class="also2">Also on file: ${ppl.slice(1).map(esc).join(', ')}</div>`:''}<button class="ad2 cp2" onclick="copyAddr(${id})" title="Copy address for RP Data">${ic2('pin',21)}<span>${addr}</span><span class="cpl">Copy</span></button></div>
     ${tag}${warnBox(r)}
-    <div class="numrow2">${numBtn(r,'num2')}${rpu?`<a class="rp2" href="${esc(rpu)}" target="_blank" rel="noopener" data-addr="${esc(rpAddress(r.street_address,r.suburb,r.postcode))}" onclick="rpCopy(this)"><i>RP</i>RP Data</a>`:'<span></span>'}</div>
+    ${numBtn(r,'num2')}
     <label class="nw2"><span class="h"><span class="lab2">Note</span><span class="kb2">N</span></span>
      <textarea class="note2" id="note2" data-note placeholder="Type while you talk" oninput="setNote(${id},this.value)">${esc(note)}</textarea></label>
     ${barHTML2(id)}
@@ -229,7 +229,7 @@ function drawCall2(){
   <div class="pcall2">
    <div class="pb2">
     <div class="ptyp2" style="align-items:center;gap:12px;flex:none;padding-bottom:4px">${photo2(r,'width:44px;height:44px;border-radius:11px',false,!desk2())}<div style="min-width:0"><b style="font-size:18px;display:block">${esc(nm)}</b><span style="font-size:14px;color:var(--t2)">${addr}</span></div></div>
-    <div class="pid2"><div class="pidr2">${photo2(r,'',false,!desk2()).replace('class="photo2"',`class="photo2" onclick="details2(${id},'history')"`)}<div style="min-width:0"><h1>${esc(nm)}</h1><div class="a">${addr}</div></div></div>
+    <div class="pid2"><div class="pidr2">${photo2(r,'',false,!desk2()).replace('class="photo2"',`class="photo2" onclick="details2(${id},'history')"`)}<div style="min-width:0"><h1>${esc(nm)}</h1><button class="a cp2" onclick="copyAddr(${id})">${addr}<span class="cpl">Copy</span></button></div></div>
      ${icons.length?`<div class="icons2">${icons.map(([i,v])=>`<span>${ic2(i,18,'var(--t2)')}${esc(v)}</span>`).join('')}</div>`:''}</div>
     ${warnBox(r,true)}
     ${numBtn(r,'pnum2')}
@@ -332,6 +332,10 @@ function drawList2(){
       <button class="ob2 hide-phone">Open${ic2('chev',16)}</button><span class="hide-desk">${chev2()}</span></div>`; }).join(''):'<p class="emptyline" style="padding:28px">Nobody left here today.</p>'}</div>
    </div></div>`;
 }
+function rpu0(r){ return r.street_address||r.suburb?rpUrl(r.street_address,r.suburb,r.rp_link,r.postcode):null; }
+async function copyAddr(id){ const r=queue().find(x=>x.property_id===id); if(!r) return; const t=rpAddress(r.street_address,r.suburb,r.postcode);
+  try{ await navigator.clipboard.writeText(t); }catch{ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy')}catch{} ta.remove(); }
+  toast('Copied: '+t); }
 function filterRows2(q){ q=q.toLowerCase(); document.querySelectorAll('#lrows2 .lg2').forEach(r=>r.style.display=r.dataset.q.includes(q)?'':'none'); }
 function open2(id){ S.pick=id; S.view='call'; S.dialer=true; try{localStorage.setItem("dp_view","call")}catch{} render(); }
 function startSub(){ S.focusSub=S.lsub==='Call backs'?null:S.lsub; S.pick=null; S.skipped.clear(); setView('call'); }
@@ -351,7 +355,8 @@ document.addEventListener('keydown',e=>{
   if(k==='s') skip2(id); else if(k==='m') moreSheet2(id); else if(k==='t') openMessage(id);
   else if(k==='n') $(desk2()?'#note2':'#pnote2')?.focus();
   else if(k==='c'){ const a=$('.num2[href^="tel:"]'); if(a) a.click(); }
-  else if(k==='r'){ const a=$('.rp2'); if(a) a.click(); }
+  else if(k==='a') copyAddr(id);
+  else if(k==='r'&&rpu0(r)) window.open(rpu0(r),'_blank','noopener');
   else return;
   e.preventDefault();
 });
