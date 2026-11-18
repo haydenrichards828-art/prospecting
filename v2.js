@@ -335,7 +335,7 @@ function drawList2(){
    </div></div>`;
 }
 function rpu0(r){ return r.street_address||r.suburb?rpUrl(r.street_address,r.suburb,r.rp_link,r.postcode):null; }
-async function copyAddr(id){ const r=queue().find(x=>x.property_id===id); if(!r) return; const t=rpAddress(r.street_address,r.suburb,r.postcode);
+async function copyAddr(id){ const r=queue().find(x=>x.property_id===id); if(!r) return; const t=[r.street_address,r.suburb].filter(Boolean).join(', ');
   try{ await navigator.clipboard.writeText(t); }catch{ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy')}catch{} ta.remove(); }
   toast('Copied: '+t); }
 function bigPhoto(id){ const r=queue().find(x=>x.property_id===id); if(!r) return; const u=aerialUrl(r,1200,900);
