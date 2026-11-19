@@ -2,7 +2,7 @@
 :root,:root:not(.x){
   --base:#0a0c0f;--panel:#111419;--sub:#171b21;--rowbg:#1a1f26;--line2:#232831;--hair:#262c35;--btn:#2a303a;
   --t1:#f2f4f7;--t2:#9ba4b2;--t3:#6f7886;--acc:#3b82f6;--accT:#93c0ff;--ok:#34d399;
-  --na:#7C3AED;--ns:#d6455a;--cb:#d97706;--ld:#3b82f6;--ap:#16a34a;--nsT:#ff9aa6;--cbT:#ffc864;--naT:#d4c4fd;
+  --na:#7C3AED;--ns:#d6455a;--cb:#d97706;--ld:#3b82f6;--ap:#16a34a;--lst:#0d9488;--lstT:#5eead4;--sld:#eab308;--sldT:#fde68a;--ref:#6366f1;--nsT:#ff9aa6;--cbT:#ffc864;--naT:#d4c4fd;
   --px:clamp(16px,2.2vw,32px);
   /* old tokens mapped onto the new palette so every older screen follows */
   --bg:var(--base);--card:var(--rowbg);--ink:var(--t1);--muted:var(--t2);--faint:var(--t3);--line:var(--hair);
@@ -604,3 +604,17 @@ textarea[data-grow]{resize:none;min-height:42px;line-height:1.4;font:inherit;wid
 #rem2 .rmore{font-size:13px;color:var(--t2);padding:2px 4px}
 #rem2 .rf{display:flex;gap:8px}#rem2 .rf .b2{flex:1;height:40px;font-size:14px}
 @media (max-width:600px){#rem2{right:12px;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));width:auto}}
+
+/* results cards and tags on Stats */
+.res2{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:4px 0 8px}
+.rs2{background:var(--rowbg);border:1px solid var(--line2);border-top:4px solid var(--c);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.rs2 span{font-size:13px;color:var(--t2);font-weight:600}.rs2 b{font-size:30px;line-height:1.15}.rs2 em{font-style:normal;font-size:12px;color:var(--t3)}
+@media (max-width:900px){.res2{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:480px){.res2{grid-template-columns:repeat(2,minmax(0,1fr))}.rs2 b{font-size:24px}}
+.rtag2{font-size:13px;font-weight:700;color:var(--c);white-space:nowrap;display:flex;align-items:center;gap:6px}
+.rtag2::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.sw2{display:flex;gap:8px}.sw2 .b2{flex:1;height:46px;gap:8px}
+.ck2{display:flex;gap:10px;align-items:center;font-size:15px;font-weight:600;color:var(--t1)}.ck2 input{width:22px;height:22px}
+.tl2i{width:36px;height:36px;border-radius:10px;background:var(--btn);display:grid;place-items:center;flex:none}
+.r2.on,.g2 .r2.on{outline:2px solid var(--accT);outline-offset:-2px}
+#refs2 .r2{grid-template-columns:minmax(0,1fr) auto auto!important}

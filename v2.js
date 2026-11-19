@@ -30,7 +30,7 @@ const OUT2=[
  {o:'call_back',lab:'Call back',bg:'var(--cb)',icon:'clock',key:'3'},
  {o:'lead',lab:'Lead',bg:'var(--ld)',icon:'lead',key:'4'},
  {o:'appraisal',lab:'Appraisal',bg:'var(--ap)',icon:'appr',key:'5'}];
-const OC2={no_answer:['#7C3AED','var(--naT)','phone'],not_interested:['var(--ns)','var(--nsT)','x'],call_back:['var(--cb)','var(--cbT)','clock'],lead:['var(--ld)','var(--accT)','lead'],appraisal:['var(--ap)','#5ee08f','appr'],listed:['var(--ap)','#5ee08f','star'],do_not_call:['var(--ns)','var(--nsT)','ban']};
+const OC2={no_answer:['#7C3AED','var(--naT)','phone'],not_interested:['var(--ns)','var(--nsT)','x'],call_back:['var(--cb)','var(--cbT)','clock'],lead:['var(--ld)','var(--accT)','lead'],appraisal:['var(--ap)','#5ee08f','appr'],listed:['var(--lst)','var(--lstT)','star'],do_not_call:['var(--ns)','var(--nsT)','ban']};
 const MONF=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONS=MONF.map(m=>m.slice(0,3));
 const TABS2=[['calls','Calls'],['enquiry','Open home calls'],['leads','Leads'],['pipeline','Appraisals and Listings'],['drops','Card drops'],['insights','Stats'],['settings','Settings']];
@@ -333,7 +333,7 @@ function details2(id,tab){
   openSheet2(esc(people(r.owner_name)[0]||'Owner unknown'),`<div class="seg2">${[['calls','Calls'],['why','Why'],['history','Sales']].map(([k,l])=>`<button class="${k===tab?'on':''}" onclick="details2(${id},'${k}')">${l}</button>`).join('')}</div>${body}`);
 }
 function moreSheet2(id){
-  openSheet2('More',`<div class="g2">${row2('var(--acc)','msg','Text message','Schedule a text from a template','<span class="kb2 hide-phone">T</span>',`closeOv();openMessage(${id})`)}${row2('var(--ap)','star','Listed with us','They signed with Dignam','',`record(${id},'listed')`)}</div>
+  openSheet2('More',`<div class="g2">${row2('var(--acc)','msg','Text message','Schedule a text from a template','<span class="kb2 hide-phone">T</span>',`closeOv();openMessage(${id})`)}${row2('var(--lst)','star','Listed with us','They signed with Dignam','',`record(${id},'listed')`)}</div>
    <div class="g2">${row2('#4b5565','warn','Something is wrong','Wrong person, rented, already listed',chev2(),`wrongSheet2(${id})`)}</div>
    <div class="g2">${row2('var(--ns)','ban','<span style="color:var(--nsT)">Do not call</span>','Never list this number again','',`dncSheet2(${id})`)}</div>`);
   S.sheetKeys={t:()=>{ closeOv(); openMessage(id); }};
@@ -641,7 +641,7 @@ window.viewPipeline=async function(local){
 };
 function pipeSheet(id){ const x=(S.pipe||[]).find(r=>r.property_id===id); if(!x) return;
   openSheet2(esc(people(x.owner_name)[0]||x.street_address||'Property'),`<p class="hint2">${esc(x.street_address||'')}${x.suburb?', '+esc(x.suburb):''}</p>
-   <div class="g2">${PNEXT[x.stage].map(([s2,l])=>row2(pBad(s2)?'var(--ns)':s2==='appraisal'?'#4b5565':'var(--ap)',pBad(s2)?'x':'check',l,{listed_other:'They listed with someone else. Not counted as ours',withdrawn:'Our listing came off the market',sold:'Our listing sold',listed:'They signed with Dignam'}[s2]||'',chev2(),`closeOv();setStage(${id},'${s2}')`)).join('')}
+   <div class="g2">${PNEXT[x.stage].map(([s2,l])=>row2(({listed:'var(--lst)',sold:'var(--sld)',withdrawn:'#64748b',appraisal:'var(--ap)'})[s2]||'var(--ns)',pBad(s2)?'x':'check',l,{listed_other:'They listed with someone else. Not counted as ours',withdrawn:'Our listing came off the market',sold:'Our listing sold',listed:'They signed with Dignam'}[s2]||'',chev2(),`closeOv();setStage(${id},'${s2}')`)).join('')}
     ${row2('#4b5565','msg',x.notes?'Edit note':'Add a note',x.notes?esc(x.notes):'',chev2(),`closeOv();stageNote(${id})`)}
     ${row2('#4b5565','tag','Came from',esc(SOURCES[x.source||'calls']),chev2(),`pickSource(${id},'${x.source||'calls'}')`)}
     ${[[x.owner_name,x.phone],[x.owner2_name,x.phone2]].filter(p=>p[1]).map(([n,p])=>row2('var(--ap)','phone',`Call ${esc(firstName(n||''))!=='them'?esc(firstName(n))+' ':''}${esc(fmtPh2(p))}`,'',chev2(),`if(callingAllowed())openUrl('tel:${esc(String(p).replace(/[^0-9+]/g,''))}')`)).join('')}</div>
@@ -1072,3 +1072,108 @@ function remLater(){ const seen=rSeen(), t=Date.now()+3600e3; (S.remind||[]).for
 async function remAsk(){ try{ await Notification.requestPermission(); }catch{} paintReminders(); }
 setTimeout(checkReminders,4000); setInterval(checkReminders,5*60e3);
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checkReminders(); });
+
+// ---------- Send info and referrals: from a lead, the call screen or the pipeline, in two taps ----------
+const XAPI=API.replace(/\/api$/,'/extra');
+async function api2(action,body={}){
+  if(DEMO){ await new Promise(r=>setTimeout(r,80)); const D=window.__demo2||(window.__demo2={partners:[{id:1,name:'Sarah Lee',business:'Coast Mortgage Co',kind:'finance',phone:'0400222333'}],refs:[]});
+    if(action==='referrals') return {partners:D.partners,referrals:D.refs};
+    if(action==='save_partner'){ const id=D.partners.length+1; D.partners.push({id,...body.partner}); return {id}; }
+    if(action==='save_referral'){ const r=body.referral; if(r.id){ Object.assign(D.refs.find(x=>x.id===r.id)||{},r); return {ok:true}; } if(!r.consent) throw new Error('Tick that they agreed to be passed on'); const p=D.partners.find(x=>x.id==r.partner_id)||{}; D.refs.unshift({id:D.refs.length+1,...r,partner:p.name,business:p.business,status:'sent',created_at:new Date().toISOString()}); return {id:D.refs.length}; }
+    if(action==='street_update') return {rows:[{d:'2026-08-12',price:1250000,addr:'14 Example St'},{d:'2026-03-02',price:1080000,addr:'3 Example St'}]};
+    return {ok:true}; }
+  let r; try{ r=await fetch(XAPI,{method:'POST',headers:{'Content-Type':'application/json','x-session':S.token||''},body:JSON.stringify({action,...body})}); }catch{ throw new Error("Can't reach the server. Check your signal."); }
+  const j=await r.json().catch(()=>({error:'Server error'})); if(!r.ok) throw new Error(j.error||'Something went wrong'); return j; }
+const ME='Marlowe from Dignam';
+const money2=n=>n>=1e6?'$'+(Math.round(n/1e4)/100)+'m':'$'+Math.round(n/1e3)+'k';
+// who: {name, phone, email, lead_id, property_id, lead}
+async function sendInfo(who){ S.sw=who; if(!S.templates&&!DEMO) api('templates').then(t=>{ S.templates=t.rows||[]; }).catch(()=>{}); const fn=firstName(who.name||''), hi=`Hi ${fn!=='them'?fn:'there'}, it's ${ME}.`;
+  const opts=[];
+  const l=who.lead; if(l&&typeof matchesFor==='function'){ const ms=matchesFor(l).slice(0,3); if(ms.length) opts.push(['homes','Homes that suit them',`${hi} A few homes that look like a good fit:\n${ms.map(x=>`${x.t.address}, ${x.t.suburb}${x.t.price_text?' ('+x.t.price_text+')':''}${x.t.url?' '+x.t.url:''}`).join('\n')}\nHappy to arrange a look at any of them.`]); }
+  if(who.property_id) opts.push(['street','Recent sales on their street',null]);
+  opts.push(['listing','One of our listings',null]);
+  opts.push(['checkin','Just checking in',`${hi} Just checking in to see how things are going. If you'd like an update on what homes near you are selling for, I'm happy to send one through.`]);
+  opts.push(['appraisal','Offer a free appraisal',`${hi} If you're curious what your home would sell for in today's market, I can arrange a free, no obligation appraisal at a time that suits you.`]);
+  (S.templates||[]).slice(0,4).forEach(t=>opts.push(['tpl'+t.id,t.name,t.body.replace(/\{first_name\}/g,fn!=='them'?fn:'there')]));
+  S.swOpts=opts;
+  openSheet2(`Send to ${esc(who.name||'them')}`,`<div class="later2" style="grid-template-columns:repeat(2,minmax(0,1fr))">${opts.map((o,i)=>`<button onclick="swPick(${i},this)"><b>${esc(o[1])}</b></button>`).join('')}</div>
+    <div id="sw_list"></div>
+    <label class="fl2">Message<textarea id="sw_body" rows="4" data-grow placeholder="Pick one above or write your own"></textarea></label>
+    <div class="sw2">${who.phone?`<button class="b2 pri" onclick="swSend('text')">${ic2('msg',18)}Text</button>`:''}${who.email?`<button class="b2" onclick="swSend('email')">${ic2('mail',18)}Email</button>`:''}<button class="b2" onclick="swSend('copy')">Copy</button></div>
+    ${who.phone?'':'<p class="hint2">No phone number on file, so copy it and paste where you need it.</p>'}`); }
+async function swPick(i,btn){ pickOne(btn,'#sheet .later2'); const o=S.swOpts[i], w=S.sw, fn=firstName(w.name||''), hi=`Hi ${fn!=='them'?fn:'there'}, it's ${ME}.`; $('#sw_list').innerHTML='';
+  if(o[0]==='street'){ $('#sw_body').value='Looking up recent sales…'; try{ const r=(await api2('street_update',{property_id:w.property_id})).rows||[];
+      $('#sw_body').value=r.length?`${hi} Thought you might like to know what's sold near you lately:\n${r.slice(0,4).map(s=>`${s.addr}, ${money2(s.price)} (${new Date(s.d+'T00:00').toLocaleDateString('en-AU',{month:'short',year:'numeric'})})`).join('\n')}\nIf you ever want to know what yours is worth, just let me know.`:`${hi} There haven't been many sales on your street lately, which can mean buyers are waiting for the right home to come up. Happy to chat about what yours might be worth.`; }
+    catch(e){ $('#sw_body').value=''; toast(e.message); } }
+  else if(o[0]==='listing'){ const ls=(S.listings||[]).slice(0,12); $('#sw_list').innerHTML=`<div class="g2">${ls.map(t=>row2('var(--acc)','house',esc(t.address),esc([t.suburb,t.price_text].filter(Boolean).join(' · ')),'',`swListing(${t.id})`)).join('')||'<p class="hint2">No listings loaded.</p>'}</div>`; $('#sw_body').value=''; }
+  else $('#sw_body').value=o[2];
+  growTA($('#sw_body')); }
+function swListing(id){ const t=(S.listings||[]).find(x=>x.id===id), w=S.sw, fn=firstName(w.name||''); if(!t) return;
+  $('#sw_body').value=`Hi ${fn!=='them'?fn:'there'}, it's ${ME}. Thought this one might interest you: ${t.address}, ${t.suburb}${t.beds?`, ${t.beds} bed`:''}${t.price_text?` (${t.price_text})`:''}.${t.url?' '+t.url:''} Happy to arrange a look.`; growTA($('#sw_body')); $('#sw_list').innerHTML=''; }
+async function swSend(ch){ const w=S.sw, body=$('#sw_body').value.trim(); if(!body) return toast('Write a message first');
+  if(ch==='text'){ if(!callingAllowed()) return toast('Outside calling hours, so texts wait too. Copy it and send later.'); openUrl(smsLink(w.phone,body)); }
+  else if(ch==='email') openUrl(`mailto:${encodeURIComponent(w.email)}?subject=${encodeURIComponent('From '+ME)}&body=${encodeURIComponent(body)}`);
+  else { try{ await navigator.clipboard.writeText(body); }catch{} toast('Copied'); }
+  api2('log_send',{channel:ch,kind:'info',body,person_name:w.name,phone:w.phone,email:w.email,lead_id:w.lead_id,property_id:w.property_id}).catch(()=>{});
+  if(ch!=='copy'){ closeOv(); toast('Opened your messages. It’s noted on their record.'); } }
+
+const RKINDS=[['finance','Finance'],['conveyancing','Conveyancing'],['agent','Agent elsewhere'],['buyers_agent',"Buyer's agent"],['property_management','Property management'],['trades','Trades'],['other','Other']];
+async function referSheet(who){ S.rw=who; let d; try{ d=await api2('referrals'); }catch(e){ return toast(e.message); } S.ref=d;
+  openSheet2(`Refer ${esc(who.name||'them')}`,`<div class="sth2">Who to</div>
+    <div class="g2" id="rf_p">${(d.partners||[]).map(p=>`<button class="r2 rfp" data-id="${p.id}" onclick="pickOne(this,'#rf_p');S.rfp=${p.id}">${tile2('users')}<span class="rt2"><b>${esc(p.name)}</b><span>${esc([p.business,(RKINDS.find(k=>k[0]===p.kind)||[])[1]].filter(Boolean).join(' · '))}</span></span></button>`).join('')}
+     <button class="r2" onclick="partnerSheet()">${tile2('plus')}<span class="rt2"><b>Add someone new</b><span>A broker, conveyancer, agent or trade you refer to</span></span></button></div>
+    <label class="fl2">Note for them<textarea id="rf_note" rows="2" data-grow placeholder="Looking to buy in Thirroul, needs pre approval"></textarea></label>
+    <label class="ck2"><input type="checkbox" id="rf_ok"> ${esc(firstName(who.name||'')!=='them'?firstName(who.name):'They')} agreed to be passed on</label>
+    <button class="b2 pri" id="rf_go" onclick="saveRef()">Save referral</button>`); S.rfp=null; }
+function tile2(i){ return `<span class="tl2i">${ic2(i,18,'var(--t1)')}</span>`; }
+function partnerSheet(p={}){ openSheet2(p.id?'Edit contact':'Someone you refer to',`<div class="ap2"><label class="fl2">Name<input id="pp_name" value="${esc(p.name||'')}"></label><label class="fl2">Business<input id="pp_biz" value="${esc(p.business||'')}"></label>
+   <label class="fl2">Phone<input id="pp_phone" inputmode="tel" value="${esc(fmtPh2(p.phone||''))}"></label><label class="fl2">Email<input id="pp_email" inputmode="email" value="${esc(p.email||'')}"></label></div>
+   <label class="fl2">What they do<select id="pp_kind">${RKINDS.map(k=>`<option value="${k[0]}"${p.kind===k[0]?' selected':''}>${k[1]}</option>`).join('')}</select></label>
+   <button class="b2 pri" onclick="savePartner(${p.id||'null'})">Save</button>`,S.rw?'referSheet(S.rw)':null); }
+async function savePartner(id){ const ph=$('#pp_phone').value.trim(), e=phoneProblem(ph); if(e) return phoneBad($('#pp_phone'),e);
+  try{ await api2('save_partner',{partner:{id,name:$('#pp_name').value,business:$('#pp_biz').value,phone:ph,email:$('#pp_email').value,kind:$('#pp_kind').value}}); }catch(err){ return toast(err.message); }
+  toast('Saved'); if(S.rw) referSheet(S.rw); else { closeOv(); if(S.tab==='insights') render(); } }
+async function saveRef(){ const w=S.rw; if(!S.rfp) return toast('Pick who you’re referring them to'); if(!$('#rf_ok').checked) return toast('Tick that they agreed to be passed on first');
+  const p=(S.ref.partners||[]).find(x=>x.id===S.rfp)||{}, note=$('#rf_note').value.trim();
+  try{ await api2('save_referral',{referral:{partner_id:p.id,partner_label:[p.name,p.business].filter(Boolean).join(', '),person_name:w.name,person_phone:w.phone,lead_id:w.lead_id,property_id:w.property_id,kind:p.kind,note,consent:true}}); }catch(e){ return toast(e.message); }
+  const msg=`Hi ${firstName(p.name)!=='them'?firstName(p.name):'there'}, it's ${ME}. I'd like to refer ${w.name||'a client'}${w.phone?' ('+fmtPh2(w.phone)+')':''} to you.${note?' '+note:''} They're happy for you to get in touch.`;
+  openSheet2('Referral saved',`<p class="hint2">It's in Stats under Referrals. Mark it won and add the fee when it comes through.</p>
+    <div class="g2">${p.phone?row2('var(--acc)','msg',`Text ${esc(p.name)} the details`,esc(msg).slice(0,80)+'…',chev2(),`openUrl(smsLink('${esc(p.phone)}',${esc(JSON.stringify(msg))}));closeOv()`):''}
+    ${p.email?row2('#4b5565','mail',`Email ${esc(p.name)}`,'',chev2(),`openUrl('mailto:${esc(p.email)}?subject=${encodeURIComponent('Referral from '+ME)}&body='+encodeURIComponent(${esc(JSON.stringify(msg))}));closeOv()`):''}</div>`); }
+
+// Entry points: lead sheet, call screen More, pipeline sheet, open home list
+window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const l=(S.leads||[]).find(x=>x.id===id); const c=document.querySelector('#sheet .lcta'); if(!l||!c||c.querySelector('.snd2')) return;
+  c.insertAdjacentHTML('afterend',`<div class="lcta snd2"><button class="ghost" onclick="sendInfo({name:${esc(JSON.stringify(leadTitle(l)))},phone:${esc(JSON.stringify(l.phone||''))},lead_id:${l.id},property_id:${l.property_id||'null'},lead:(S.leads||[]).find(x=>x.id===${l.id})})">${ic2('msg',18)} Send info</button><button class="ghost" onclick="referSheet({name:${esc(JSON.stringify(leadTitle(l)))},phone:${esc(JSON.stringify(l.phone||''))},lead_id:${l.id},property_id:${l.property_id||'null'}})">${ic2('users',18)} Refer</button></div>`); }; })(window.openLead);
+window.moreSheet2=(function(orig){ return function(id){ orig(id); const r=findRow(id); const g=document.querySelector('#sheet .sb2 .g2'); if(!g||!r) return;
+  const who=JSON.stringify({name:people(r.owner_name)[0]||'',phone:r.owner_phone||r.phone||'',property_id:id});
+  g.insertAdjacentHTML('afterbegin',row2('var(--acc)','msg','Send info','Recent street sales, a listing, a check in',chev2(),`sendInfo(${esc(who)})`)+row2('#6366f1','users','Refer','To a broker, conveyancer or agent you work with',chev2(),`referSheet(${esc(who)})`)); }; })(window.moreSheet2);
+window.pipeSheet=(function(orig){ return function(id){ orig(id); const x=(S.pipe||[]).find(r=>r.property_id===id); const gs=document.querySelectorAll('#sheet .sb2 .g2'); const g=gs[gs.length-1]; if(!g||!x) return;
+  const who=JSON.stringify({name:people(x.owner_name)[0]||'',phone:x.phone||'',property_id:id,lead_id:x.lead_id||null});
+  g.insertAdjacentHTML('beforeend',row2('var(--acc)','msg','Send info','',chev2(),`sendInfo(${esc(who)})`)+row2('#6366f1','users','Refer','',chev2(),`referSheet(${esc(who)})`)); }; })(window.pipeSheet);
+
+// ---------- Stats: results for the period at the top (appraisals, listings, sold, referrals), then referrals to manage ----------
+window.paintInsights=(function(orig){ return function(ov){ orig(ov); const R=ov.results||{}, k=S.period||'week', a=R[k]||{}, b=R[k+'_prev']||{};
+  const lab={week:'last week',month:'last month',quarter:'last quarter'}[k];
+  const card=(n,l,c,v,pv,fmt)=>{ const d=(+v||0)-(+pv||0); return `<div class="rs2" style="--c:${c}"><span>${l}</span><b>${fmt?fmt(v):(+v||0)}</b><em>${d===0?'Same as '+lab:(d>0?'+':'')+(fmt?fmt(d):d)+' on '+lab}</em></div>`; };
+  const html=`<section class="res2" aria-label="Results this ${k}">
+    ${card('a','Appraisals',COL.appraisal,a.appraisals,b.appraisals)}${card('l','Listings',COL.listed,a.listed,b.listed)}${card('s','Sold',COL.sold,a.sold,b.sold)}
+    ${card('r','Referrals',COL.referral,a.referrals,b.referrals)}${card('f','Referral fees',COL.referral,a.fees,b.fees,n=>'$'+Math.round(+n||0).toLocaleString('en-AU'))}${card('m','Info sent',COL.sent,a.sent,b.sent)}</section>
+    <section class="sec2" id="refs2"><div class="gh2" style="margin:0"><span>Referrals</span><button class="b2" style="height:36px" onclick="S.rw=null;partnerSheet()">${ic2('plus',16)}Add who you refer to</button></div><p class="emptyline">Loading…</p></section>`;
+  const head=document.querySelector('#main .ph2'); if(head) head.insertAdjacentHTML('afterend',html);
+  paintRefs(); }; })(window.paintInsights);
+const RST=[['sent','Sent'],['in_progress','In progress'],['won','Won'],['lost','Lost']];
+async function paintRefs(){ const el=document.getElementById('refs2'); if(!el) return; let d; try{ d=await api2('referrals'); }catch(e){ el.querySelector('.emptyline').textContent=e.message; return; } S.ref=d;
+  const rs=d.referrals||[]; const body=rs.length?`<div class="g2">${rs.slice(0,20).map(r=>`<button class="r2" onclick="refEdit(${r.id})"><span class="rt2"><b>${esc(r.person_name||'Someone')} to ${esc(r.partner||'?')}</b><span>${esc([r.business,dayMon(r.created_at),r.note].filter(Boolean).join(' · '))}</span></span><span class="rtag2" style="--c:${r.status==='won'?COL.sold:r.status==='lost'?COL.lost:COL.referral}">${esc((RST.find(s=>s[0]===r.status)||[])[1]||r.status)}${r.status==='won'&&r.fee?' $'+Math.round(r.fee).toLocaleString('en-AU'):''}</span>${chev2()}</button>`).join('')}</div>`
+    :`<p class="emptyline">No referrals yet. Use Refer on a lead, the call screen or Appraisals and Listings.${(d.partners||[]).length?'':' Add the brokers, conveyancers and agents you work with first.'}</p>`;
+  el.innerHTML=el.querySelector('.gh2').outerHTML+body+((d.partners||[]).length?`<p class="hint2" style="margin:4px 0 0">You refer to: ${(d.partners||[]).map(p=>`<a href="#" onclick="event.preventDefault();S.rw=null;partnerSheet(S.ref.partners.find(x=>x.id===${p.id}))">${esc(p.name)}</a>`).join(', ')}</p>`:''); }
+function refEdit(id){ const r=(S.ref?.referrals||[]).find(x=>x.id===id); if(!r) return;
+  openSheet2(`${esc(r.person_name||'Referral')} to ${esc(r.partner||'')}`,`<div class="later2 sm" id="re_st">${RST.map(([k,l])=>`<button class="${r.status===k?'on':''}" onclick="pickOne(this,'#re_st');S.rest='${k}'">${l}</button>`).join('')}</div>
+   <div class="ap2"><label class="fl2">Fee received ($)<input id="re_fee" inputmode="decimal" value="${r.fee??''}"></label><label class="fl2">Paid on<input id="re_paid" type="date" value="${r.paid_at||''}"></label></div>
+   <label class="fl2">Note<textarea id="re_note" rows="2" data-grow>${esc(r.note||'')}</textarea></label>
+   <button class="b2 pri" onclick="refSave(${id})">Save</button>`); S.rest=r.status; }
+async function refSave(id){ const fee=$('#re_fee').value.replace(/[$,\s]/g,'');
+  try{ await api2('save_referral',{referral:{id,status:S.rest,fee,paid_at:$('#re_paid').value,note:$('#re_note').value}}); }catch(e){ return toast(e.message); }
+  closeOv(); toast('Saved'); if(S.tab==='insights') render(); }
+
+// One colour per meaning, used everywhere: outcomes, pipeline stages, stats and tags
+const COL={no_answer:'#7C3AED',not_selling:'#d6455a',call_back:'#d97706',lead:'#3b82f6',appraisal:'#16a34a',listed:'#0d9488',sold:'#eab308',withdrawn:'#64748b',lost:'#d6455a',other_agency:'#d6455a',referral:'#6366f1',sent:'#0ea5e9'};
