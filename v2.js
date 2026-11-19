@@ -1230,13 +1230,13 @@ document.addEventListener('visibilitychange',()=>{ if(document.hidden||!S.tm||!S
 
 // Lead panel bottom: one clean list. Each row shows its current value; tap to change it right there. Status and next step save straight away.
 const LST2=[['Active','Active'],['Not Ready','Not ready'],['Appraisal Booked','Appraisal booked'],['Appraisal Done','Appraisal done'],['Listing Won','Listed with us'],['Listing Lost','Listed elsewhere'],['Do Not Contact','Do not contact'],['Closed','Closed']];
-function lrowHTML(k,ic,label,val,on){ return `<button class="lr2" data-k="${k}" onclick="${on}"><span class="lri2">${ic2(ic,17)}</span><span class="lrt2"><span>${label}</span><b class="${val?'':'none'}">${val||'Not set'}</b></span>${chev2()}</button><div class="lrx2" id="lrx_${k}" hidden></div>`; }
-function lrToggle(k,html){ const x=document.getElementById('lrx_'+k); if(!x) return; const open=x.hidden; document.querySelectorAll('.lrx2').forEach(e=>{ e.hidden=true; e.innerHTML=''; }); document.querySelectorAll('.lr2').forEach(e=>e.classList.remove('open')); if(!open) return; x.innerHTML=html; x.hidden=false; x.previousElementSibling.classList.add('open'); }
+function lrowHTML(k,ic,label,val,on){ return `<button class="ldr4" data-k="${k}" onclick="${on}"><span class="lri2">${ic2(ic,17)}</span><span class="lrt2"><span>${label}</span><b class="${val?'':'none'}">${val||'Not set'}</b></span>${chev2()}</button><div class="lrx2" id="lrx_${k}" hidden></div>`; }
+function lrToggle(k,html){ const x=document.getElementById('lrx_'+k); if(!x) return; const open=x.hidden; document.querySelectorAll('.lrx2').forEach(e=>{ e.hidden=true; e.innerHTML=''; }); document.querySelectorAll('.ldr4').forEach(e=>e.classList.remove('open')); if(!open) return; x.innerHTML=html; x.hidden=false; x.previousElementSibling.classList.add('open'); }
 function lrPick(id,field,val){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;
   const sel=document.getElementById(field==='status'?'ln_status':'ln_next'); if(sel) sel.value=val;
   const prev=l[field]; l[field]=val||null; if(field==='status') S.ol.status=val;
   const p={id,body:'',status:field==='status'?val:(document.getElementById('ln_status')?.value||l.status||'Active'),next_action:field==='next_action'?(val||null):(document.getElementById('ln_next')?.value||null)};
-  const r=document.querySelector(`.lr2[data-k="${field}"] b`); if(r){ r.textContent=field==='status'?(LST2.find(s=>s[0]===val)||[0,val])[1]:(val||'Not set'); r.classList.toggle('none',!val); }
+  const r=document.querySelector(`.ldr4[data-k="${field}"] b`); if(r){ r.textContent=field==='status'?(LST2.find(s=>s[0]===val)||[0,val])[1]:(val||'Not set'); r.classList.toggle('none',!val); }
   lrToggle(field);
   api('lead_note',p).then(()=>{ toast(field==='status'?'Status saved':'Next step saved'); if(S.tab==='leads') drawLeads(); })
    .catch(e=>{ l[field]=prev; toast("Couldn't save that. "+e.message); });
@@ -1251,33 +1251,33 @@ window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const 
   const chips=(field,list,cur)=>`<div class="lrc2">${list.map(([v,t])=>`<button class="${v===cur?'on':''}" onclick="lrPick(${id},'${field}','${v.replace(/'/g,'')}')">${esc(t)}</button>`).join('')}</div>`;
   const stHTML=chips('status',LST2,l.status||'Active').replace(/"/g,'&quot;');
   const nxHTML=chips('next_action',[['','None'],...LO.next_action.map(v=>[v,v])],l.next_action||'').replace(/"/g,'&quot;');
-  const rows=`<div class="lrows2">
+  const rows=`<div class="ldrows4">
     ${lrowHTML('status','flag','Status',st,`lrToggle('status',this.dataset.h)`).replace('data-k="status"',`data-k="status" data-h="${stHTML}"`)}
     ${lrowHTML('next_action','skip','Next step',l.next_action||'',`lrToggle('next_action',this.dataset.h)`).replace('data-k="next_action"',`data-k="next_action" data-h="${nxHTML}"`)}
     ${lrowHTML('who','user','Their details',who,`editDetails();this.classList.toggle('open')`)}
     ${hasB?'':lrowHTML('buy','search','What they want to buy','',`editWants(true);this.style.display='none'`)}
   </div>`;
   const card=sh.querySelector('.lcard'); if(card) card.insertAdjacentHTML('afterend',rows);
-  const de=document.getElementById('deditor'), wr=sh.querySelector('.lr2[data-k="who"]'); if(de&&wr) wr.nextElementSibling.after(de);
-  const we=document.getElementById('weditor'), br=sh.querySelector('.lr2[data-k="buy"]'); if(we&&br) br.nextElementSibling.after(we);
+  const de=document.getElementById('deditor'), wr=sh.querySelector('.ldr4[data-k="who"]'); if(de&&wr) wr.nextElementSibling.after(de);
+  const we=document.getElementById('weditor'), br=sh.querySelector('.ldr4[data-k="buy"]'); if(we&&br) br.nextElementSibling.after(we);
 }; })(window.openLead);
 
 // Simpler lead panel: the extras live behind a three dot menu next to the close button
 function lmenuOpen(btn){ const m=document.getElementById('lmenu2'); if(!m) return; const show=m.hidden; m.hidden=!show; btn.classList.toggle('on',show);
   if(show) setTimeout(()=>document.addEventListener('click',function c(e){ if(!e.target.closest('#lmenu2,.ldots2')){ m.hidden=true; btn.classList.remove('on'); document.removeEventListener('click',c); } }),0); }
 function lmenuGo(k){ const m=document.getElementById('lmenu2'); if(m) m.hidden=true; document.querySelector('.ldots2')?.classList.remove('on');
-  const rows=document.querySelector('.lrows2');
-  if(k==='status'||k==='next_action'){ if(!rows) return; rows.hidden=false; rows.querySelectorAll('.lr2').forEach(r=>r.style.display=r.dataset.k===k?'':'none');
-    const r=rows.querySelector(`.lr2[data-k="${k}"]`); lrToggle(k,r.dataset.h); rows.scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
+  const rows=document.querySelector('.ldrows4');
+  if(k==='status'||k==='next_action'){ if(!rows) return; rows.hidden=false; rows.querySelectorAll('.ldr4').forEach(r=>r.style.display=r.dataset.k===k?'':'none');
+    const r=rows.querySelector(`.ldr4[data-k="${k}"]`); lrToggle(k,r.dataset.h); rows.scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
   if(k==='who'){ const d=document.getElementById('deditor'); if(d){ d.hidden=false; d.scrollIntoView({block:'nearest',behavior:'smooth'}); d.querySelector('input')?.focus(); } return; }
   if(k==='buy'){ editWants(true); document.getElementById('weditor')?.scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
   const b=[...document.querySelectorAll('.snd2 button')].find(x=>x.textContent.includes(k==='send'?'Send info':'Refer')); b?.click(); }
-window.lrPick=(function(orig){ return function(...a){ orig(...a); const rows=document.querySelector('.lrows2'); if(rows) rows.hidden=true;
+window.lrPick=(function(orig){ return function(...a){ orig(...a); const rows=document.querySelector('.ldrows4'); if(rows) rows.hidden=true;
   const sub=document.querySelector('.lhead .lsub b'); const l=(S.leads||[]).find(x=>x.id===a[0]); if(a[1]==='status'&&l){ const t=(LST2.find(s=>s[0]===l.status)||[0,l.status])[1]; if(sub) sub.textContent=t; }
   const mb=[...document.querySelectorAll('#lmenu2 button')].find(b=>b.getAttribute('onclick')===`lmenuGo('${a[1]}')`); if(mb&&l){ let em=mb.querySelector('em'); const v=a[1]==='status'?(LST2.find(s=>s[0]===l.status)||[0,l.status])[1]:(l.next_action||''); if(!em&&v){ em=document.createElement('em'); mb.append(em); } if(em) em.textContent=v; } }; })(window.lrPick);
 window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const sh=document.getElementById('sheet'); if(!sh||!id) return;
   const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;
-  const rows=sh.querySelector('.lrows2'); if(rows){ rows.hidden=true;
+  const rows=sh.querySelector('.ldrows4'); if(rows){ rows.hidden=true;
     ['deditor','weditor'].forEach(i=>{ const e=document.getElementById(i); if(e) rows.after(e); }); }
   sh.querySelector('.snd2')?.setAttribute('hidden','');
   const st=(LST2.find(s=>s[0]===(l.status||'Active'))||[0,l.status])[1];
