@@ -532,9 +532,7 @@ function paintInsights(ov){
     <p class="muted" style="margin-top:0">Control calls are random picks. The gap between the two is what the algorithm adds.</p>
     <table><tr><th>Group</th><th>Answered</th><th>Appraisals</th><th>Per 100</th></tr>${(ov.groups||[]).length?ov.groups.map(g=>`<tr><td>${esc(g.grp)} v${g.version??"?"}</td><td>${g.connected}</td><td>${g.appraisals}</td><td>${g.rate??0}</td></tr>`).join(""):`<tr><td colspan="4" class="muted">No calls yet.</td></tr>`}</table>
     <p class="muted">Current weights: ${Object.entries(live?.weights||{}).map(([k,w])=>`${esc(k)} ${w}`).join(", ")}. Every Sunday it tests better weights against your results and asks you here before changing anything.</p></div></details>
-   <details class="sec" ${ov.failed?"open":""}><summary>System</summary><div>
-    <table>${(ov.last_runs||[]).map(r=>`<tr><td>${esc(r.job.replace(/_/g," "))}</td><td style="color:${r.ok?"inherit":"var(--bad)"}">${esc(r.detail)}</td><td class="muted">${fmt(r.created_at)}</td></tr>`).join("")||`<tr><td class="muted">Nothing has run yet.</td></tr>`}</table>
-    <p class="muted" style="margin-bottom:0">${(ov.properties||0).toLocaleString()} properties in the system.</p></div></details>
+   ${ov.failed?`<p class="muted" style="color:var(--bad)">A background update didn't finish. Hayden can see the details.</p>`:""}
   </div></div>`;
   drawPhoneTime();
 }
