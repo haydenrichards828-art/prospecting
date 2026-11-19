@@ -33,7 +33,7 @@ const OUT2=[
 const OC2={no_answer:['#7C3AED','var(--naT)','phone'],not_interested:['var(--ns)','var(--nsT)','x'],call_back:['var(--cb)','var(--cbT)','clock'],lead:['var(--ld)','var(--accT)','lead'],appraisal:['var(--ap)','#5ee08f','appr'],listed:['var(--ap)','#5ee08f','star'],do_not_call:['var(--ns)','var(--nsT)','ban']};
 const MONF=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONS=MONF.map(m=>m.slice(0,3));
-const TABS2=[['calls','Calls'],['leads','Leads'],['pipeline','Appraisals and listings'],['drops','Card drops'],['insights','Stats'],['settings','Settings']];
+const TABS2=[['calls','Calls'],['enquiry','Open home calls'],['leads','Leads'],['pipeline','Appraisals and listings'],['drops','Card drops'],['insights','Stats'],['settings','Settings']];
 const LVL2={Strong:['var(--acc)','#93c0ff'],Medium:['#6366f1','#a5b4fc'],Light:['#475063','var(--t2)'],Note:['#b45309','#ffc864']};
 
 // ---------- small helpers ----------
@@ -163,7 +163,7 @@ function tabBtn(id){ return `<button class="tabbtn" id="${id}" onclick="navPop(t
 function vseg2(){ return S.tab==='calls'&&!S.searching?`<div class="vseg">${[['call','Calling'],['list','List']].map(([k,l])=>`<button class="${S.view===k?'on':''}" onclick="setView('${k}')">${l}</button>`).join('')}</div>`:''; }
 function setView(v){ S.view=v; S.dialer=v!=='list'; try{localStorage.setItem("dp_view",v)}catch{} if(v==='list') S.pick=null; render(); }
 function navPop(btn){
-  const ico={calls:['var(--acc)','phone'],leads:['#6366f1','users'],pipeline:['var(--ap)','appr'],drops:['var(--cb)','mail'],insights:['var(--ap)','chart'],settings:['#4b5565','gear']};
+  const ico={calls:['var(--acc)','phone'],enquiry:['var(--cb)','users'],leads:['#6366f1','users'],pipeline:['var(--ap)','appr'],drops:['var(--cb)','mail'],insights:['var(--ap)','chart'],settings:['#4b5565','gear']};
   const ready=S.ov?.ready_texts||0, nl=(S.leads||[]).filter(l=>newMatches(l).length).length;
   const body=`<div class="g2">${TABS2.map(([k,l])=>row2(ico[k][0],ico[k][1],l,k==='leads'&&nl?`${nl} with new matching homes`:'',k===S.tab?ic2('check',18,'var(--accT)'):'',`closePop2();closeOv();go('${k}')`)).join('')}</div>
    ${ready?`<div class="g2" style="margin-top:10px">${row2('var(--acc)','send','Texts',`${ready} ready to send`,chev2(),"closePop2();closeOv();go('messages')")}</div>`:''}`;
@@ -177,7 +177,7 @@ function togglePS(){ S.psearch=!S.psearch; if(!S.psearch&&S.sq){ S.sq=''; hSearc
 async function render(){
   if (!S.token) return renderLogin();
   closePop2();
-  const v2tab=['calls','leads','insights'].includes(S.tab)&&!S.searching;
+  const v2tab=['calls','leads','insights','enquiry'].includes(S.tab)&&!S.searching;
   $("#app").innerHTML=`<div id="shell"><div class="panel">
    <header class="top2">${tabBtn('tabbtn')}${vseg2()}${S.tab==='calls'?'<div class="tstats" id="tstats"></div>':''}
     <label class="tsearch" style="${S.tab==='calls'?'':'margin-left:auto'}">${ic2('search',16)}<input id="hq" type="search" placeholder="Search everything" value="${esc(S.sq||'')}" oninput="v2search(this.value)" autocomplete="off" aria-label="Search names, numbers and addresses"></label></header>
@@ -187,7 +187,7 @@ async function render(){
   ensureExtras(); document.body.classList.remove('typing');
   if (!S.leadsAt || Date.now()-S.leadsAt>10*60e3) { S.leadsAt=Date.now(); loadLeads().then(()=>{ document.querySelectorAll('.tabbtn').forEach(b=>{ if(hasDot()&&!b.querySelector('.dot')) b.insertAdjacentHTML('beforeend','<span class="dot"></span>'); }); }).catch(()=>{ S.leadsAt=0; }); }
   if (S.searching && (S.sq||'').trim().length>=2) { runSearch(S.sq); return; }
-  try { await ({calls:viewCalls,leads:viewLeads,pipeline:viewPipeline,drops:viewDrops,messages:viewMessages,insights:viewInsights,settings:viewSettings})[S.tab](); }
+  try { await ({enquiry:viewEnquiry,calls:viewCalls,leads:viewLeads,pipeline:viewPipeline,drops:viewDrops,messages:viewMessages,insights:viewInsights,settings:viewSettings})[S.tab](); }
   catch(e){ if (S.token&&$("#main")) $("#main").innerHTML = `<div class="empty2"><b>${esc(e.message)}</b><button class="b2 pri" onclick="render()">Try again</button></div>`; }
 }
 function updateLeadDot(){}
@@ -874,3 +874,115 @@ window.setStage=async function(id,stage,notes){ const x=(S.pipe||[]).find(r=>r.p
   if(x){ x.stage=stage; x[(PST[stage]||[])[2]]=new Date().toISOString(); if(typeof notes==='string') x.notes=notes; x.updated_at=new Date().toISOString(); if(S.tab==='pipeline') paintPipe(); }
   try{ await api("set_stage",{property_id:id,stage,notes}); toast('Moved to '+(stage==='listed_other'?'Lost (another agency)':PST[stage][0])); if(S.leads) loadLeads().catch(()=>{}); }
   catch(e){ if(x) Object.assign(x,prev); if(S.tab==='pipeline') paintPipe(); toast("Couldn't move it. "+e.message); } };
+
+// ---------- Open home calls: buyer enquiry lists from the CRM, one per Dignam listing ----------
+const EOUT={coming:['Coming','var(--ap)','#5ee08f'],maybe:['Maybe','var(--cb)','var(--cbT)'],no_answer:['No answer','#7C3AED','var(--naT)'],not_coming:["Can't make it",'#4b5565','var(--t2)'],
+  not_looking:['Not looking now','#4b5565','var(--t2)'],bought:['Bought elsewhere','#4b5565','var(--t2)'],wrong_number:['Wrong number','#4b5565','var(--t2)'],do_not_call:['Do not call','var(--ns)','var(--nsT)']};
+const ohWhen=iso=>iso?new Date(iso).toLocaleString('en-AU',{timeZone:'Australia/Sydney',weekday:'long',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}).replace(/:00/,'').replace(' am','am').replace(' pm','pm'):'';
+async function viewEnquiry(){
+  const [r]=await Promise.all([api("elists"),S.listings?null:loadLeads().catch(()=>{})]); S.el=r.rows||[];
+  const live=S.el.filter(x=>!x.archived);
+  if(!S.el.find(x=>x.id===S.elid)) S.elid=(live[0]||S.el[0]||{}).id||null;
+  if(S.elid){ S.erows=(await api("elist",{id:S.elid})).rows||[]; } else S.erows=[];
+  paintEnquiry();
+}
+function paintEnquiry(){
+  const L=(S.el||[]).find(x=>x.id===S.elid), live=(S.el||[]).filter(x=>!x.archived), old=(S.el||[]).filter(x=>x.archived);
+  const rail=`<nav class="rail2" aria-label="Open home lists"><button class="cbk" onclick="importSheet()">Import from CRM<span>${ic2('plus',14)}</span></button>
+   ${live.map(x=>`<button class="${x.id===S.elid?'on':''}" onclick="openEList(${x.id})" title="${esc(x.address||x.title)}">${esc(shortAddr(x.address||x.title))}<span>${x.total-x.done}</span></button>`).join('')}
+   ${old.length?`<div class="rh2">Finished</div>`+old.map(x=>`<button class="${x.id===S.elid?'on':''}" onclick="openEList(${x.id})">${esc(shortAddr(x.address||x.title))}<span>${x.coming}</span></button>`).join(''):''}</nav>`;
+  if(!L){ $("#main").innerHTML=`<div class="list2">${rail}<div class="lm2"><div class="empty2"><b>No open home lists yet</b>Export the enquiries for a listing from the CRM, then tap Import from CRM. A spreadsheet or copied rows both work.<button class="b2 pri" onclick="importSheet()">Import from CRM</button></div></div></div>`; return; }
+  const rows=S.erows||[], left=rows.filter(c=>!c.outcome||c.outcome==='no_answer').length;
+  const addr=L.address?`${L.address}${L.suburb?', '+L.suburb:''}`:L.title;
+  $("#main").innerHTML=`<div class="list2">${rail}<div class="lm2">
+   <div class="lh2 oh2h"><div style="min-width:0;flex:1"><h1>${esc(addr)}</h1><div class="ohs">${L.open_at?`Open ${esc(ohWhen(L.open_at))}`:'<span style="color:var(--cbT)">No open home time set</span>'} · <b style="color:#5ee08f">${L.coming} coming</b> · ${L.maybe} maybe · ${left} to call</div></div>
+    <button class="b2" style="height:40px" onclick="elSettings(${L.id})">${ic2('gear',16)}<span class="hide-phone">Open time and more</span></button></div>
+   <div class="lr2">${rows.length?rows.map(eRow).join(''):'<div class="empty2"><b>Nobody on this list</b></div>'}</div></div></div>`;
+}
+const shortAddr=a=>String(a||'').replace(/\s+(Street|Road|Avenue|Drive|Place|Crescent|Parade|Close|Court|Lane|Circuit|Terrace|Way)\b/i,m=>' '+({street:'St',road:'Rd',avenue:'Ave',drive:'Dr',place:'Pl',crescent:'Cres',parade:'Pde',close:'Cl',court:'Ct',lane:'La',circuit:'Cct',terrace:'Tce',way:'Way'}[m.trim().toLowerCase()]));
+function eRow(c){ const o=EOUT[c.outcome], tel=c.phone?c.phone:'', done=c.outcome&&c.outcome!=='no_answer';
+  const sub=[c.phone?fmtPh2(c.phone):'No phone',c.enquired_on?'Enquired '+new Date(c.enquired_on+'T00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'}):null,c.attempts>1?c.attempts+' tries':null].filter(Boolean).join(' · ');
+  return `<div class="er2 ${done?'done':''}" id="er${c.id}"><div class="nm"><b>${esc(c.name||c.email||'Name unknown')}${c.lead_id?' <span class="stag">lead</span>':''}</b><span>${esc(sub)}</span>${c.crm_note||c.note?`<em>${esc(c.note||c.crm_note)}</em>`:''}</div>
+   <div class="eo2">${o?`<span class="eob" style="color:${o[2]}">${esc(o[0])}</span>`:''}
+    ${c.dnc?'<span class="eob" style="color:var(--nsT)">Do not call list</span>':`${tel?`<a class="cl3" href="tel:${esc(tel)}" onclick="return hoursOk(event)" aria-label="Call ${esc(c.name||'')}">${ic2('phone',18,'#fff')}</a>`:''}
+    <button class="b2 go4" onclick="eSet(${c.id},'coming')">Coming</button><button class="b2" onclick="eSet(${c.id},'maybe')">Maybe</button><button class="b2" onclick="eSet(${c.id},'no_answer')">No answer</button>`}
+    <button class="b2 ib" aria-label="More for ${esc(c.name||'')}" onclick="eMore(${c.id})">${ic2('chev',16)}</button></div></div>`; }
+async function openEList(id){ S.elid=id; S.erows=null; paintEnquiry(); try{ S.erows=(await api("elist",{id})).rows||[]; }catch(e){ return toast(e.message); } paintEnquiry(); }
+async function eSet(id,outcome,note){ const c=(S.erows||[]).find(x=>x.id===id); if(!c) return; const prev={...c};
+  c.outcome=outcome; if(outcome) c.attempts=(c.attempts||0)+1; if(typeof note==='string') c.note=note; eCounts(); paintEnquiry();
+  try{ await api("econtact",{id,outcome,note}); toast(outcome?`${firstName(c.name)}: ${EOUT[outcome][0]}`:'Cleared',()=>{ Object.assign(c,prev); eCounts(); paintEnquiry(); api("econtact",{id,outcome:prev.outcome,note:prev.note??''}).catch(()=>{}); }); }
+  catch(e){ Object.assign(c,prev); eCounts(); paintEnquiry(); toast("Couldn't save. "+e.message); } }
+function eCounts(){ const L=(S.el||[]).find(x=>x.id===S.elid); if(!L) return; const r=S.erows||[];
+  L.total=r.length; L.done=r.filter(c=>c.outcome&&c.outcome!=='no_answer').length; L.coming=r.filter(c=>c.outcome==='coming').length; L.maybe=r.filter(c=>c.outcome==='maybe').length; }
+function ohText(c){ const L=(S.el||[]).find(x=>x.id===S.elid)||{}, a=L.address||L.title||'the property';
+  return `Hi ${firstName(c.name)}, it's Marlowe from Dignam. Thanks for your enquiry on ${a}.${L.open_at?` We're open ${ohWhen(L.open_at)}, would you like to come through?`:''} Reply STOP to opt out.`; }
+function eMore(id){ const c=(S.erows||[]).find(x=>x.id===id); if(!c) return;
+  openSheet2(esc(c.name||'Enquiry'),`${c.crm_note?`<p class="hint2">${esc(c.crm_note)}</p>`:''}
+   <div class="g2">${c.phone&&!c.dnc?row2('var(--acc)','msg','Text an invite',esc(ohText(c)).slice(0,90)+'…',chev2(),`openUrl(smsLink('${esc(c.phone)}',ohText((S.erows||[]).find(x=>x.id===${id}))))`):''}
+    ${row2('#6366f1','users',c.lead_id?'Open buyer lead':'Make a buyer lead','Keeps them for matching homes later',chev2(),`eLead(${id})`)}</div>
+   <div class="g2">${['not_coming','not_looking','bought','wrong_number'].map(k=>row2(EOUT[k][1],'x',EOUT[k][0],'',c.outcome===k?ic2('check',18,'var(--accT)'):'',`closeOv();eSet(${id},'${k}')`)).join('')}
+    ${c.outcome?row2('#4b5565','back','Clear the result','Back to the top of the list','',`closeOv();eSet(${id},null)`):''}</div>
+   <label class="fl2">Note<input id="en_note" value="${esc(c.note||'')}" placeholder="Coming Saturday with partner" onchange="eSet(${id},(S.erows.find(x=>x.id===${id})||{}).outcome||null,this.value)"></label>
+   <div class="g2">${row2('var(--ns)','ban','<span style="color:var(--nsT)">Do not call</span>','Never call this number again','',`closeOv();eSet(${id},'do_not_call')`)}</div>`); }
+async function eLead(id){ closeOv(); try{ const r=await api("econtact_lead",{id}); const c=(S.erows||[]).find(x=>x.id===id); if(c) c.lead_id=r.lead_id; await loadLeads(); openLead(r.lead_id); }catch(e){ toast(e.message); } }
+function elSettings(id){ const L=(S.el||[]).find(x=>x.id===id); if(!L) return;
+  openSheet2('Open home',`<label class="fl2">Open home day and time<input type="datetime-local" id="el_open" value="${L.open_at?sydInput(new Date(L.open_at)):''}"></label>
+   <button class="b2 pri" onclick="elSave(${id})">Save time</button>
+   <div class="g2">${row2('var(--cb)','plus','Add more enquiries','Import a newer export, repeats are merged',chev2(),`importSheet(${id})`)}
+    ${row2('#4b5565','check',L.archived?'Move back to current':'Finished with this list',L.archived?'':'Moves it under Finished',chev2(),`elArchive(${id},${!L.archived})`)}</div>`); }
+async function elSave(id){ const v=$('#el_open').value; try{ await api("elist_set",{id,open_at:v?sydToISO(v):null}); }catch(e){ return toast(e.message); } closeOv(); toast('Saved'); viewEnquiry(); }
+async function elArchive(id,a){ try{ await api("elist_set",{id,archived:a}); }catch(e){ return toast(e.message); } closeOv(); viewEnquiry(); }
+
+// Import: a CSV or Excel export from the CRM, or rows copied straight off the screen. Columns are found by their names.
+function importSheet(listId){ const ts=(S.listings||[]).slice(); S.imp=null;
+  openSheet2(listId?'Add more enquiries':'Import enquiries',`${listId?'':`<label class="fl2">Property<select id="im_listing"><option value="">Pick a Dignam listing</option>${ts.map(t=>`<option value="${t.id}">${esc(t.address)}${t.suburb?', '+esc(t.suburb):''}</option>`).join('')}<option value="other">Something else</option></select></label>
+   <label class="fl2" id="im_titlew" hidden>Name for this list<input id="im_title" placeholder="12 Smith St, Bulli"></label>
+   <label class="fl2">Open home day and time<input type="datetime-local" id="im_open"></label>`}
+   <label class="fl2">Export from the CRM (CSV or Excel)<input type="file" id="im_file" accept=".csv,.xlsx,.xls,text/csv" onchange="impFile(this.files[0])"></label>
+   <label class="fl2">Or paste the rows<textarea id="im_paste" rows="3" placeholder="Copy the enquiry list in the CRM, including the headings, and paste it here" oninput="impParse(this.value)"></textarea></label>
+   <p class="hint2" id="im_res" aria-live="polite"></p>
+   <button class="b2 pri" id="im_go" onclick="impGo(${listId||'null'})" disabled>Import</button>`,listId?`elSettings(${listId})`:null);
+  const s=$('#im_listing'); if(s) s.onchange=()=>{ $('#im_titlew').hidden=s.value!=='other'; }; }
+async function impFile(f){ if(!f) return; $('#im_res').textContent='Reading…';
+  try{ let rows;
+    if(/\.xlsx?$/i.test(f.name)){ const X=await import('https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs'); const wb=X.read(await f.arrayBuffer(),{cellDates:true}); rows=X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''}); }
+    else rows=parseCSV(await f.text());
+    impRows(rows); }catch(e){ $('#im_res').textContent="Couldn't read that file. "+e.message; } }
+function impParse(t){ if(!t.trim()){ $('#im_res').textContent=''; $('#im_go').disabled=true; return; }
+  const rows=t.includes('\t')?t.split(/\r?\n/).filter(l=>l.trim()).map(l=>l.split('\t')):parseCSV(t); impRows(rows); }
+function impDate(v){ v=String(v||'').trim(); let m=v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/); if(m){ const y=+m[3]<100?2000+ +m[3]:+m[3]; return `${y}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`; }
+  m=v.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return m[0]; const d=new Date(v); return isNaN(d)?'':d.toISOString().slice(0,10); }
+function impRows(rows){
+  const hi=rows.findIndex(r=>r.some(c=>/name|mobile|phone|email/i.test(String(c)))); if(hi<0){ $('#im_res').textContent='No heading row found. Include the column headings (Name, Mobile, Email).'; $('#im_go').disabled=true; return; }
+  const h=rows[hi].map(c=>String(c).trim().toLowerCase()), col=(...res)=>{ for(const re of res){ const i=h.findIndex(x=>re.test(x)); if(i>=0) return i; } return -1; };
+  const iFirst=col(/^first ?name$|^given/), iLast=col(/^last ?name$|^surname$|^family/), iName=col(/^(full ?)?name$|^contact( name)?$|^buyer$|^enquirer|^person/),
+    iMob=col(/mobile|^cell/), iPh=col(/^phone$|phone ?number|^home ?phone|^work ?phone|^contact ?number|phone/), iEm=col(/e-?mail/),
+    iDate=col(/enquir\w* ?date|^date|created|received|^when/), iNote=col(/message|comment|note|enquiry$|^enquiry ?text|^details/);
+  const v=(r,i)=>i>=0?String(r[i]??'').trim():'';
+  const out=rows.slice(hi+1).map(r=>{ const nm=[v(r,iFirst),v(r,iLast)].filter(Boolean).join(' ')||v(r,iName); const ph=[v(r,iMob),v(r,iPh)].find(x=>x.replace(/\D/g,'').length>=8)||'';
+    return {name:nm,phone:ph,email:v(r,iEm),enquired_on:impDate(v(r,iDate)),note:v(r,iNote)}; }).filter(x=>x.name||x.phone||x.email);
+  S.imp=out; const wp=out.filter(x=>x.phone).length;
+  $('#im_res').innerHTML=out.length?`<b>${out.length} people found</b>, ${wp} with a phone number.${out[0]?` First one reads as ${esc(out[0].name||'no name')}${out[0].phone?', '+esc(out[0].phone):''}.`:''}${iMob<0&&iPh<0?' <span style="color:var(--bad)">No phone column found.</span>':''}`:'No people found under the headings.';
+  $('#im_go').disabled=!out.length; }
+async function impGo(listId){ if(!S.imp?.length) return; const s=$('#im_listing');
+  if(!listId&&(!s||!s.value)) return toast('Pick the property');
+  const other=s&&s.value==='other', title=other?$('#im_title').value.trim():'';
+  if(other&&!title) return toast('Name this list');
+  const op=$('#im_open')?.value, b=$('#im_go'); b.disabled=true; b.textContent='Importing…';
+  try{ const r=await api("elist_import",{list_id:listId,listing_id:other||!s?null:+s.value,title:title||(s&&!other?s.options[s.selectedIndex].text:''),open_at:op?sydToISO(op):null,rows:S.imp});
+    closeOv(); S.elid=r.list_id; toast(`${r.added} added${r.merged?`, ${r.merged} already there`:''}${r.skipped?`, ${r.skipped} with no phone or email left out`:''}`); viewEnquiry(); }
+  catch(e){ b.disabled=false; b.textContent='Import'; toast(e.message); } }
+// Demo: one made up open home list
+window.demoApi=(function(orig){ return function(action,body){ const D=window.__demo||{};
+  if(!D.el&&/^e(list|contact)/.test(action)){ const t=(D.listings||[])[0]||{id:1,address:'14 Hill View Cl',suburb:'Tarrawanna'};
+    D.el=[{id:1,listing_id:t.id,title:t.address,address:t.address,suburb:t.suburb,open_at:new Date(Date.now()+2*864e5).toISOString().slice(0,11)+'00:00:00Z',archived:false}];
+    D.ec=['Priya Shah','Tom Walsh','Kate Nguyen','Ben Carter','Lucy Moore','Sam Patel'].map((n,i)=>({id:i+1,list_id:1,name:n,phone:'04'+(12345670+i*1111),email:null,enquired_on:`2026-11-${10+i}`,crm_note:i%2?'Asked about strata levies':'Wants the contract',outcome:null,attempts:0,note:null,lead_id:null,dnc:false})); }
+  const sum=l=>{ const r=D.ec.filter(c=>c.list_id===l.id); return {...l,total:r.length,done:r.filter(c=>c.outcome&&c.outcome!=='no_answer').length,coming:r.filter(c=>c.outcome==='coming').length,maybe:r.filter(c=>c.outcome==='maybe').length}; };
+  if(action==='elists') return {rows:D.el.map(sum)};
+  if(action==='elist') return {rows:D.ec.filter(c=>c.list_id===body.id).map(c=>({...c}))};
+  if(action==='econtact'){ const c=D.ec.find(x=>x.id===body.id); if(c){ c.outcome=body.outcome; if(typeof body.note==='string') c.note=body.note; } return {ok:true}; }
+  if(action==='elist_set'){ const l=D.el.find(x=>x.id===body.id); if(l) Object.assign(l,'open_at' in body?{open_at:body.open_at}:{},'archived' in body?{archived:body.archived}:{}); return {ok:true}; }
+  if(action==='elist_import'){ let id=body.list_id; if(!id){ id=D.el.length+1; D.el.push({id,listing_id:body.listing_id,title:body.title,address:body.title,suburb:'',open_at:body.open_at,archived:false}); }
+    body.rows.forEach((r,i)=>D.ec.push({id:D.ec.length+1,list_id:id,...r,crm_note:r.note,outcome:null,attempts:0,lead_id:null,dnc:false})); return {list_id:id,added:body.rows.length,merged:0,skipped:0}; }
+  if(action==='econtact_lead'){ const c=D.ec.find(x=>x.id===body.id); const r=orig('save_lead',{lead:{name:c.name,phone:c.phone,lead_type:'Buyer'}}); c.lead_id=r.id; return {lead_id:r.id}; }
+  return orig(action,body); }; })(window.demoApi);
