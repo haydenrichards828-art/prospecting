@@ -33,6 +33,8 @@ const OUT2=[
 const OC2={no_answer:['#7C3AED','var(--naT)','phone'],not_interested:['var(--ns)','var(--nsT)','x'],call_back:['var(--cb)','var(--cbT)','clock'],lead:['var(--ld)','var(--accT)','lead'],appraisal:['var(--ap)','#5ee08f','appr'],listed:['var(--lst)','var(--lstT)','star'],do_not_call:['var(--ns)','var(--nsT)','ban']};
 const MONF=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONS=MONF.map(m=>m.slice(0,3));
+// One colour and icon per page, used in the menu and the side bar
+const NAVI={calls:['#3b82f6','phone'],enquiry:['#d97706','msg'],leads:['#6366f1','users'],pipeline:['#0d9488','appr'],drops:['#db2777','mail'],insights:['#16a34a','chart'],settings:['#4b5565','gear']};
 const TABS2=[['calls','Calls'],['enquiry','Call sheets'],['leads','Leads'],['pipeline','Appraisals and Listings'],['drops','Card drops'],['insights','Stats'],['settings','Settings']];
 const LVL2={Strong:['var(--acc)','#93c0ff'],Medium:['#6366f1','#a5b4fc'],Light:['#475063','var(--t2)'],Note:['#b45309','#ffc864']};
 
@@ -163,7 +165,7 @@ function tabBtn(id){ return `<button class="tabbtn" id="${id}" onclick="navPop(t
 function vseg2(){ return S.tab==='calls'&&!S.searching?`<div class="vseg">${[['call','Calling'],['list','List']].map(([k,l])=>`<button class="${S.view===k?'on':''}" onclick="setView('${k}')">${l}</button>`).join('')}</div>`:''; }
 function setView(v){ S.view=v; S.dialer=v!=='list'; try{localStorage.setItem("dp_view",v)}catch{} if(v==='list') S.pick=null; render(); }
 function navPop(btn){
-  const ico={calls:['var(--acc)','phone'],enquiry:['var(--cb)','users'],leads:['#6366f1','users'],pipeline:['var(--ap)','appr'],drops:['var(--cb)','mail'],insights:['var(--ap)','chart'],settings:['#4b5565','gear']};
+  const ico=NAVI;
   const ready=S.ov?.ready_texts||0, nl=(S.leads||[]).filter(l=>newMatches(l).length).length;
   const body=`<div class="g2">${TABS2.map(([k,l])=>row2(ico[k][0],ico[k][1],l,k==='leads'&&nl?`${nl} with new matching homes`:'',k===S.tab?ic2('check',18,'var(--accT)'):'',`closePop2();closeOv();go('${k}')`)).join('')}</div>
    ${ready?`<div class="g2" style="margin-top:10px">${row2('var(--acc)','send','Texts',`${ready} ready to send`,chev2(),"closePop2();closeOv();go('messages')")}</div>`:''}`;
@@ -1186,3 +1188,21 @@ const COL={no_answer:'#7C3AED',not_selling:'#d6455a',call_back:'#d97706',lead:'#
     if(dirty&&Date.now()-warned>4000){ warned=Date.now(); toast('You typed something here. Tap outside again to close without saving.'); return; }
     dirty=false; warned=0; closeOv(); }); })();
 document.addEventListener('click',e=>{ const h=e.target.closest('#main .ph2 h1, #main .pph2 h1'); if(!h) return; const b=document.getElementById('tabbtn')||document.getElementById('ptabbtn'); if(b&&b.offsetParent) navPop(b); });
+
+// ---------- Side bar on computers: every page one click away (the menu took 7 to 30 seconds to use) ----------
+const SIDEL={calls:'Calls',enquiry:'Call sheets',leads:'Leads',pipeline:'Appraisals',drops:'Card drops',insights:'Stats',settings:'Settings'};
+window.render=(function(orig){ return async function(){ const p=orig(); const sh=document.getElementById('shell');
+  if(sh&&S.token&&!sh.querySelector('.side2')){ const nl=(S.leads||[]).filter(l=>newMatches(l).length).length;
+    sh.insertAdjacentHTML('afterbegin',`<nav class="side2" aria-label="Pages">${TABS2.map(([k])=>`<button class="${k===S.tab&&!S.searching?'on':''}" onclick="closePop2();closeOv();go('${k}')" aria-label="${esc(TABS2.find(t=>t[0]===k)[1])}"${k===S.tab?' aria-current="page"':''}><span class="si" style="--c:${NAVI[k][0]}">${ic2(NAVI[k][1],20,'#fff')}${k==='leads'&&nl?'<i class="dot"></i>':''}</span><span class="sl">${SIDEL[k]}</span></button>`).join('')}</nav>`); }
+  return p; }; })(window.render);
+// Card drop pins are small: a tap within a finger's width of a pin now opens it
+(function(){ const t=setInterval(()=>{ if(!window.L||!L.canvas) return; clearInterval(t); const orig=L.canvas; L.canvas=o=>orig({...(o||{}),tolerance:10}); },500); })();
+// Lead panel: status, next action and edit details always showing; matching homes and older notes open (people opened them every time)
+window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const sh=document.getElementById('sheet'); if(!sh) return;
+  const d=sh.querySelector('details.lmore'); if(d){ d.open=true; d.querySelector('summary')?.remove(); d.classList.add('lmore2'); }
+  sh.querySelectorAll('.lsec details').forEach(x=>x.open=true);
+  const h=sh.querySelector('.lhead h3'); if(h&&id){ h.classList.add('edn2'); h.title='Tap to edit name, phone and address'; h.onclick=()=>{ if(typeof editDetails==='function') editDetails(); }; } }; })(window.openLead);
+// Back from a call: the result buttons light up so the next tap is obvious
+document.addEventListener('visibilitychange',()=>{ if(document.hidden||!S.tm||!S.tm.back||Date.now()-S.tm.back>1500) return;
+  document.querySelectorAll('#main .bar2x').forEach(b=>{ b.classList.remove('pulse2'); void b.offsetWidth; b.classList.add('pulse2'); });
+  if(desk2()){ const n=document.getElementById('note2'); if(n&&!n.value) n.focus(); } });
