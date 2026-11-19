@@ -671,11 +671,7 @@ textarea[data-grow]{resize:none;min-height:42px;line-height:1.4;font:inherit;wid
 /* row icons: muted tile, colour carried by the glyph */
 .tile{background:var(--sub)!important;border:1px solid var(--line2);color:color-mix(in srgb,var(--c,#9ba4b2) 65%,#fff);border-radius:7px!important}
 .tile svg{stroke:currentColor}
-/* reason chips: neutral with a small tinted glyph */
-.wc2{background:var(--rowbg)!important;border:1px solid var(--line2)!important}
-.wc2 .ti2{background:var(--sub)!important;border:1px solid var(--line2);border-radius:6px!important}
-.wc2 .ti2 svg{stroke:color-mix(in srgb,var(--c) 65%,#fff)}
-.wc2 em{color:var(--t2)!important;font-weight:600}
+/* reason chips keep their colour, just tighter corners */
 /* stat cards: no coloured caps, a small square marks the series */
 .rs2{border-top:1px solid var(--line2)!important}
 .rs2 span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--c);margin-right:7px;vertical-align:1px}
