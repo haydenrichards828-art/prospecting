@@ -990,8 +990,8 @@ window.demoApi=(function(orig){ return function(action,body){ const D=window.__d
 // ---------- Street View: a photo of the front of the house, from Google, through our server so the key stays private ----------
 const SV_URL=API.replace(/\/api$/,'/streetview'); S.sv=S.sv||{};
 async function svGet(pid,size){ const k=pid+':'+size; if(S.sv[k]) return S.sv[k]; if(S.svOff||DEMO) return null;
-  S.sv[k]=(async()=>{ try{ const r=await fetch(SV_URL,{method:'POST',headers:{'content-type':'application/json','x-session':S.token||''},body:JSON.stringify({pid,size})});
-      if(r.status===503||r.status===429){ S.svOff=true; return null; } if(!r.ok) return null;
+  S.sv[k]=(async()=>{ try{ const r=await fetch(`${SV_URL}?pid=${pid}&size=${size}`,{headers:{'x-session':S.token||''}});
+      if(r.status===503||r.status===429||r.status===401){ S.svOff=true; return null; } if(!r.ok) return null;
       return {url:URL.createObjectURL(await r.blob()),date:r.headers.get('X-Pano-Date')||''}; }catch{ S.sv[k]=null; return null; } })();
   return S.sv[k]; }
 function svFill(el,pid,size){ if(!el||el.dataset.sv) return; el.dataset.sv='1';
@@ -1004,3 +1004,11 @@ window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); 
   const big=document.querySelector('#main .prop2 .photo2'), small=document.querySelector('#main .pidr2 .photo2');
   if(big&&big.offsetParent) svFill(big,r.property_id,'big'); if(small&&small.offsetParent) svFill(small,r.property_id,'small');
   const nx=queue().find(x=>x.property_id!==r.property_id&&!x.today_outcome&&!S.skipped.has(x.property_id)); if(nx) svGet(nx.property_id,big&&big.offsetParent?'big':'small'); }; })(window.drawCall2);
+
+// Small street photos on list and pipeline rows, loaded only as they scroll into view
+function svThumbs(sel,re){ if(S.svOff||DEMO||!('IntersectionObserver' in window)) return;
+  const io=new IntersectionObserver(es=>es.forEach(e=>{ if(!e.isIntersecting) return; io.unobserve(e.target); const t=e.target, pid=+t.dataset.svp;
+    svGet(pid,'small').then(p=>{ if(!p||!t.isConnected) return; let im=t.querySelector('img'); if(!im){ im=document.createElement('img'); im.alt=''; t.prepend(im); } im.onerror=null; im.src=p.url; }); }),{rootMargin:'200px'});
+  document.querySelectorAll(sel).forEach(row=>{ const m=(row.getAttribute('onclick')||'').match(re), th=row.querySelector('.th3'); if(m&&th){ th.dataset.svp=m[1]; io.observe(th); } }); }
+window.drawList2=(function(orig){ return function(){ orig(); svThumbs('#main .lg3',/open2\((\d+)\)/); }; })(window.drawList2);
+window.viewPipeline=(function(orig){ return async function(local){ await orig(local); svThumbs('#main .lg4',/pipeSheet\((\d+)\)/); }; })(window.viewPipeline);
