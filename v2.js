@@ -1010,5 +1010,4 @@ function svThumbs(sel,re){ if(S.svOff||DEMO||!('IntersectionObserver' in window)
   const io=new IntersectionObserver(es=>es.forEach(e=>{ if(!e.isIntersecting) return; io.unobserve(e.target); const t=e.target, pid=+t.dataset.svp;
     svGet(pid,'small').then(p=>{ if(!p||!t.isConnected) return; let im=t.querySelector('img'); if(!im){ im=document.createElement('img'); im.alt=''; t.prepend(im); } im.onerror=null; im.src=p.url; }); }),{rootMargin:'200px'});
   document.querySelectorAll(sel).forEach(row=>{ const m=(row.getAttribute('onclick')||'').match(re), th=row.querySelector('.th3'); if(m&&th){ th.dataset.svp=m[1]; io.observe(th); } }); }
-window.drawList2=(function(orig){ return function(){ orig(); svThumbs('#main .lg3',/open2\((\d+)\)/); }; })(window.drawList2);
-window.viewPipeline=(function(orig){ return async function(local){ await orig(local); svThumbs('#main .lg4',/pipeSheet\((\d+)\)/); }; })(window.viewPipeline);
+// Rows keep the free aerial; a paid street photo loads only for the person you open
