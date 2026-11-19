@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=56">
+<link rel="stylesheet" href="v2.css?v=57">
 </head>
 <body>
 <div id="app"></div>
@@ -347,7 +347,7 @@ function hSearch(v){
   if (v.trim().length<2) { if (S.searching) { S.searching=false; const back=S.prevTab||"calls"; S.prevTab=null; go(back); setTimeout(()=>{ const i=$("#hq"); if(i){ i.value=v; i.focus(); } },0); } return; }
   if (!S.searching) { S.searching=true; S.prevTab=S.tab; }
   $("#main").innerHTML=`<div class="empty" style="padding:30px 0"><i class="ti ti-search"></i>Searching…</div>`;
-  searchT=setTimeout(()=>runSearch(v),250);
+  searchT=setTimeout(()=>runSearch(v),150);
 }
 const sWords=q=>q.toLowerCase().replace(/[,/]/g," ").split(/\s+/).filter(Boolean);
 const sHay=(...xs)=>xs.map(x=>String(x??"")).join(" ").toLowerCase()+" "+xs.map(x=>String(x??"").replace(/\D/g,"")).join(" ");
@@ -1661,7 +1661,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=64"></script>
+<script src="v2.js?v=65"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

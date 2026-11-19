@@ -591,3 +591,4 @@ textarea[data-grow]{resize:none;min-height:42px;line-height:1.4;font:inherit;wid
 .num2.ph2nd svg{flex:none}
 .who2{font-style:normal;font-weight:700;margin-right:.45em;font-size:.62em;vertical-align:middle}
 .and2{color:inherit;font-weight:inherit}
+.edn2{cursor:pointer}.edn2:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px;text-decoration-color:var(--t3)}

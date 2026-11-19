@@ -644,7 +644,11 @@ function pipeSheet(id){ const x=(S.pipe||[]).find(r=>r.property_id===id); if(!x)
    <div class="g2">${PNEXT[x.stage].map(([s2,l])=>row2(pBad(s2)?'var(--ns)':s2==='appraisal'?'#4b5565':'var(--ap)',pBad(s2)?'x':'check',l,{listed_other:'They listed with someone else. Not counted as ours',withdrawn:'Our listing came off the market',sold:'Our listing sold',listed:'They signed with Dignam'}[s2]||'',chev2(),`closeOv();setStage(${id},'${s2}')`)).join('')}
     ${row2('#4b5565','msg',x.notes?'Edit note':'Add a note',x.notes?esc(x.notes):'',chev2(),`closeOv();stageNote(${id})`)}
     ${row2('#4b5565','tag','Came from',esc(SOURCES[x.source||'calls']),chev2(),`pickSource(${id},'${x.source||'calls'}')`)}
-    ${x.phone?row2('var(--ap)','phone','Call '+esc(x.phone),'',chev2(),`if(callingAllowed())openUrl('tel:${esc(String(x.phone).replace(/[^0-9+]/g,''))}')`):''}</div>`); }
+    ${[[x.owner_name,x.phone],[x.owner2_name,x.phone2]].filter(p=>p[1]).map(([n,p])=>row2('var(--ap)','phone',`Call ${esc(firstName(n||''))!=='them'?esc(firstName(n))+' ':''}${esc(fmtPh2(p))}`,'',chev2(),`if(callingAllowed())openUrl('tel:${esc(String(p).replace(/[^0-9+]/g,''))}')`)).join('')}</div>
+   <div class="g2">${row2('#4b5565','users','Names and phones',esc([x.owner_name,x.owner2_name].filter(Boolean).join(' & ')||'Add the owners'),chev2(),`S.ecFrom='pipe';editContact2(${id})`)}
+    ${row2('#6366f1','lead',x.lead_id?'Open their lead':'Make a lead','Notes, follow ups and buyer details',chev2(),x.lead_id?`closeOv();pipeLead(${x.lead_id})`:`closeOv();pipeMakeLead(${id})`)}</div>`); }
+async function pipeLead(lid){ if(!S.leads) await loadLeads().catch(()=>{}); openLead(lid); }
+async function pipeMakeLead(id){ try{ const r=await api("make_lead",{property_id:id}); const x=(S.pipe||[]).find(p=>p.property_id===id); if(x) x.lead_id=r.lead_id; await loadLeads().catch(()=>{}); openLead(r.lead_id); }catch(e){ toast(e.message); } }
 
 // Homes a lead has said no to never show as matches again
 window.matchesFor=(function(orig){ return function(l){ const no=((l&&l.buy)||{}).no||[]; return orig(l).filter(x=>!no.includes(+x.t.id)); }; })(window.matchesFor);
@@ -805,14 +809,14 @@ function monthsAhead(n){ const p=Object.fromEntries(new Intl.DateTimeFormat("en-
   const d=new Date(Date.UTC(+p.year,+p.month-1+n,Math.min(+p.day,28))); if(d.getUTCDay()===0) d.setUTCDate(d.getUTCDate()+1);
   return sydToISO(d.toISOString().slice(0,10)+'T10:00'); }
 const longLab=iso=>new Date(iso).toLocaleDateString('en-AU',{timeZone:'Australia/Sydney',day:'numeric',month:'long',year:'numeric'});
-function findRow(id){ return (S.rows||[]).find(x=>x.property_id===id)||(S.callbacks||[]).find(x=>x.property_id===id)||queue().find(x=>x.property_id===id)||(S.sres?.props||[]).find(x=>x.id===id); }
+function findRow(id){ return (S.ecFrom==='pipe'&&(S.pipe||[]).find(x=>x.property_id===id))||(S.rows||[]).find(x=>x.property_id===id)||(S.callbacks||[]).find(x=>x.property_id===id)||queue().find(x=>x.property_id===id)||(S.sres?.props||[]).find(x=>x.id===id); }
 function editContact2(id){ const r=findRow(id)||{};
   openSheet2('Names and phones',`<div class="ap2"><label class="fl2">Name<input id="ec_name" value="${esc(r.owner_name||'')}" autocomplete="off"></label>
    <label class="fl2">Phone<input id="ec_phone" inputmode="tel" value="${esc(fmtPh2(r.owner_phone||r.phone||''))}" autocomplete="off"></label>
    <label class="fl2">Second owner<input id="ec_name2" value="${esc(r.owner2_name||'')}" placeholder="Husband, wife or partner" autocomplete="off"></label>
    <label class="fl2">Their phone<input id="ec_phone2" inputmode="tel" value="${esc(fmtPh2(r.phone2||''))}" autocomplete="off"></label></div>
    <p class="muted" style="margin:0 4px;font-size:13px">Your change is kept even when new data comes in.</p>
-   <button class="b2 pri" id="ec_go" onclick="saveContact2(${id})">Save</button>`,S.ecFromSearch?null:`moreSheet2(${id})`); setTimeout(()=>$('#ec_name')?.focus(),50); }
+   <button class="b2 pri" id="ec_go" onclick="saveContact2(${id})">Save</button>`,S.ecFrom==='pipe'?`pipeSheet(${id})`:S.ecFromSearch?null:`moreSheet2(${id})`); setTimeout(()=>$('#ec_name')?.focus(),50); }
 async function saveContact2(id){ const n=$('#ec_name').value.trim(), p=$('#ec_phone').value.trim(), n2=$('#ec_name2')?.value.trim()||'', p2=$('#ec_phone2')?.value.trim()||'', e=phoneProblem(p), e2=phoneProblem(p2);
   if(e) return phoneBad($('#ec_phone'),e); if(e2) return phoneBad($('#ec_phone2'),e2); if(!n&&!p) return phoneBad($('#ec_name'),'Add a name or a phone number.');
   const b=$('#ec_go'); b.disabled=true; b.textContent='Saving…';
@@ -820,10 +824,12 @@ async function saveContact2(id){ const n=$('#ec_name').value.trim(), p=$('#ec_ph
   const nz=s=>s.replace(/\D/g,'').replace(/^61(\d{9})$/,'0$1'), ph=nz(p), ph2=nz(p2);
   [...(S.rows||[]),...(S.callbacks||[])].filter(x=>x.property_id===id).forEach(x=>{ x.owner_name=n||null; x.phone=ph||null; x.owner_phone=ph||null; x.owner2_name=n2||null; x.phone2=ph2&&ph2!==ph?ph2:null; });
   (S.sres?.props||[]).filter(x=>x.id===id).forEach(x=>{ x.owner_name=n||null; x.phone=ph||null; });
+  (S.pipe||[]).filter(x=>x.property_id===id).forEach(x=>{ x.owner_name=n||null; x.phone=ph||null; x.owner2_name=n2||null; x.phone2=ph2&&ph2!==ph?ph2:null; });
+  if(S.ecFrom==='pipe'){ S.ecFrom=null; saveCallsCache(); closeOv(); toast('Saved'); if(S.tab==='pipeline') paintPipe(); pipeSheet(id); return; }
   saveCallsCache(); closeOv();
   if(S.ecFromSearch){ S.ecFromSearch=false; toast(ph?'Saved. They go on the call list on days they rank high enough':'Saved'); if(S.searching&&S.sq) runSearch(S.sq); return; }
   drawList(); toast('Saved'); }
-window.moreSheet2=(function(orig){ return function(id){ S.ecFromSearch=false; orig(id);
+window.moreSheet2=(function(orig){ return function(id){ S.ecFromSearch=false; S.ecFrom=null; orig(id);
   const g=document.querySelector('#sheet .sb2 .g2'); if(g) g.insertAdjacentHTML('beforeend',row2('#4b5565','users','Edit name and phone','Fix a wrong name or number',chev2(),`editContact2(${id})`)); }; })(window.moreSheet2);
 window.callbackSheet2=(function(orig){ return function(id){ orig(id);
   const gs=document.querySelectorAll('#sheet .sb2 .g2'); const g=gs[gs.length-1]; if(g) g.insertAdjacentHTML('beforeend',row2('#4b5565','clock','Months or years from now','For someone who just sold or bought',chev2(),`laterSheet2(${id})`)); }; })(window.callbackSheet2);
@@ -866,7 +872,7 @@ window.demoApi=(function(orig){ return function(action,body){ const D=window.__d
 window.openSearchProp=(function(orig){ return function(pid,inList){ orig(pid,inList);
   const p=(S.sres?.props||[]).find(x=>x.id===pid), r=(S.sres?.calls||[]).find(x=>x.property_id===pid), has=(p||r)&&((p||r).owner_name||(p||r).phone);
   const sh=$('#sheet'); if(!sh) return;
-  sh.insertAdjacentHTML('beforeend',`<button class="ghost" style="width:100%;margin-top:8px" onclick="S.ecFromSearch=true;editContact2(${pid})"><i class="ti ti-pencil"></i>${has?'Edit owner name and phone':'Add owner name and phone'}</button>`); }; })(window.openSearchProp);
+  sh.insertAdjacentHTML('beforeend',`<button class="ghost" style="width:100%;margin-top:8px" onclick="S.ecFrom=null;S.ecFromSearch=true;editContact2(${pid})"><i class="ti ti-pencil"></i>${has?'Edit owner name and phone':'Add owner name and phone'}</button>`); }; })(window.openSearchProp);
 // Enquiry call lists (owners near a home buyers are chasing) show as their own group, first in the list
 window.grp=(function(orig){ return function(r){ return r&&r.campaign?r.campaign:orig(r); }; })(window.grp);
 window.bySuburb=(function(orig){ return function(rows){ const c=rows.filter(r=>r.campaign).sort((a,b)=>a.rank-b.rank); return [...c,...orig(rows.filter(r=>!r.campaign))]; }; })(window.bySuburb);
@@ -1036,3 +1042,6 @@ window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); 
 document.addEventListener('blur',e=>{ const t=e.target; if(!(t instanceof HTMLInputElement)||!(t.type==='tel'||t.inputMode==='tel'||/phone/i.test(t.id))) return;
   const d=t.value.replace(/\D/g,''); if(/^0\d{9}$/.test(d)) t.value=fmtPh2(d); },true);
 window.record=(function(orig){ return async function(id,o,cb){ if(o==='listed'&&!(await uiAsk('Mark as Listed with Dignam?',{ok:'Yes, listed'}))) return; return orig(id,o,cb); }; })(window.record);
+// Tap the name on the call screen to fix names and numbers straight away
+window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); if(!r) return;
+  document.querySelectorAll('#main .nm2, #main .pidr2 h1').forEach(h=>{ h.classList.add('edn2'); h.title='Tap to edit names and numbers'; h.onclick=()=>{ S.ecFrom=null; S.ecFromSearch=false; editContact2(r.property_id); }; }); }; })(window.drawCall2);
