@@ -39,7 +39,7 @@ const TABS2=[['calls','Calls'],['enquiry','Call sheets'],['leads','Leads'],['pip
 const LVL2={Strong:['var(--acc)','#93c0ff'],Medium:['#6366f1','#a5b4fc'],Light:['#475063','var(--t2)'],Note:['#b45309','#ffc864']};
 
 // ---------- small helpers ----------
-const row2=(tile,icon,title,sub='',right='',on='')=>`<${on?'button':'div'} class="r2" ${on?`onclick="${on}"`:''}><span class="tile" style="background:${tile}">${ic2(icon,17,'#fff')}</span><span class="rt2"><b>${title}</b>${sub?`<span>${sub}</span>`:''}</span>${right||'<span></span>'}</${on?'button':'div'}>`;
+const row2=(tile,icon,title,sub='',right='',on='')=>`<${on?'button':'div'} class="r2" ${on?`onclick="${on}"`:''}><span class="tile" style="--c:${tile}">${ic2(icon,17,'#fff')}</span><span class="rt2"><b>${title}</b>${sub?`<span>${sub}</span>`:''}</span>${right||'<span></span>'}</${on?'button':'div'}>`;
 const chev2=()=>ic2('chev',16,'var(--t3)');
 const fmtPh2=p=>{ const d=String(p||'').replace(/[^\d]/g,''); return /^0[2378]\d{8}$/.test(d)?d.replace(/^(\d{2})(\d{4})(\d{4})$/,'$1 $2 $3'):d.replace(/^(\d{4})(\d{3})(\d{3})$/,'$1 $2 $3'); };
 const telOf=p=>String(p||'').replace(/[^\d+]/g,'');
@@ -214,7 +214,7 @@ function curCall(){ const all=queue(); if(S.pick){ const p=all.find(r=>r.propert
 function drawList(){ if(S.tab!=='calls'||S.searching||!$("#main")) return; $("#main").className='v2main'; if(S.view==='list') return drawList2(); drawCall2(); }
 function hoursStrip(){ if(callingAllowed()) return ''; return `<div class="hline2">${ic2('clock',16)}Outside legal calling hours. Next window ${nextWindowText()}. Only call if they asked you to call at this time.</div>`; }
 function failStrip(){ return S.ov?.failed?`<div class="hline2" style="color:var(--nsT);background:#d6455a1a;border-color:#d6455a44">${ic2('warn',16)}Something didn't run overnight.&nbsp;<a href="#" onclick="go('insights');return false" style="color:inherit">See details</a></div>`:''; }
-function barHTML2(id,small){ return `<div class="bar2x">${OUT2.map(o=>`<button style="background:${o.bg}" onclick="act2(${id},'${o.o}')" ${small?`onmousedown="event.preventDefault()" aria-label="${o.lab}"`:''}>${ic2(o.icon,20,'#fff')}${small?'':`<span>${o.lab}</span><span class="k">${o.key}</span>`}</button>`).join('')}</div>`; }
+function barHTML2(id,small){ return `<div class="bar2x">${OUT2.map(o=>`<button style="--c:${o.bg}" onclick="act2(${id},'${o.o}')" ${small?`onmousedown="event.preventDefault()" aria-label="${o.lab}"`:''}>${ic2(o.icon,20)}${small?'':`<span>${o.lab}</span><span class="k">${o.key}</span>`}</button>`).join('')}</div>`; }
 function setNote(id,v){ if(v.trim()) notes[id]=v; else delete notes[id]; document.querySelectorAll('.nsaved').forEach(x=>x.textContent=v.trim()?'· saved':''); document.querySelectorAll('textarea[data-note]').forEach(t=>{ if(t!==document.activeElement) t.value=v; }); }
 function numBtn(r,cls){
   const id=r.property_id, probate=(r.signals||[]).includes('probate');
@@ -453,7 +453,7 @@ function drawLeads(){
   if(!ls.length){ m.innerHTML=`<div class="pg2">${head}<div class="empty2"><b>No leads yet</b>Tap Lead on a call, or Add above.</div></div>`; return; }
   const sub=l=>[l.name?l.address:null,l.suburb].filter(Boolean).join(', ')||l.motivation||'';
   const latest=l=>(l.notes||[])[0]?.body||l.motivation||'';
-  const tile=l=>`<span class="tile" style="background:${TCOL2[l.temperature]||'#4b5565'}">${ic2(hasCriteria(l.buy)?'search':'lead',16,'#fff')}</span>`;
+  const tile=l=>`<span class="tile" style="--c:${TCOL2[l.temperature]||'#4b5565'}">${ic2(hasCriteria(l.buy)?'search':'lead',16,'#fff')}</span>`;
   const nw=l=>{ const n=newMatches(l).length; return n?`<em class="nw4">${n} new match${n>1?'es':''}</em>`:''; };
   const table=`<div class="ltab2"><div class="lt2 h"><span>Lead</span><span>Next step</span><span>Due</span><span class="c4">Notes</span><span class="c5">Last spoke</span><span></span></div>${ls.map(l=>`<div class="lt2" onclick="openLead(${l.id})" data-lq="${esc([l.name,l.address,l.suburb,l.phone].join(' ').toLowerCase())}">
      <div class="ltn">${tile(l)}<div><b>${esc(leadTitle(l))}${nw(l)}</b><span>${esc(sub(l))}</span></div></div>
@@ -587,7 +587,7 @@ async function upcomingCB(){
   openSheet2('Booked call backs','<p class="emptyline">Loading</p>');
   let rows=[]; try{ rows=(await api("upcoming_callbacks")).rows||[]; }catch(e){ openSheet2('Booked call backs',`<p class="emptyline">${esc(e.message)}</p>`); return; }
   S._ucb=rows;
-  openSheet2('Booked call backs',rows.length?`<div class="g2">${rows.map((c,i)=>`<div class="r2" style="grid-template-columns:32px minmax(0,1fr) auto"><span class="tile" style="background:var(--cb)">${ic2('clock',17,'#fff')}</span><span class="rt2"><b>${esc(people(c.owner_name)[0]||'Owner unknown')}</b><span>${esc(fmt(c.callback_at))} · ${esc(c.street_address||'')}${c.notes?' · '+esc(c.notes):''}</span></span>
+  openSheet2('Booked call backs',rows.length?`<div class="g2">${rows.map((c,i)=>`<div class="r2" style="grid-template-columns:32px minmax(0,1fr) auto"><span class="tile" style="--c:var(--cb)">${ic2('clock',17,'#fff')}</span><span class="rt2"><b>${esc(people(c.owner_name)[0]||'Owner unknown')}</b><span>${esc(fmt(c.callback_at))} · ${esc(c.street_address||'')}${c.notes?' · '+esc(c.notes):''}</span></span>
      <span style="display:flex;gap:6px"><button class="b2" style="height:36px;padding:0 12px!important" onclick="moveCB(${i})">Change</button><button class="b2" style="height:36px;padding:0 12px!important" onclick="cancelCB(${i})">Cancel</button></span></div>`).join('')}</div>`
    :'<p class="emptyline">No call backs booked.</p>');
 }
@@ -726,7 +726,7 @@ function setHealth(){ openSheet2('List health',`<div id="health"><p class="hint2
 async function loadHealth(){ const el=$("#health"); if(!el) return;
   try{ const h=(await api("list_health")).rows||{}; const c=(h.checks||[])[0], rep=h.reports||[], bad=h.rule_breakers_on_list||0;
     el.innerHTML=`<div class="hb2 ${bad?'bad':''}">${ic2(bad?'warn':'check',22)}<div><b>${bad?`${bad} rule breaker${bad>1?'s':''} on today's list`:'Today\'s list passes every check'}</b><span>${[h.list_size!=null?h.list_size+' people on the list':'',c?c.removed+' taken off this morning':''].filter(Boolean).join(' · ')}</span></div></div>
-     ${(h.safeguards||[]).length?`<div class="sth2">Safeguards</div><div class="g2">${h.safeguards.map(g=>`<div class="r2"><span class="tile" style="background:${g.ok?'#16a34a':'#d97706'}">${ic2(g.ok?'check':'warn',16,'#fff')}</span><span class="rt2"><b>${esc(g.name)}</b></span><span class="sv2">${Number(g.n).toLocaleString()}</span></div>`).join('')}</div>`:''}
+     ${(h.safeguards||[]).length?`<div class="sth2">Safeguards</div><div class="g2">${h.safeguards.map(g=>`<div class="r2"><span class="tile" style="--c:${g.ok?'#16a34a':'#d97706'}">${ic2(g.ok?'check':'warn',16,'#fff')}</span><span class="rt2"><b>${esc(g.name)}</b></span><span class="sv2">${Number(g.n).toLocaleString()}</span></div>`).join('')}</div>`:''}
      ${c&&Object.keys(c.rules||{}).length?`<div class="sth2">Taken off this morning</div><div class="g2">${Object.entries(c.rules).map(([k,v])=>`<div class="hr2"><span>${esc(k[0].toUpperCase()+k.slice(1))}</span><b>${v}</b></div>`).join('')}</div>`:''}
      ${rep.length?`<div class="sth2">Problems you reported</div><div class="g2">${rep.slice(0,10).map(r=>`<div class="hr2"><span>${esc(r.address)}<em>${esc((WRONG.find(w=>w[0]===r.kind)||[,r.kind])[1])}${r.note?' · '+esc(r.note):''}</em></span></div>`).join('')}</div>`:''}`;
   }catch(e){ el.innerHTML=`<p class="hint2">${esc(e.message)}</p>`; } }
