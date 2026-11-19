@@ -801,20 +801,23 @@ function monthsAhead(n){ const p=Object.fromEntries(new Intl.DateTimeFormat("en-
   const d=new Date(Date.UTC(+p.year,+p.month-1+n,Math.min(+p.day,28))); if(d.getUTCDay()===0) d.setUTCDate(d.getUTCDate()+1);
   return sydToISO(d.toISOString().slice(0,10)+'T10:00'); }
 const longLab=iso=>new Date(iso).toLocaleDateString('en-AU',{timeZone:'Australia/Sydney',day:'numeric',month:'long',year:'numeric'});
-function findRow(id){ return (S.rows||[]).find(x=>x.property_id===id)||(S.callbacks||[]).find(x=>x.property_id===id)||queue().find(x=>x.property_id===id); }
+function findRow(id){ return (S.rows||[]).find(x=>x.property_id===id)||(S.callbacks||[]).find(x=>x.property_id===id)||queue().find(x=>x.property_id===id)||(S.sres?.props||[]).find(x=>x.id===id); }
 function editContact2(id){ const r=findRow(id)||{};
   openSheet2('Name and phone',`<label class="fl2">Name<input id="ec_name" value="${esc(r.owner_name||'')}" autocomplete="off"></label>
    <label class="fl2">Phone<input id="ec_phone" inputmode="tel" value="${esc(r.phone||'')}" autocomplete="off"></label>
    <p class="muted" style="margin:0 4px;font-size:13px">Your change is kept even when new data comes in.</p>
-   <button class="b2 pri" id="ec_go" onclick="saveContact2(${id})">Save</button>`,`moreSheet2(${id})`); setTimeout(()=>$('#ec_name')?.focus(),50); }
+   <button class="b2 pri" id="ec_go" onclick="saveContact2(${id})">Save</button>`,S.ecFromSearch?null:`moreSheet2(${id})`); setTimeout(()=>$('#ec_name')?.focus(),50); }
 async function saveContact2(id){ const n=$('#ec_name').value.trim(), p=$('#ec_phone').value.trim(), e=phoneProblem(p);
   if(e) return phoneBad($('#ec_phone'),e); if(!n&&!p) return phoneBad($('#ec_name'),'Add a name or a phone number.');
   const b=$('#ec_go'); b.disabled=true; b.textContent='Saving…';
   try{ await api("save_contact",{property_id:id,owner_name:n,phone:p}); }catch(err){ b.disabled=false; b.textContent='Save'; return phoneBad($('#ec_phone'),err.message); }
   const ph=p.replace(/\D/g,'').replace(/^61(\d{9})$/,'0$1');
   [...(S.rows||[]),...(S.callbacks||[])].filter(x=>x.property_id===id).forEach(x=>{ x.owner_name=n||null; x.phone=ph||null; });
-  saveCallsCache(); closeOv(); drawList(); toast('Saved'); }
-window.moreSheet2=(function(orig){ return function(id){ orig(id);
+  (S.sres?.props||[]).filter(x=>x.id===id).forEach(x=>{ x.owner_name=n||null; x.phone=ph||null; });
+  saveCallsCache(); closeOv();
+  if(S.ecFromSearch){ S.ecFromSearch=false; toast(ph?'Saved. They go on the call list on days they rank high enough':'Saved'); if(S.searching&&S.sq) runSearch(S.sq); return; }
+  drawList(); toast('Saved'); }
+window.moreSheet2=(function(orig){ return function(id){ S.ecFromSearch=false; orig(id);
   const g=document.querySelector('#sheet .sb2 .g2'); if(g) g.insertAdjacentHTML('beforeend',row2('#4b5565','users','Edit name and phone','Fix a wrong name or number',chev2(),`editContact2(${id})`)); }; })(window.moreSheet2);
 window.callbackSheet2=(function(orig){ return function(id){ orig(id);
   const gs=document.querySelectorAll('#sheet .sb2 .g2'); const g=gs[gs.length-1]; if(g) g.insertAdjacentHTML('beforeend',row2('#4b5565','clock','Months or years from now','For someone who just sold or bought',chev2(),`laterSheet2(${id})`)); }; })(window.callbackSheet2);
@@ -852,3 +855,12 @@ window.demoApi=(function(orig){ return function(action,body){ const D=window.__d
   if(action==='reminder') return {ok:true};
   if(action==='save_lead'&&body.lead&&'phone' in body.lead){ const e=phoneProblem(body.lead.phone); if(e) throw new Error(e); }
   return orig(action,body); }; })(window.demoApi);
+
+// Any address can get owner details from search; with a phone number they compete for a spot on the daily list
+window.openSearchProp=(function(orig){ return function(pid,inList){ orig(pid,inList);
+  const p=(S.sres?.props||[]).find(x=>x.id===pid), r=(S.sres?.calls||[]).find(x=>x.property_id===pid), has=(p||r)&&((p||r).owner_name||(p||r).phone);
+  const sh=$('#sheet'); if(!sh) return;
+  sh.insertAdjacentHTML('beforeend',`<button class="ghost" style="width:100%;margin-top:8px" onclick="S.ecFromSearch=true;editContact2(${pid})"><i class="ti ti-pencil"></i>${has?'Edit owner name and phone':'Add owner name and phone'}</button>`); }; })(window.openSearchProp);
+// Enquiry call lists (owners near a home buyers are chasing) show as their own group, first in the list
+window.grp=(function(orig){ return function(r){ return r&&r.campaign?r.campaign:orig(r); }; })(window.grp);
+window.bySuburb=(function(orig){ return function(rows){ const c=rows.filter(r=>r.campaign).sort((a,b)=>a.rank-b.rank); return [...c,...orig(rows.filter(r=>!r.campaign))]; }; })(window.bySuburb);
