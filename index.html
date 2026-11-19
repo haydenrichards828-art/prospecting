@@ -964,6 +964,8 @@ function drawDrops(){
     $("#dmap").innerHTML="";
     S.map=L.map("dmap",{zoomControl:false,attributionControl:true}).setView([-34.36,150.91],12);
     S.map.on("zoomend",resizePins);
+    // The map box settles its size a moment after the page draws; tell the map so no grey gap is left
+    [50,300,900].forEach(t=>setTimeout(()=>{ try{ S.map&&S.map.invalidateSize(); }catch{} },t)); new ResizeObserver(()=>{ try{ S.map&&S.map.invalidateSize(); }catch{} }).observe($("#dmap"));
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(S.map);
     const pts=dropRows().filter(x=>x.lat!=null).map(x=>[x.lat,x.lng]); if (pts.length) S.map.fitBounds(pts,{padding:[20,20]});
     drawDropLayer();
@@ -1653,7 +1655,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=49"></script>
+<script src="v2.js?v=50"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>
