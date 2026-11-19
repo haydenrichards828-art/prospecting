@@ -800,3 +800,19 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 /* toasts never block a tap on the buttons under them, and sit above the result buttons on the phone */
 .toast{pointer-events:none}.toast button{pointer-events:auto}
 @media (max-width:899px){ body.hastb2 .toast{bottom:calc(214px + env(safe-area-inset-bottom))} }
+/* appraisal time sits in its own column, same shape as the others */
+.apt4{cursor:pointer;width:max-content}
+.apt4:hover{text-decoration:underline}
+.apt4.none{color:var(--accT)!important;font-weight:600}
+.apt4.soon{color:#7ee2a8!important}
+.pex2{display:flex;gap:6px;flex-wrap:wrap;padding:14px 0 4px}
+.pex2 button{height:32px;min-height:0!important;padding:0 12px!important;background:none!important;border:1px solid var(--line2)!important;color:var(--t2)!important;font-size:13px!important;font-weight:600}
+.pex2 button:hover{color:var(--t1)!important}
+/* pipeline rows: every row and the header share the same columns, so they line up */
+@media (min-width:901px){
+  .lg4{grid-template-columns:64px minmax(0,1.5fr) minmax(0,1fr) minmax(0,.8fr) minmax(0,436px)!important}
+  .lg4 .ac4{justify-content:flex-end}
+  .lg4 .bt3 span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+/* the red "new matches" dots are gone: the Leads list already marks new matches on each lead */
+.tabbtn .dot,.si2 .dot,.ndot{display:none!important}

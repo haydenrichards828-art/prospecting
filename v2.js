@@ -1344,9 +1344,13 @@ async function apptGo2(id,iso){ closeOv(); S.appt=S.appt||{}; S.appt[id]=iso||nu
 const apptTxt2=iso=>iso?new Date(iso).toLocaleString('en-AU',{timeZone:'Australia/Sydney',weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}).replace(':00','').replace(/\s?([ap]m)/i,'$1'):'';
 // Appraisals list: sorted by the appraisal time, with the time shown and a way to set or change it
 window.viewPipeline=(function(orig){ return async function(local){ const r=await orig(local); try{
-  if((S.pst||'appraisal')==='appraisal'){ document.querySelectorAll('#main [onclick^="pipeSheet("]').forEach(el=>{ const id=+el.getAttribute('onclick').match(/\d+/)[0], x=(S.pipe||[]).find(p=>p.property_id===id); if(!x) return;
-    const t=x.appt_at?apptTxt2(x.appt_at):'Time not set'; const soon=x.appt_at&&new Date(x.appt_at)-Date.now()<36*3600e3&&new Date(x.appt_at)>Date.now();
-    const nm=el.querySelector('b'); nm?.insertAdjacentHTML('afterend',`<span class="apt3${x.appt_at?'':' none'}${soon?' soon':''}" onclick="event.stopPropagation();apptEdit2(${id})">${ic2('cal',13)} ${t}</span>`); }); }
+  if((S.pst||'appraisal')==='appraisal'){ const h=document.querySelector('#main .lg4.h span:nth-child(3)'); if(h) h.textContent='Appraisal';
+    document.querySelectorAll('#main .lg4[onclick^="pipeSheet("]').forEach(el=>{ const id=+el.getAttribute('onclick').match(/\d+/)[0], x=(S.pipe||[]).find(p=>p.property_id===id), c=el.querySelector('.bt3:not(.pb4)'); if(!x||!c) return;
+      const soon=x.appt_at&&new Date(x.appt_at)>Date.now()&&new Date(x.appt_at)-Date.now()<36*3600e3, bk=c.querySelector('b')?.textContent||'', src=c.querySelector('span')?.textContent||'';
+      c.innerHTML=`<b class="apt4${x.appt_at?'':' none'}${soon?' soon':''}" onclick="event.stopPropagation();apptEdit2(${id})">${x.appt_at?esc(apptTxt2(x.appt_at)):'Set a time'}</b><span>Booked ${esc(bk)}${src?' · '+esc(src.replace(/^From /,'from ')):''}</span>`; }); }
+  { const seg=document.querySelector('#main .pph2 .seg2.mini'); if(seg){ if(desk2()) seg.remove(); else seg.querySelectorAll('button').forEach(b=>{ const k=(b.getAttribute('onclick')||'').match(/S.pst='(\w+)'/); if(k&&!['appraisal','listed'].includes(k[1])) b.remove(); }); }
+    const pst=S.pst||'appraisal', n=k=>(S.pipe||[]).filter(x=>ptab(x.stage)===k).length, ex=['sold','withdrawn','lost'].filter(k=>n(k));
+    if(pst!=='appraisal'&&(ex.length||pst!=='listed')){ document.querySelector('#main .pp2')?.insertAdjacentHTML('beforeend',`<div class="pex2">${pst!=='listed'?`<button onclick="S.pst='listed';viewPipeline(true)">Back to listings</button>`:''}${ex.filter(k=>k!==pst).map(k=>`<button onclick="S.pst='${k}';viewPipeline(true)">${n(k)} ${PST[k][0].toLowerCase()}</button>`).join('')}</div>`); } }
   }catch(e){} return r; }; })(window.viewPipeline);
 function apptEdit2(id){ const x=(S.pipe||[]).find(p=>p.property_id===id)||{}; openSheet2('Appraisal time',`<input type="datetime-local" id="apt3" value="${x.appt_at?sydInput(new Date(x.appt_at)):sydInput(new Date(Date.now()+864e5)).slice(0,11)+'10:00'}" step="900" style="height:52px;border-radius:8px;padding:0 14px">
    <button class="b2 pri" onclick="apptSave2(${id})">Save time</button>`); }
@@ -1426,10 +1430,11 @@ window.go=(function(orig){ return function(...a){ const r=orig(...a); setTimeout
 addEventListener('resize',()=>tbPaint2());
 
 // Card drops: the layer and "how many" filters live behind one Filters button
+try{ localStorage.removeItem('dp_dtop'); }catch{}   // the "how many" control is gone, so any old pick goes back to the automatic default
 window.drawDrops=(function(orig){ return function(...a){ const r=orig(...a); try{ const m=$('#main'), top=m.querySelector(':scope > .top'), ch=m.querySelector(':scope > .chips'); if(!top||!ch) return r;
   const segs=top.querySelectorAll('.seg'), box=document.createElement('div'); box.className='top dflt2'; box.hidden=!S.dflt; if(segs[1]) box.append(segs[1]);
-  const lab=ch.querySelector('.muted'); if(lab) lab.textContent='Show the best'; box.append(ch);
-  const active=(S.dtop&&S.dtop!==0)||(S.dlayer&&S.dlayer!=='pins');
+  ch.remove();
+  const active=S.dlayer&&S.dlayer!=='pins';
   top.insertAdjacentHTML('beforeend',`<button class="dfb2${S.dflt?' on':''}" onclick="S.dflt=!S.dflt;document.querySelector('.dflt2').hidden=!S.dflt;this.classList.toggle('on',S.dflt)">${ic2('menu',16)} Filters${active?' <i></i>':''}</button>`); top.after(box); }catch(e){} return r; }; })(window.drawDrops);
 
 // Stats: the call order suggestion in plain words, and in Settings rather than Stats
