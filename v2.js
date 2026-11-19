@@ -1175,3 +1175,14 @@ async function refSave(id){ const fee=$('#re_fee').value.replace(/[$,\s]/g,'');
 
 // One colour per meaning, used everywhere: outcomes, pipeline stages, stats and tags
 const COL={no_answer:'#7C3AED',not_selling:'#d6455a',call_back:'#d97706',lead:'#3b82f6',appraisal:'#16a34a',listed:'#0d9488',sold:'#eab308',withdrawn:'#64748b',lost:'#d6455a',other_agency:'#d6455a',referral:'#6366f1',sent:'#0ea5e9'};
+
+// ---------- From the click tracking: people click outside a panel to close it, and click page titles expecting the menu ----------
+// Clicking the dark area around a panel closes it, unless something was typed and not saved (then it asks first).
+(function(){ const ov=document.getElementById('ov'); if(!ov) return; let dirty=false;
+  ov.addEventListener('input',e=>{ if(e.target.closest('#sheet')) dirty=true; },true);
+  new MutationObserver(()=>{ if(!ov.classList.contains('show')) dirty=false; }).observe(ov,{attributes:true,attributeFilter:['class']});
+  let warned=0;
+  ov.addEventListener('click',e=>{ if(e.target!==ov) return;
+    if(dirty&&Date.now()-warned>4000){ warned=Date.now(); toast('You typed something here. Tap outside again to close without saving.'); return; }
+    dirty=false; warned=0; closeOv(); }); })();
+document.addEventListener('click',e=>{ const h=e.target.closest('#main .ph2 h1, #main .pph2 h1'); if(!h) return; const b=document.getElementById('tabbtn')||document.getElementById('ptabbtn'); if(b&&b.offsetParent) navPop(b); });

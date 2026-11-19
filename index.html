@@ -839,7 +839,7 @@ async function openMessage(id, ctx){
   $("#ov").classList.add("show");
 }
 function closeOv(){ $("#ov").classList.remove("show"); $("#sheet").classList.remove("lsheet"); }
-$("#ov").addEventListener("click", e=>{ if(e.target.id==="ov") closeOv(); });
+// clicking outside a panel closes it: handled in v2.js, which first checks for unsaved typing
 
 async function viewMessages(){
   const r = await api("messages");
@@ -1659,7 +1659,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=69"></script>
+<script src="v2.js?v=70"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>
