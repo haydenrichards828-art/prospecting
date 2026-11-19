@@ -581,3 +581,5 @@ input.bad2{border-color:var(--bad)!important;box-shadow:0 0 0 2px var(--bad-bg)}
   .oh2h{padding:10px 16px}.oh2h h1{font-size:20px}
 }
 .fl2[hidden]{display:none!important}
+.photo2 .svt{position:absolute;left:8px;bottom:8px;height:32px;padding:0 10px!important;border-radius:9px!important;background:rgba(10,12,15,.8)!important;color:#fff!important;font-size:12px;font-weight:700;border:0!important;min-height:0!important}
+.photo2.svon .credit{left:auto;right:8px;top:8px;bottom:auto}

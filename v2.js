@@ -986,3 +986,21 @@ window.demoApi=(function(orig){ return function(action,body){ const D=window.__d
     body.rows.forEach((r,i)=>D.ec.push({id:D.ec.length+1,list_id:id,...r,crm_note:r.note,outcome:null,attempts:0,lead_id:null,dnc:false})); return {list_id:id,added:body.rows.length,merged:0,skipped:0}; }
   if(action==='econtact_lead'){ const c=D.ec.find(x=>x.id===body.id); const r=orig('save_lead',{lead:{name:c.name,phone:c.phone,lead_type:'Buyer'}}); c.lead_id=r.id; return {lead_id:r.id}; }
   return orig(action,body); }; })(window.demoApi);
+
+// ---------- Street View: a photo of the front of the house, from Google, through our server so the key stays private ----------
+const SV_URL=API.replace(/\/api$/,'/streetview'); S.sv=S.sv||{};
+async function svGet(pid,size){ const k=pid+':'+size; if(S.sv[k]) return S.sv[k]; if(S.svOff||DEMO) return null;
+  S.sv[k]=(async()=>{ try{ const r=await fetch(SV_URL,{method:'POST',headers:{'content-type':'application/json','x-session':S.token||''},body:JSON.stringify({pid,size})});
+      if(r.status===503||r.status===429){ S.svOff=true; return null; } if(!r.ok) return null;
+      return {url:URL.createObjectURL(await r.blob()),date:r.headers.get('X-Pano-Date')||''}; }catch{ S.sv[k]=null; return null; } })();
+  return S.sv[k]; }
+function svFill(el,pid,size){ if(!el||el.dataset.sv) return; el.dataset.sv='1';
+  svGet(pid,size).then(p=>{ if(!p||!el.isConnected) return; const aer=el.querySelector('img'), au=aer?aer.src:null;
+    let im=aer; if(!im){ el.querySelectorAll(':scope>span:not(.credit)').forEach(s=>s.remove()); im=document.createElement('img'); im.alt=''; el.prepend(im); } im.src=p.url; el.classList.add('svon'); el.querySelector('.pinm')?.remove();
+    if(size==='big'){ el.querySelector('.credit')?.remove(); el.insertAdjacentHTML('beforeend',`<span class="credit" data-s="Google${p.date?' · '+esc(p.date):''}">Google${p.date?' · '+esc(p.date.replace(/^(\d{4})-(\d{2})$/,(m,y,mo)=>MONS[+mo-1]+' '+y)):''}</span>${au?`<button class="svt" onclick="event.stopPropagation();svToggle(this)" data-a="${esc(au)}" data-s="${esc(p.url)}">Aerial</button>`:''}`); } }); }
+function svToggle(b){ const el=b.closest('.photo2'), im=el.querySelector('img'), cr=el.querySelector('.credit'), toA=b.textContent==='Aerial'; im.src=toA?b.dataset.a:b.dataset.s; b.textContent=toA?'Street':'Aerial'; el.classList.toggle('svon',!toA);
+  if(cr){ if(!cr.dataset.g) cr.dataset.g=cr.textContent; cr.textContent=toA?'Imagery © NSW Spatial Services':cr.dataset.g; } }
+window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); if(!r) return;
+  const big=document.querySelector('#main .prop2 .photo2'), small=document.querySelector('#main .pidr2 .photo2');
+  if(big&&big.offsetParent) svFill(big,r.property_id,'big'); if(small&&small.offsetParent) svFill(small,r.property_id,'small');
+  const nx=queue().find(x=>x.property_id!==r.property_id&&!x.today_outcome&&!S.skipped.has(x.property_id)); if(nx) svGet(nx.property_id,big&&big.offsetParent?'big':'small'); }; })(window.drawCall2);
