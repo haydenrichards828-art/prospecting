@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=45">
+<link rel="stylesheet" href="v2.css?v=46">
 </head>
 <body>
 <div id="app"></div>
@@ -223,7 +223,7 @@ function demoApi(action, body){
       if(i%11===5){sig.push("withdrawn");reasons.push("Withdrawn or expired listing");}
       if(i%13===7){sig.push("probate");reasons.push("Probate notice (Asquith Legal)");}
       if(yrs>=15&&i%3===0){sig.push("downsize");reasons.push("Large home held long term");}
-      return {list_id:i,rank:i+1,score:Math.round(85-i*0.9),reasons,signals:sig,is_control:i%5===4,version:1,property_id:i+1,owner_name:names[i%names.length],phone:i%6===5?null:"04"+String(10000000+i*7919).slice(0,8),street_address:`${(i*3)%90+1} ${st[0]}`,suburb:st[1],postcode:st[2],bedrooms:2+(i%3),today_outcome:null,street_sales_12m:i%4,history:i%8===0?[{at:new Date(Date.now()-864e5*12).toISOString(),outcome:"call_back",notes:"Thinking about selling after Christmas"}]:null,no_answers:i%7===2?1:0}; });
+      return {list_id:i,rank:i+1,score:Math.round(85-i*0.9),reasons,signals:sig,is_control:i%5===4,version:1,property_id:i+1,owner_name:names[i%names.length],phone:i%6===5?null:"04"+String(10000000+i*7919).slice(0,8),street_address:`${(i*3)%90+1} ${st[0]}`,suburb:st[1],postcode:st[2],bedrooms:2+(i%3),today_outcome:null,street_sales_12m:i%4,history:i%8===0?[{at:new Date(Date.now()-864e5*12).toISOString(),outcome:"call_back",notes:"Thinking about selling after Christmas"}]:null,no_answers:i%7===2?1:0,extra:i%3===2?{}:{lv:620000+(i%9)*45000,lv_d:"2026-07-01",lv_old:560000+(i%9)*40000,lv_old_d:"2022-07-01",area:520+(i%7)*90,zone:"R2 - Low Density Residential",min_lot:449,split:i%7>=5||undefined,rent:600+(i%4)*40,rent_beds:String(2+(i%3)),cdc:i%5===1?{d:"2026-09-12",what:"Swimming pool",status:"Approved"}:undefined,heritage:i%11===4?"Thirroul heritage conservation area":undefined}}; });
     const times=[]; for(let d=1;d<=7;d++) for(let h=8;h<=20;h++){ const c=8+((d*h)%7); times.push({dow:d,hr:h,calls:c,answered:Math.round(c*(h>=17&&h<=19?0.55:0.25))}); }
     return { rows, times, calls:0, appr:0, connected:0,
       pipe:[{property_id:101,stage:"appraisal",updated_at:new Date().toISOString(),owner_name:"Graham Hughes",phone:"0400111222",street_address:"14 Moore St",suburb:"Austinmer",notes:"Appraisal Sat 10am"},{property_id:102,stage:"listed",updated_at:new Date(Date.now()-864e5*6).toISOString(),owner_name:"Wendy Park",phone:"0400333444",street_address:"7 Surfers Pde",suburb:"Thirroul",notes:null}],
@@ -1656,7 +1656,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=51"></script>
+<script src="v2.js?v=52"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

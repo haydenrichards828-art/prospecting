@@ -227,6 +227,18 @@ function warnBox(r,ph){
     w+=`<div class="warn2" style="color:#5ee08f;background:#16a34a1a;border-color:#16a34a55;align-items:center">${ic2('check',18)}<div style="flex:1"><b>Called today:</b> ${esc(LABEL[r.today_outcome]||r.today_outcome)}</div>${tc?`<button class="b2" style="height:36px" onclick="undoToday(${r.property_id},${tc.id})">Undo</button>`:''}</div>`; }
   return w;
 }
+// Extra facts from NSW government data (land values, planning maps, certificates, rental bonds)
+function extraRows(r){
+  const e=r.extra||{}, out=[], yr=d=>d?String(d).slice(0,4):'', mon=d=>{ const x=new Date(String(d).slice(0,10)+'T12:00:00Z'); return isNaN(x)?'':x.toLocaleString('en-AU',{month:'short',year:'numeric',timeZone:'UTC'}); };
+  if(e.lv){ const ch=e.lv_old&&e.lv_old!==e.lv?Math.round((e.lv/e.lv_old-1)*100):null;
+    out.push(['Land value',price2(e.lv),ch!=null?`${ch>=0?'+':''}${ch}% since ${yr(e.lv_old_d)}`:'',ch>0]); }
+  if(e.area) out.push(['Block',`${Math.round(e.area).toLocaleString()} m²`,e.split?`could be split, min ${e.min_lot} m²`:(e.zone?'zoned '+String(e.zone).split(' ')[0]:''),!!e.split]);
+  if(e.rent) out.push(['Rent guide',`$${e.rent}/wk`,`${e.rent_beds&&/^\d$/.test(e.rent_beds)?e.rent_beds+' bed ':''}${/^\d+\//.test(r.street_address||'')?'units':'houses'} nearby`,false]);
+  if(e.cdc){ const w=String(e.cdc.what||'').split(';')[0].trim()||'Building work';
+    out.push([w,mon(e.cdc.d),/approv|determin|issued/i.test(e.cdc.status||'')?'approved':String(e.cdc.status||'lodged').toLowerCase(),true]); }
+  if(e.heritage&&out.length<4) out.push(['Heritage','Yes',String(e.heritage).slice(0,30),false]);
+  return out.length?`<div class="xg2">${out.slice(0,4).map(([l,v,s,hot])=>`<div class="xr2"><span>${esc(l)}</span><b>${esc(v)}</b>${s?`<em class="${hot?'hot':''}">${esc(s)}</em>`:''}</div>`).join('')}</div>`:'';
+}
 function drawCall2(){
   const all=queue();
   if(!S.rows.length&&!all.length){ $("#main").innerHTML=`<div class="empty2">${ic2('search',30)}<b>No list yet for today</b>It builds itself at 4:30am. To build it now, go to Settings.</div>`; return; }
@@ -261,7 +273,7 @@ function drawCall2(){
     <div class="ends2"><button onclick="skip2(${id})">${ic2('skip',16)}Skip<span class="k kb2">S</span></button><button onclick="moreSheet2(${id})">${ic2('more',16)}More<span class="k kb2">M</span></button></div>
    </section>
    <section class="cr2">
-    <div class="prop2">${photo2(r,'height:clamp(170px,30vh,320px);cursor:zoom-in',true,desk2()).replace('class="photo2"',`class="photo2" onclick="if(!event.target.closest('.sv'))bigPhoto(${id})"`)}
+    <div class="prop2"><div class="pcol2">${photo2(r,(r.extra&&Object.keys(r.extra).length?'height:clamp(140px,22vh,280px)':'height:clamp(170px,30vh,320px)')+';cursor:zoom-in',true,desk2()).replace('class="photo2"',`class="photo2" onclick="if(!event.target.closest('.sv'))bigPhoto(${id})"`)}${extraRows(r)}</div>
      <div class="sales2"><span class="lab2">Sales history</span>${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}${h.gain?` <span class="gain2 ${h.gain[0]==='+'?'up':'dn'}">${esc(h.gain)}</span>`:''}</small>${h.agency?`<small class="agy2">Sold through ${esc(h.agency)}</small>`:''}</div></div>`).join(''):'<p class="emptyline" style="margin:0">No sales on record</p>'}</div></div>
     <div class="calls2"><span class="lab2">Calls and Dignam history</span>${callCards2(r)}</div>
     <div class="facts2">${attrs.map(([i,v,l])=>`<div class="attr2">${ic2(i,22,'var(--t2)')}<div><b>${esc(v)}</b><span>${l}</span></div></div>`).join('')}</div>
