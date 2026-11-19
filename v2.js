@@ -807,16 +807,18 @@ function monthsAhead(n){ const p=Object.fromEntries(new Intl.DateTimeFormat("en-
 const longLab=iso=>new Date(iso).toLocaleDateString('en-AU',{timeZone:'Australia/Sydney',day:'numeric',month:'long',year:'numeric'});
 function findRow(id){ return (S.rows||[]).find(x=>x.property_id===id)||(S.callbacks||[]).find(x=>x.property_id===id)||queue().find(x=>x.property_id===id)||(S.sres?.props||[]).find(x=>x.id===id); }
 function editContact2(id){ const r=findRow(id)||{};
-  openSheet2('Name and phone',`<label class="fl2">Name<input id="ec_name" value="${esc(r.owner_name||'')}" autocomplete="off"></label>
-   <label class="fl2">Phone<input id="ec_phone" inputmode="tel" value="${esc(r.phone||'')}" autocomplete="off"></label>
+  openSheet2('Names and phones',`<div class="ap2"><label class="fl2">Name<input id="ec_name" value="${esc(r.owner_name||'')}" autocomplete="off"></label>
+   <label class="fl2">Phone<input id="ec_phone" inputmode="tel" value="${esc(r.owner_phone||r.phone||'')}" autocomplete="off"></label>
+   <label class="fl2">Second owner<input id="ec_name2" value="${esc(r.owner2_name||'')}" placeholder="Husband, wife or partner" autocomplete="off"></label>
+   <label class="fl2">Their phone<input id="ec_phone2" inputmode="tel" value="${esc(r.phone2||'')}" autocomplete="off"></label></div>
    <p class="muted" style="margin:0 4px;font-size:13px">Your change is kept even when new data comes in.</p>
    <button class="b2 pri" id="ec_go" onclick="saveContact2(${id})">Save</button>`,S.ecFromSearch?null:`moreSheet2(${id})`); setTimeout(()=>$('#ec_name')?.focus(),50); }
-async function saveContact2(id){ const n=$('#ec_name').value.trim(), p=$('#ec_phone').value.trim(), e=phoneProblem(p);
-  if(e) return phoneBad($('#ec_phone'),e); if(!n&&!p) return phoneBad($('#ec_name'),'Add a name or a phone number.');
+async function saveContact2(id){ const n=$('#ec_name').value.trim(), p=$('#ec_phone').value.trim(), n2=$('#ec_name2')?.value.trim()||'', p2=$('#ec_phone2')?.value.trim()||'', e=phoneProblem(p), e2=phoneProblem(p2);
+  if(e) return phoneBad($('#ec_phone'),e); if(e2) return phoneBad($('#ec_phone2'),e2); if(!n&&!p) return phoneBad($('#ec_name'),'Add a name or a phone number.');
   const b=$('#ec_go'); b.disabled=true; b.textContent='Saving…';
-  try{ await api("save_contact",{property_id:id,owner_name:n,phone:p}); }catch(err){ b.disabled=false; b.textContent='Save'; return phoneBad($('#ec_phone'),err.message); }
-  const ph=p.replace(/\D/g,'').replace(/^61(\d{9})$/,'0$1');
-  [...(S.rows||[]),...(S.callbacks||[])].filter(x=>x.property_id===id).forEach(x=>{ x.owner_name=n||null; x.phone=ph||null; });
+  try{ await api("save_contact",{property_id:id,owner_name:n,phone:p,owner2_name:n2,phone2:p2}); }catch(err){ b.disabled=false; b.textContent='Save'; return phoneBad(/second/i.test(err.message)?$('#ec_phone2'):$('#ec_phone'),err.message); }
+  const nz=s=>s.replace(/\D/g,'').replace(/^61(\d{9})$/,'0$1'), ph=nz(p), ph2=nz(p2);
+  [...(S.rows||[]),...(S.callbacks||[])].filter(x=>x.property_id===id).forEach(x=>{ x.owner_name=n||null; x.phone=ph||null; x.owner_phone=ph||null; x.owner2_name=n2||null; x.phone2=ph2&&ph2!==ph?ph2:null; });
   (S.sres?.props||[]).filter(x=>x.id===id).forEach(x=>{ x.owner_name=n||null; x.phone=ph||null; });
   saveCallsCache(); closeOv();
   if(S.ecFromSearch){ S.ecFromSearch=false; toast(ph?'Saved. They go on the call list on days they rank high enough':'Saved'); if(S.searching&&S.sq) runSearch(S.sq); return; }
@@ -1016,3 +1018,13 @@ function svThumbs(sel,re){ if(S.svOff||DEMO||!('IntersectionObserver' in window)
 function growTA(t){ if(!t||!t.matches('textarea[data-grow]')) return; t.style.height='auto'; t.style.height=Math.min(t.scrollHeight+2,innerHeight*0.5)+'px'; t.style.overflowY=t.scrollHeight+2>innerHeight*0.5?'auto':'hidden'; }
 document.addEventListener('input',e=>growTA(e.target),true);
 new MutationObserver(ms=>{ for(const m of ms) m.addedNodes.forEach(n=>{ if(n.nodeType!==1) return; (n.matches?.('textarea[data-grow]')?[n]:[...n.querySelectorAll('textarea[data-grow]')]).forEach(t=>requestAnimationFrame(()=>growTA(t))); }); }).observe(document.body,{childList:true,subtree:true});
+
+// ---------- two owners: both names and both numbers on the call screen ----------
+window.numBtn=(function(orig){ return function(r,cls){ const a=orig(r,cls); if(!r.phone2||(r.signals||[]).includes('probate')) return a;
+  const n1=firstName(people(r.owner_name)[0]||''), n2=firstName(r.owner2_name||'');
+  const one=n1&&n1!=='them'?a.replace(/(<span style="[^"]*">)/,`$1<em class="who2">${esc(n1)}</em>`):a;
+  return `<div class="nums2">${one}<a class="${cls} ph2nd" href="tel:${esc(telOf(r.phone2))}" onclick="if(!hoursOk(event))return false;markDial(${r.property_id})">${ic2('phone',cls==='num2'?24:20,'#fff')}<span${cls==='num2'?' style="flex:1"':''}>${n2&&n2!=='them'?`<em class="who2">${esc(n2)}</em>`:''}${esc(fmtPh2(r.phone2))}</span></a></div>`; }; })(window.numBtn);
+window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); if(!r||!r.owner2_name) return;
+  const known=people(r.owner_name).map(s=>s.toLowerCase()); if(known.includes(r.owner2_name.toLowerCase())) return;
+  document.querySelectorAll('#main .nm2, #main .pidr2 h1').forEach(h=>{ if(h.dataset.two) return; h.dataset.two='1'; h.insertAdjacentHTML('beforeend',`<span class="and2"> &amp; ${esc(firstName(r.owner2_name))}</span>`); });
+  const al=document.querySelector('#main .also2'), t=`Second owner: ${esc(r.owner2_name)}`; if(al) al.insertAdjacentHTML('beforeend',' · '+t); else document.querySelector('#main .nm2')?.insertAdjacentHTML('afterend',`<div class="also2">${t}</div>`); }; })(window.drawCall2);

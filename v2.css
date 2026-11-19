@@ -585,3 +585,12 @@ input.bad2{border-color:var(--bad)!important;box-shadow:0 0 0 2px var(--bad-bg)}
 .photo2.svon .credit{left:auto;right:8px;top:8px;bottom:auto}
 textarea[data-grow]{resize:none;min-height:42px;line-height:1.4;font:inherit;width:100%;box-sizing:border-box;white-space:pre-wrap;overflow-wrap:anywhere}
 .fl2 textarea[data-grow]{font-size:16px;font-weight:400;padding:10px 12px}
+/* two owners */
+.nums2{display:flex;flex-direction:column;gap:8px;flex:none}
+.nums2 .ph2nd{height:clamp(40px,6.4vh,58px)!important;background:color-mix(in srgb,var(--acc) 70%,#0b0f14)!important;align-items:center!important}
+.num2.ph2nd{font-size:clamp(18px,1.9vw,26px)!important;line-height:1!important}
+.num2.ph2nd svg{flex:none}
+.pnum2.ph2nd{font-size:clamp(17px,4.6vw,22px)!important}
+.who2{font-style:normal;font-weight:600;opacity:.8;margin-right:.5em;font-size:.62em;vertical-align:middle}
+.ph2nd .who2{font-size:.9em}
+.and2{color:var(--t2);font-weight:600}
