@@ -33,7 +33,7 @@ const OUT2=[
 const OC2={no_answer:['#7C3AED','var(--naT)','phone'],not_interested:['var(--ns)','var(--nsT)','x'],call_back:['var(--cb)','var(--cbT)','clock'],lead:['var(--ld)','var(--accT)','lead'],appraisal:['var(--ap)','#5ee08f','appr'],listed:['var(--ap)','#5ee08f','star'],do_not_call:['var(--ns)','var(--nsT)','ban']};
 const MONF=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONS=MONF.map(m=>m.slice(0,3));
-const TABS2=[['calls','Calls'],['enquiry','Open home calls'],['leads','Leads'],['pipeline','Appraisals and listings'],['drops','Card drops'],['insights','Stats'],['settings','Settings']];
+const TABS2=[['calls','Calls'],['enquiry','Open home calls'],['leads','Leads'],['pipeline','Appraisals and Listings'],['drops','Card drops'],['insights','Stats'],['settings','Settings']];
 const LVL2={Strong:['var(--acc)','#93c0ff'],Medium:['#6366f1','#a5b4fc'],Light:['#475063','var(--t2)'],Note:['#b45309','#ffc864']};
 
 // ---------- small helpers ----------
@@ -503,7 +503,7 @@ function funnel2(ov){
   if(!h) return `<section class="sec2"><div class="gh2" style="margin:0"><span>From call to listing</span></div><p class="emptyline" style="margin:0">No calls logged in this period yet.</p></section>`;
   return `<section class="sec2"><div class="gh2" style="margin:0"><span>From call to listing</span><b>${f1(per(+c.listed||0))} listings per 100</b></div>
    ${steps.map(([l,v,g],i)=>{ const p=per(v), ok=g!=null&&p>=g; return `<div class="fun2"><span>${l}</span><div class="hbt2"><i style="width:${v?Math.max(1.5,v/h*100):0}%;background:${i===0?'#3a4250':ok?'var(--ap)':'var(--acc)'}"></i></div><b>${v.toLocaleString()}</b><em>${i?`<span style="color:${ok?'#5ee08f':'var(--t1)'}">${f1(p)}</span> per 100 <small>goal ${g}</small>`:''}</em></div>`; }).join('')}
-   <p class="emptyline" style="margin:12px 0 0">Each home counts once. Appraisals and listings count whenever they come after the first call.${h<300?` Settles after about 300 homes, ${h} so far.`:''}</p></section>`;
+   <p class="emptyline" style="margin:12px 0 0">Each home counts once. Appraisals and Listings count whenever they come after the first call.${h<300?` Settles after about 300 homes, ${h} so far.`:''}</p></section>`;
 }
 const hm2=s=>{ s=Math.round(s||0); const h=Math.floor(s/3600), m=Math.round((s%3600)/60); return h?`${h}h ${m}m`:`${m}m`; };
 function paintInsights(ov){
@@ -611,7 +611,7 @@ async function removedSheet(){
 async function restore2(i){ const x=S._rm[i]; if(!x) return;
   try{ await api("restore_removed",{ref:x.ref}); }catch(e){ return toast(e.message); }
   toast('Back on the list from tomorrow'); removedSheet(); }
-// ---------- Appraisals and listings: one tab per stage, tidy rows like the call list ----------
+// ---------- Appraisals and Listings: one tab per stage, tidy rows like the call list ----------
 // Tabs: another agency's listing sits under Lost, but is kept apart so it never counts as one of ours
 const PST={appraisal:['Appraisals','Booked','appraisal_at'],listed:['Listed','Listed','listed_at'],sold:['Sold','Sold','sold_at'],withdrawn:['Withdrawn','Withdrawn','withdrawn_at'],lost:['Lost','Lost','lost_at'],listed_other:['Lost','Another agency','listed_other_at']};
 const PTABS=['appraisal','listed','sold','withdrawn','lost'], ptab=s=>s==='listed_other'?'lost':s;
@@ -625,7 +625,7 @@ window.viewPipeline=async function(local){
   const list=rows.filter(x=>ptab(x.stage)===S.pst);
   const when=x=>{ const d=x[PST[x.stage][2]]||x.updated_at; return d?new Date(d).toLocaleDateString('en-AU',{timeZone:'Australia/Sydney',weekday:'short',day:'numeric',month:'short'}):''; };
   $("#main").innerHTML=`<div class="pp2">
-   <div class="lh2 pph2"><h1>Appraisals and listings</h1>
+   <div class="lh2 pph2"><h1>Appraisals and Listings</h1>
     <div class="seg2 mini">${PTABS.map(k=>[k,PST[k]]).map(([k,v])=>`<button class="${S.pst===k?'on':''}" onclick="S.pst='${k}';viewPipeline(true)">${v[0]} <span style="opacity:.65">${cnt(k)}</span></button>`).join('')}</div>
     <button class="b2 pri" style="height:40px;margin-left:auto" onclick="openAddPipe()" aria-label="Add appraisal or listing">${ic2('plus',18)}<span class="addt">Add</span></button></div>
    <div class="lg4 h"><span></span><span>Owner</span><span>${PST[S.pst][1]}</span><span>Last bought</span><span></span></div>
@@ -808,9 +808,9 @@ const longLab=iso=>new Date(iso).toLocaleDateString('en-AU',{timeZone:'Australia
 function findRow(id){ return (S.rows||[]).find(x=>x.property_id===id)||(S.callbacks||[]).find(x=>x.property_id===id)||queue().find(x=>x.property_id===id)||(S.sres?.props||[]).find(x=>x.id===id); }
 function editContact2(id){ const r=findRow(id)||{};
   openSheet2('Names and phones',`<div class="ap2"><label class="fl2">Name<input id="ec_name" value="${esc(r.owner_name||'')}" autocomplete="off"></label>
-   <label class="fl2">Phone<input id="ec_phone" inputmode="tel" value="${esc(r.owner_phone||r.phone||'')}" autocomplete="off"></label>
+   <label class="fl2">Phone<input id="ec_phone" inputmode="tel" value="${esc(fmtPh2(r.owner_phone||r.phone||''))}" autocomplete="off"></label>
    <label class="fl2">Second owner<input id="ec_name2" value="${esc(r.owner2_name||'')}" placeholder="Husband, wife or partner" autocomplete="off"></label>
-   <label class="fl2">Their phone<input id="ec_phone2" inputmode="tel" value="${esc(r.phone2||'')}" autocomplete="off"></label></div>
+   <label class="fl2">Their phone<input id="ec_phone2" inputmode="tel" value="${esc(fmtPh2(r.phone2||''))}" autocomplete="off"></label></div>
    <p class="muted" style="margin:0 4px;font-size:13px">Your change is kept even when new data comes in.</p>
    <button class="b2 pri" id="ec_go" onclick="saveContact2(${id})">Save</button>`,S.ecFromSearch?null:`moreSheet2(${id})`); setTimeout(()=>$('#ec_name')?.focus(),50); }
 async function saveContact2(id){ const n=$('#ec_name').value.trim(), p=$('#ec_phone').value.trim(), n2=$('#ec_name2')?.value.trim()||'', p2=$('#ec_phone2')?.value.trim()||'', e=phoneProblem(p), e2=phoneProblem(p2);
@@ -873,6 +873,9 @@ window.bySuburb=(function(orig){ return function(rows){ const c=rows.filter(r=>r
 
 // A stage change moves the home straight away; the server catches up behind it
 window.setStage=async function(id,stage,notes){ const x=(S.pipe||[]).find(r=>r.property_id===id), prev=x&&{...x};
+  // big moves are confirmed first so a stray tap can't mark a home sold or lost
+  const ASK={sold:['Mark as Sold?','Yes, sold'],lost:['Mark as Lost?','Yes, lost'],withdrawn:['Mark as Withdrawn?','Yes, withdrawn'],listed_other:['Listed with another agency?','Yes, another agency'],listed:['Listed with Dignam?','Yes, listed']};
+  if(ASK[stage]&&!(await uiAsk(`${ASK[stage][0]}${x?' '+(x.street_address||'')+(x.suburb?', '+x.suburb:''):''}`,{ok:ASK[stage][1]}))) return;
   if(x){ x.stage=stage; x[(PST[stage]||[])[2]]=new Date().toISOString(); if(typeof notes==='string') x.notes=notes; x.updated_at=new Date().toISOString(); if(S.tab==='pipeline') paintPipe(); }
   try{ await api("set_stage",{property_id:id,stage,notes}); toast('Moved to '+(stage==='listed_other'?'Lost (another agency)':PST[stage][0])); if(S.leads) loadLeads().catch(()=>{}); }
   catch(e){ if(x) Object.assign(x,prev); if(S.tab==='pipeline') paintPipe(); toast("Couldn't move it. "+e.message); } };
@@ -1028,3 +1031,8 @@ window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); 
   const known=people(r.owner_name).map(s=>s.toLowerCase()); if(known.includes(r.owner2_name.toLowerCase())) return;
   document.querySelectorAll('#main .nm2, #main .pidr2 h1').forEach(h=>{ if(h.dataset.two) return; h.dataset.two='1'; h.insertAdjacentHTML('beforeend',`<span class="and2"> &amp; ${esc(firstName(r.owner2_name))}</span>`); });
   const al=document.querySelector('#main .also2'), t=`Second owner: ${esc(r.owner2_name)}`; if(al) al.insertAdjacentHTML('beforeend',' · '+t); else document.querySelector('#main .nm2')?.insertAdjacentHTML('afterend',`<div class="also2">${t}</div>`); }; })(window.drawCall2);
+
+// Phone boxes tidy themselves into groups when you leave them (0412 345 678, 02 4283 5242)
+document.addEventListener('blur',e=>{ const t=e.target; if(!(t instanceof HTMLInputElement)||!(t.type==='tel'||t.inputMode==='tel'||/phone/i.test(t.id))) return;
+  const d=t.value.replace(/\D/g,''); if(/^0\d{9}$/.test(d)) t.value=fmtPh2(d); },true);
+window.record=(function(orig){ return async function(id,o,cb){ if(o==='listed'&&!(await uiAsk('Mark as Listed with Dignam?',{ok:'Yes, listed'}))) return; return orig(id,o,cb); }; })(window.record);
