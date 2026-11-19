@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=68">
+<link rel="stylesheet" href="v2.css?v=71">
 </head>
 <body>
 <div id="app"></div>
@@ -334,7 +334,7 @@ function toast(msg, undo) {
 async function render() {
   if (!S.token) return renderLogin();
   $("#app").innerHTML = `
-  <header><div class="bar"><div class="brand"><i class="ti ti-phone-call"></i><span class="bname">Prospect</span></div><input id="hq" class="hsearch" type="search" placeholder="" value="${esc(S.sq||"")}" oninput="hSearch(this.value)" autocomplete="off" onfocus="document.body.classList.add('srch')" onblur="if(!this.value.trim())document.body.classList.remove('srch')" aria-label="Search name, street or suburb"><nav>${[["calls","Calls"],["leads","Leads"],["drops","Card drops"],["insights","Stats"],["settings",'<i class="ti ti-settings"></i>']].map(([k,l])=>`<button id="nav_${k}" class="${S.tab===k||(k==="settings"&&S.tab==="messages")?"on":""}" onclick="go('${k}')"${k==="settings"?' aria-label="Settings" title="Settings"':""}>${l}</button>`).join("")}</nav></div></header>
+  <header><div class="bar"><div class="brand"><span class="brand2 bsm">${typeof LOGO2!=="undefined"?LOGO2:""}</span><span class="bname">Prospect</span></div><input id="hq" class="hsearch" type="search" placeholder="" value="${esc(S.sq||"")}" oninput="hSearch(this.value)" autocomplete="off" onfocus="document.body.classList.add('srch')" onblur="if(!this.value.trim())document.body.classList.remove('srch')" aria-label="Search name, street or suburb"><nav>${[["calls","Calls"],["leads","Leads"],["drops","Card drops"],["insights","Stats"],["settings",'<i class="ti ti-settings"></i>']].map(([k,l])=>`<button id="nav_${k}" class="${S.tab===k||(k==="settings"&&S.tab==="messages")?"on":""}" onclick="go('${k}')"${k==="settings"?' aria-label="Settings" title="Settings"':""}>${l}</button>`).join("")}</nav></div></header>
   <div class="wrap" id="main"><div class="empty"><i class="ti ti-loader-2"></i>Loading</div></div>`;
   updateLeadDot(); if (!S.leadsAt || Date.now()-S.leadsAt>10*60e3) { S.leadsAt=Date.now(); loadLeads().catch(()=>{ S.leadsAt=0; }); }
   try { await ({calls:viewCalls,leads:viewLeads,pipeline:viewPipeline,drops:viewDrops,messages:viewMessages,insights:viewInsights,settings:viewSettings})[S.tab](); }
@@ -394,7 +394,7 @@ function go(t){ if (S.searching) { S.searching=false; S.sq=""; S.prevTab=null; }
 async function renderLogin(){
   let has = true; try { has = (await api("has_password")).has; } catch {}
   $("#app").innerHTML = `<div class="login"><form class="card" onsubmit="login(event)">
-   <div class="brand" style="margin-bottom:6px"><i class="ti ti-phone-call"></i>Prospect</div>
+   <div class="brand" style="margin-bottom:6px"><span class="brand2 bsm">${typeof LOGO2!=="undefined"?LOGO2:""}</span>Prospect</div>
    <p class="muted" style="margin:0 0 8px">${has ? "Enter your password to open today's call list." : "First time here. Choose a password of at least 10 characters. This becomes the only password."}</p>
    <label for="pw">Password</label><input id="pw" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="${has?"current-password":"new-password"}" autofocus>
    ${has?"":`<label for="pw2">Confirm password</label><input id="pw2" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="new-password">`}
@@ -1659,7 +1659,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=73"></script>
+<script src="v2.js?v=77"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

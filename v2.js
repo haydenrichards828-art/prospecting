@@ -1192,15 +1192,23 @@ document.addEventListener('click',e=>{ const h=e.target.closest('#main .ph2 h1, 
 // ---------- Side bar on computers: every page one click away (the menu took 7 to 30 seconds to use) ----------
 // Pipeline opens Leads, Appraisals and Listings when you point at it. The button at the top folds the bar down to just the icons.
 const SIDE=[['calls','Calls','phone'],['enquiry','Call sheets','msg'],['pipe','Pipeline','appr',[['leads','Leads','users'],['appraisal','Appraisals','appr'],['listed','Listings','star']]],['drops','Card drops','mail'],['insights','Stats','chart']];
+const LOGO2=`<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11.5 12 3.5l9.5 8"/><path d="M5.5 13v7.5h13V13"/><path d="M10.2 20.5v-3.3a1.8 1.8 0 0 1 3.6 0v3.3"/></svg>`;
 function sideFolded(){ try{ return localStorage.getItem('dp_side')==='1'; }catch{ return false; } }
-function sideFold(){ try{ localStorage.setItem('dp_side',sideFolded()?'0':'1'); }catch{} document.querySelector('.side2')?.classList.toggle('fold',sideFolded()); }
+function sideFold(){ try{ localStorage.setItem('dp_side',sideFolded()?'0':'1'); }catch{} sideApply(); }
+function sideW(){ let w=220; try{ w=+localStorage.getItem('dp_side_w')||220; }catch{} return Math.min(380,Math.max(170,w)); }
+function sideApply(){ const n=document.querySelector('.side2'); if(!n) return; const f=sideFolded(); n.classList.toggle('fold',f); n.style.width=f?'':sideW()+'px'; }
+function sideReset(){ try{ localStorage.setItem('dp_side_w','220'); localStorage.setItem('dp_side','0'); }catch{} sideApply(); }
+function sideDrag(e){ const n=document.querySelector('.side2'); if(!n) return; e.preventDefault(); const now=Date.now(); if(now-(window._rzT||0)<400){ window._rzT=0; return sideReset(); } let moved=false; const x0=n.getBoundingClientRect().left; n.classList.add('drag'); document.body.classList.add('rzing');
+  const mv=ev=>{ moved=true; const w=ev.clientX-x0; const fold=w<120; try{ localStorage.setItem('dp_side',fold?'1':'0'); if(!fold) localStorage.setItem('dp_side_w',String(Math.round(Math.min(380,Math.max(170,w))))); }catch{} sideApply(); };
+  const up=()=>{ window._rzT=moved?0:Date.now(); n.classList.remove('drag'); document.body.classList.remove('rzing'); removeEventListener('pointermove',mv); removeEventListener('pointerup',up); };
+  addEventListener('pointermove',mv); addEventListener('pointerup',up); }
 function sideGo(k){ closePop2(); closeOv(); if(k==='appraisal'||k==='listed'){ S.pst=k; go('pipeline'); } else go(k); }
 function sideOn(k){ if(S.searching) return false; if(k==='appraisal'||k==='listed') return S.tab==='pipeline'&&(S.pst||'appraisal')===k; return S.tab===k; }
 function sideHTML(){ const nl=(S.leads||[]).filter(l=>newMatches(l).length).length;
   const item=(k,l,ic,sub)=>`<button class="si2${sideOn(k)?' on':''}${sub?' sub':''}" onclick="sideGo('${k}')" title="${esc(l)}"${sideOn(k)?' aria-current="page"':''}>${ic2(ic,sub?16:19)}<span class="sl">${esc(l)}</span>${k==='leads'&&nl?'<i class="dot"></i>':''}</button>`;
   const inPipe=['leads','pipeline'].includes(S.tab)&&!S.searching;
-  return `<nav class="side2${sideFolded()?' fold':''}" aria-label="Pages">
-   <div class="sh2"><span class="brand2">${ic2('phone',18,'#fff')}</span><span class="bn2">Prospect</span><button class="fold2" onclick="sideFold()" aria-label="Show icons only or icons and names">${ic2('menu',18)}</button></div>
+  return `<nav class="side2${sideFolded()?' fold':''}" aria-label="Pages"${sideFolded()?'':` style="width:${sideW()}px"`}><div class="rz2" onpointerdown="sideDrag(event)" title="Drag to resize, double click to reset" role="separator" aria-orientation="vertical" aria-label="Resize sidebar"></div>
+   <div class="sh2"><span class="brand2">${LOGO2}</span><span class="bn2">Prospect</span><button class="fold2" onclick="sideFold()" aria-label="Show icons only or icons and names">${ic2('menu',18)}</button></div>
    <div class="sg2">${SIDE.map(([k,l,ic,kids])=>kids?`<div class="grp2${inPipe?' open':''}"><button class="si2${inPipe?' on':''}" onclick="this.parentElement.classList.toggle('open')" aria-expanded="${inPipe}" title="${l}">${ic2(ic,19)}<span class="sl">${l}</span><span class="car2">${ic2('down',14)}</span>${nl?'<i class="dot"></i>':''}</button><div class="kids2">${kids.map(([k2,l2,i2])=>item(k2,l2,i2,true)).join('')}</div></div>`:item(k,l,ic)).join('')}</div>
    <div class="sf2">${item('settings','Settings','gear')}</div></nav>`; }
 window.render=(function(orig){ return async function(){ const p=orig(); const sh=document.getElementById('shell');
