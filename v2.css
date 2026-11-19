@@ -510,3 +510,24 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 @media (max-width:899px){.fg2.two4{grid-template-columns:1fr 1fr}}
 .opts3 button{height:38px;min-height:38px}
 @media (min-width:900px){.opts3.c3{grid-template-columns:repeat(4,minmax(0,1fr))}} .v2s .sth2{margin:12px 0 6px} .v2s .fg2{gap:10px 12px}
+
+/* Leads: plain text instead of pills */
+.nw4{font-style:normal;font-size:13px;font-weight:700;color:#5ee08f;margin-left:8px}
+.w2 .wl2{font-size:13px;font-weight:600;color:var(--t2);margin-bottom:2px}
+.w2 .wln2{font-size:15px;line-height:22px;color:var(--t1);margin-top:6px}.w2 .wln2 span{color:var(--t2);margin-right:4px}
+
+/* Card drops: one tidy header row, segmented controls instead of pills */
+.drops2 > .top{display:flex;align-items:center;justify-content:flex-start;gap:14px;flex-wrap:wrap;margin:0 0 12px}
+.drops2 > .top .pt2{margin:0 10px 0 0}
+.drops2 .seg{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sub);border:1px solid var(--line2);margin:0}
+.drops2 .seg button{height:34px;min-height:0;padding:0 14px;border-radius:9px;background:none;border:0;color:var(--t2);font-size:14px;font-weight:600}
+.drops2 .seg button.on{background:#2a3240;color:var(--t1)}
+.drops2 > .top .iconbtn:first-of-type{margin-left:auto}
+.drops2 > .chips{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:12px;background:var(--sub);border:1px solid var(--line2);margin:0 0 14px;flex-wrap:nowrap;overflow-x:auto;max-width:100%}
+.drops2 > .chips .muted{padding:0 10px 0 8px;font-size:13px;font-weight:600}
+.drops2 > .chips button{height:34px;min-height:0;padding:0 14px;border-radius:9px!important;background:none!important;border:0!important;color:var(--t2);font-size:14px;font-weight:600}
+.drops2 > .chips button.on{background:#2a3240!important;color:var(--t1)!important}
+@media (max-width:899px){.drops2 > .top{gap:8px}.drops2 > .top .pt2{display:none}.drops2 .seg button,.drops2 > .chips button{padding:0 11px}}
+.newtag{background:none!important;color:#5ee08f!important;padding:0!important;margin-right:8px!important;font-size:13px!important;font-weight:700!important;border-radius:0!important}
+.drops2 > .chips{flex-wrap:nowrap!important;width:fit-content}
+@media (max-width:899px){.drops2 > .chips button{padding:0 9px}.drops2 > .chips .muted{padding:0 6px}}

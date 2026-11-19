@@ -439,10 +439,10 @@ function drawLeads(){
   const sub=l=>[l.name?l.address:null,l.suburb].filter(Boolean).join(', ')||l.motivation||'';
   const latest=l=>(l.notes||[])[0]?.body||l.motivation||'';
   const tile=l=>`<span class="tile" style="background:${TCOL2[l.temperature]||'#4b5565'}">${ic2(hasCriteria(l.buy)?'search':'lead',16,'#fff')}</span>`;
-  const nw=l=>{ const n=newMatches(l).length; return n?`<span class="pill2" style="background:#16a34a33;color:#5ee08f;margin-left:8px">${n} new</span>`:''; };
+  const nw=l=>{ const n=newMatches(l).length; return n?`<em class="nw4">${n} new match${n>1?'es':''}</em>`:''; };
   const table=`<div class="ltab2"><div class="lt2 h"><span>Lead</span><span>Next step</span><span>Due</span><span class="c4">Notes</span><span class="c5">Last spoke</span><span></span></div>${ls.map(l=>`<div class="lt2" onclick="openLead(${l.id})" data-lq="${esc([l.name,l.address,l.suburb,l.phone].join(' ').toLowerCase())}">
      <div class="ltn">${tile(l)}<div><b>${esc(leadTitle(l))}${nw(l)}</b><span>${esc(sub(l))}</span></div></div>
-     <span class="ltnote" style="color:var(--t1)">${l.status&&l.status!=='Active'?`<span class="pill2" style="background:${/Listing Won/.test(l.status)?'#16a34a33;color:#5ee08f':/Appraisal/.test(l.status)?'#3b82f633;color:#93c0ff':'#3a425066;color:var(--t2)'};margin-right:8px">${esc(l.status==='Listing Won'?'Listed':l.status)}</span>`:''}${esc(l.next_action||(l.status&&l.status!=='Active'?'':'Set a next step'))}</span>
+     <span class="ltnote" style="color:var(--t1)">${l.status&&l.status!=='Active'?`<b style="color:${/Listing Won/.test(l.status)?'#5ee08f':/Appraisal/.test(l.status)?'#93c0ff':'var(--t2)'};margin-right:6px">${esc(l.status==='Listing Won'?'Listed':l.status)}${l.next_action?',':''}</b>`:''}${esc(l.next_action||(l.status&&l.status!=='Active'?'':'Set a next step'))}</span>
      <b style="color:${dueCol(l.follow_up)};font-size:14px">${esc(dueLabel(l.follow_up))}</b><span class="ltnote c4">${esc(latest(l))}</span><span class="c5" style="font-size:14px;color:var(--t2)">${l.last_contact?esc(dayMon(l.last_contact)):''}</span>
      <div class="lbtns">${l.phone?`<a class="ib2" href="${smsLink(l.phone,'')}" onclick="event.stopPropagation()" aria-label="Text">${ic2('msg',17,'#fff')}</a><a class="ib2 call" href="tel:${esc(telOf(l.phone))}" onclick="event.stopPropagation()" aria-label="Call">${ic2('phone',17,'#fff')}</a>`:''}</div></div>`).join('')}</div>`;
   const list=`<div class="g2">${ls.map(l=>`<button class="r2" onclick="openLead(${l.id})">${tile(l)}<span class="rt2"><b>${esc(leadTitle(l))}</b><span>${esc(l.next_action||sub(l))}</span></span><span style="display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:${dueCol(l.follow_up)};white-space:nowrap">${esc(dueLabel(l.follow_up).replace('Follow up today','Today').replace('No follow up set','No date'))}${chev2()}</span></button>`).join('')}</div>`;
@@ -534,7 +534,7 @@ window.viewSettings=(function(orig){ return async function(){ await orig();
   m.insertAdjacentHTML('afterbegin',`<div class="ph2"><h1>Settings</h1></div>
    <div class="g2" style="margin-bottom:14px">${row2('var(--cb)','skip','Auto dial next','After No answer or Not selling, ring the next person straight away',`<span class="sw2 ${S.autodial?'on':''}"><i></i></span>`,'toggleAuto()')}${row2('var(--ns)','ban','Taken off the list','Problems reported and do not calls, bring people back',chev2(),'removedSheet()')}${row2('var(--cb)','clock','Booked call backs','Change the time or cancel',chev2(),'upcomingCB()')}${row2('#4b5565','users','Sign out','','','logout()')}</div>`); }; })(window.viewSettings);
 function toggleAuto(){ S.autodial=!S.autodial; try{localStorage.setItem("dp_autodial",S.autodial?"1":"0")}catch{} document.querySelectorAll('.sw2').forEach(s=>s.classList.toggle('on',S.autodial)); toast(S.autodial?"Auto dial is on":"Auto dial is off"); }
-window.drawDrops=(function(orig){ return function(){ orig(); const top=$("#main .top"); if(top&&!top.querySelector('.pt2')) top.insertAdjacentHTML('afterbegin','<h1 class="pt2">Card drops</h1>'); }; })(window.drawDrops);
+window.drawDrops=(function(orig){ return function(){ orig(); $("#main").classList.add('drops2'); $("#main").querySelectorAll('.muted').forEach(e=>{ if(/\(area avg \d+\)/.test(e.textContent)) e.textContent=e.textContent.replace(/\s*\(area avg \d+\)/g,''); }); const top=$("#main .top"); if(top&&!top.querySelector('.pt2')) top.insertAdjacentHTML('afterbegin','<h1 class="pt2">Card drops</h1>'); }; })(window.drawDrops);
 window.viewMessages=(function(orig){ return async function(){ await orig(); const h=$("#main h2"); if(h){ h.outerHTML='<div class="ph2"><h1>Texts</h1></div>'; } }; })(window.viewMessages);
 
 // ---------- demo data: photos, sales and history so the preview looks real ----------
@@ -730,3 +730,15 @@ function openAddPipe(){
    <button class="b2 pri wide2b" id="ap_go" onclick="saveAddPipe()">Add</button>`);
   setTimeout(()=>$("#ap_no")?.focus(),60);
 }
+
+// What a lead wants, as three plain lines instead of tiles and pills
+function wantsView(b){ b=b||{};
+  if(!hasCriteria(b)) return `<button class="wempty" onclick="editWants(true)"><i class="ti ti-plus"></i>Add what they want to buy</button>`;
+  const bud=b.min&&b.max?`${money(b.min)} to ${money(b.max)}`:b.max?`Up to ${money(b.max)}`:b.min?`From ${money(b.min)}`:"";
+  const rooms=[b.beds?b.beds+'+ bed':'',b.baths?b.baths+'+ bath':'',b.cars?b.cars+'+ car':''].filter(Boolean).join(' · ');
+  const types=[...(b.types||[]),...(b.flat?["Flat block"]:[])], subs=b.suburbs||[];
+  const where=`${types.length?types.join(' or '):'Any type'} in ${subs.length?subs.join(', '):'any area'}`;
+  return `<div class="wcard w2" id="wview">
+    <div class="whead"><div style="flex:1;min-width:0"><div class="wl2">Looking to buy</div><div class="wbudget${bud?"":" none"}">${bud||"Budget not set yet"}</div></div><button class="wedit" onclick="editWants(true)"><i class="ti ti-pencil"></i>Edit</button></div>
+    ${rooms?`<div class="wln2">${esc(rooms)}</div>`:''}<div class="wln2">${esc(where)}</div>
+    ${(b.musts||[]).length?`<div class="wln2"><span>Must have</span> ${esc(b.musts.join(', '))}</div>`:''}</div>`; }
