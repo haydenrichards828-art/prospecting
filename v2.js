@@ -765,3 +765,90 @@ function wantsView(b){ b=b||{};
     <div class="whead"><div style="flex:1;min-width:0"><div class="wl2">Looking to buy</div><div class="wbudget${bud?"":" none"}">${bud||"Budget not set yet"}</div></div><button class="wedit" onclick="editWants(true)"><i class="ti ti-pencil"></i>Edit</button></div>
     ${rooms?`<div class="wln2">${esc(rooms)}</div>`:''}<div class="wln2">${esc(where)}</div>
     ${(b.musts||[]).length?`<div class="wln2"><span>Must have</span> ${esc(b.musts.join(', '))}</div>`:''}</div>`; }
+
+// ---------- phone safeguard: a phone box holds a number, never a name (the server and database check the same) ----------
+function phoneProblem(p){ const v=String(p||'').trim(); if(!v) return null;
+  if(!/\d/.test(v)) return `The phone box has no number in it. If "${v.slice(0,40)}" is part of their name, put it in the name box.`;
+  if(/[A-Za-z]{2}/.test(v)) return 'The phone box has words in it. Names go in the name box.';
+  const d=v.replace(/\D/g,'').length; if(d<8) return 'That phone number is too short. It needs at least 8 digits.'; if(d>24) return 'That phone number is too long.'; return null; }
+function phoneBad(inp,msg){ if(!inp) return; inp.classList.add('bad2'); inp.setAttribute('aria-invalid','true');
+  let n=inp.parentElement.querySelector('.err2'); if(!n){ n=document.createElement('div'); n.className='err2'; n.setAttribute('role','alert'); inp.insertAdjacentElement('afterend',n); } n.textContent=msg;
+  const d=inp.closest('#deditor'); if(d) d.hidden=false; inp.focus(); inp.oninput=()=>{ inp.classList.remove('bad2'); inp.removeAttribute('aria-invalid'); n.remove(); }; }
+// Moves a word typed in the phone box onto the end of the name, then clears the phone box
+function phoneToName(){ const p=$('#d_phone'), n=$('#d_name'); if(!p||!n) return; n.value=(n.value.trim()+' '+p.value.trim()).trim(); p.value=''; p.dispatchEvent(new Event('input',{bubbles:true})); n.focus(); }
+window.saveLeadAll=(function(orig){ return async function(id){ const p=$('#d_phone'), e=p&&phoneProblem(p.value);
+  if(e){ phoneBad(p,e); if(!/\d/.test(p.value)) p.parentElement.querySelector('.err2').insertAdjacentHTML('beforeend',` <button class="lnk2" onclick="phoneToName()">Move it to the name</button>`);
+    const b=$('#lead_save'); if(b){ b.textContent='Fix the phone first'; b.classList.add('err'); } return; }
+  return orig(id); }; })(window.saveLeadAll);
+
+// ---------- matches: removing a person from a listing works from both sides ----------
+window.buyersFor=(function(orig){ return function(t){ return orig(t).filter(x=>!(((x.l.buy)||{}).no||[]).includes(+t.id)); }; })(window.buyersFor);
+window.rejectMatch=(function(){ return async function(leadId,listingId,from){ const l=(S.leads||[]).find(x=>x.id===leadId); if(!l) return;
+  const redraw=()=>from==='listing'?openListingMatches(listingId):openLead(leadId,{keepScroll:true});
+  const buy={...(l.buy||{})}; buy.no=[...new Set([...(buy.no||[]),listingId])];
+  const prev=l.buy; l.buy=buy; redraw();
+  try{ await api("save_lead",{id:leadId,lead:{buy}}); toast(from==='listing'?`${leadTitle(l)} removed from this home`:"Removed. It won't show for them again",()=>{ l.buy=prev; api("save_lead",{id:leadId,lead:{buy:prev||{}}}).catch(()=>{}); redraw(); }); }
+  catch(e){ l.buy=prev; redraw(); toast("Couldn't save that. "+e.message); } }; })();
+window.openListingMatches=(function(orig){ return function(lid){ orig(lid);
+  const t=(S.listings||[]).find(x=>x.id===lid); if(!t) return; const by=buyersFor(t);
+  [...document.querySelectorAll('#sheet .lsec .mcard')].forEach((c,i)=>{ const x=by[i]; if(!x) return;
+    c.insertAdjacentHTML('beforeend',`<button class="iconbtn" onclick="event.stopPropagation();rejectMatch(${x.l.id},${+t.id},'listing')" aria-label="Remove ${esc(leadTitle(x.l))} from this home" title="Not a match for them"><i class="ti ti-trash"></i></button>`); }); }; })(window.openListingMatches);
+
+// ---------- people on the calls side: fix a name or number, or add someone to ring back later ----------
+const LATER=[['3 months',3],['6 months',6],['1 year',12],['2 years',24],['3 years',36],['5 years',60]];
+// A date some months ahead at 10am Sydney time, moved off Sundays
+function monthsAhead(n){ const p=Object.fromEntries(new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+  const d=new Date(Date.UTC(+p.year,+p.month-1+n,Math.min(+p.day,28))); if(d.getUTCDay()===0) d.setUTCDate(d.getUTCDate()+1);
+  return sydToISO(d.toISOString().slice(0,10)+'T10:00'); }
+const longLab=iso=>new Date(iso).toLocaleDateString('en-AU',{timeZone:'Australia/Sydney',day:'numeric',month:'long',year:'numeric'});
+function findRow(id){ return (S.rows||[]).find(x=>x.property_id===id)||(S.callbacks||[]).find(x=>x.property_id===id)||queue().find(x=>x.property_id===id); }
+function editContact2(id){ const r=findRow(id)||{};
+  openSheet2('Name and phone',`<label class="fl2">Name<input id="ec_name" value="${esc(r.owner_name||'')}" autocomplete="off"></label>
+   <label class="fl2">Phone<input id="ec_phone" inputmode="tel" value="${esc(r.phone||'')}" autocomplete="off"></label>
+   <p class="muted" style="margin:0 4px;font-size:13px">Your change is kept even when new data comes in.</p>
+   <button class="b2 pri" id="ec_go" onclick="saveContact2(${id})">Save</button>`,`moreSheet2(${id})`); setTimeout(()=>$('#ec_name')?.focus(),50); }
+async function saveContact2(id){ const n=$('#ec_name').value.trim(), p=$('#ec_phone').value.trim(), e=phoneProblem(p);
+  if(e) return phoneBad($('#ec_phone'),e); if(!n&&!p) return phoneBad($('#ec_name'),'Add a name or a phone number.');
+  const b=$('#ec_go'); b.disabled=true; b.textContent='Saving…';
+  try{ await api("save_contact",{property_id:id,owner_name:n,phone:p}); }catch(err){ b.disabled=false; b.textContent='Save'; return phoneBad($('#ec_phone'),err.message); }
+  const ph=p.replace(/\D/g,'').replace(/^61(\d{9})$/,'0$1');
+  [...(S.rows||[]),...(S.callbacks||[])].filter(x=>x.property_id===id).forEach(x=>{ x.owner_name=n||null; x.phone=ph||null; });
+  saveCallsCache(); closeOv(); drawList(); toast('Saved'); }
+window.moreSheet2=(function(orig){ return function(id){ orig(id);
+  const g=document.querySelector('#sheet .sb2 .g2'); if(g) g.insertAdjacentHTML('beforeend',row2('#4b5565','users','Edit name and phone','Fix a wrong name or number',chev2(),`editContact2(${id})`)); }; })(window.moreSheet2);
+window.callbackSheet2=(function(orig){ return function(id){ orig(id);
+  const gs=document.querySelectorAll('#sheet .sb2 .g2'); const g=gs[gs.length-1]; if(g) g.insertAdjacentHTML('beforeend',row2('#4b5565','clock','Months or years from now','For someone who just sold or bought',chev2(),`laterSheet2(${id})`)); }; })(window.callbackSheet2);
+function laterSheet2(id){ openSheet2('Call back in',`<div class="later2">${LATER.map(([l,m])=>`<button onclick="closeOv();record(${id},'call_back',monthsAhead(${m}))"><b>${l}</b><span>${esc(longLab(monthsAhead(m)))}</span></button>`).join('')}</div>`,`callbackSheet2(${id})`); }
+function addPerson2(){ S.apWhen=null;
+  openSheet2('Add a person',`<div class="ap2"><label class="fl2">Name<input id="ap_name" autocomplete="off"></label><label class="fl2">Phone<input id="ap_phone" inputmode="tel" autocomplete="off"></label>
+   <label class="fl2">Address<input id="ap_addr" placeholder="12 Smith Street" autocomplete="off"></label><label class="fl2">Suburb<input id="ap_sub" list="sublist2" autocomplete="off"></label></div>
+   <datalist id="sublist2">${(typeof SUBURBS!=='undefined'?SUBURBS:[]).map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+   <div class="fl2">Call them back in<div class="later2 sm" id="ap_when">${LATER.map(([l,m])=>`<button onclick="S.apWhen=monthsAhead(${m});pickOne(this);$('#ap_date').value='';$('#ap_when .pd2').classList.remove('on')"><b>${l}</b></button>`).join('')}<label class="pd2"><span>Pick date</span><input type="date" id="ap_date" onchange="S.apWhen=this.value?sydToISO(this.value+'T10:00'):null;pickOne(null,'#ap_when');this.parentElement.classList.toggle('on',!!this.value);this.previousElementSibling.textContent=this.value?longLab(S.apWhen):'Pick date'"></label></div></div>
+   <label class="fl2">Note<input id="ap_note" placeholder="Sold 12 Smith St in November, wants a check in" autocomplete="off"></label>
+   <button class="b2 pri" id="ap_go" onclick="savePerson2()">Add to call backs</button>`); setTimeout(()=>$('#ap_name')?.focus(),50); }
+async function savePerson2(){ const v=k=>$('#ap_'+k).value.trim(), e=phoneProblem(v('phone'));
+  if(e) return phoneBad($('#ap_phone'),e);
+  if(!v('name')&&!v('phone')) return phoneBad($('#ap_name'),'Add their name or phone number.');
+  if(!/^\s*(\w+\s*\/\s*)?\d+\w?\s+\S/.test(v('addr'))) return phoneBad($('#ap_addr'),'Start with the house number, like 12 Smith Street.');
+  if(!v('sub')) return phoneBad($('#ap_sub'),'Add the suburb.');
+  if(!S.apWhen) return toast('Pick when to call them back');
+  const b=$('#ap_go'); b.disabled=true; b.textContent='Adding…';
+  try{ await api("add_person",{name:v('name'),phone:v('phone'),address:v('addr'),suburb:v('sub'),callback_at:S.apWhen,notes:v('note')}); }
+  catch(err){ b.disabled=false; b.textContent='Add to call backs'; return toast(err.message); }
+  closeOv(); toast(`${v('name')||'They'} will come up as a call back on ${longLab(S.apWhen)}`); }
+// Booked call backs: reminders added by hand move and cancel on their own record
+window.saveMoveCB=(function(orig){ return async function(i){ const c=S._ucb[i]; if(!c||!c.reminder_id) return orig(i); const v=$('#mcb2').value; if(!v) return toast('Pick a date and time');
+  try{ await api("reminder",{id:c.reminder_id,callback_at:sydToISO(v)}); }catch(e){ return toast(e.message); } toast('Call back moved to '+fmt(sydToISO(v))); await loadCallbacks(); upcomingCB(); }; })(window.saveMoveCB);
+window.cancelCB=(function(orig){ return async function(i){ const c=S._ucb[i]; if(!c||!c.reminder_id) return orig(i);
+  if(!(await uiAsk(`Cancel the call back with ${people(c.owner_name)[0]||'them'}?`,{ok:'Cancel call back'}))) return upcomingCB();
+  try{ await api("reminder",{id:c.reminder_id,cancel:true}); }catch(e){ return toast(e.message); } toast('Call back cancelled'); await loadCallbacks(); upcomingCB(); }; })(window.cancelCB);
+window.upcomingCB=(function(orig){ return async function(){ await orig(); const sb=document.querySelector('#sheet .sb2');
+  if(sb&&!sb.querySelector('.addp2')) sb.insertAdjacentHTML('afterbegin',`<div class="g2 addp2">${row2('var(--acc)','lead','Add a person','Someone to ring back months or years from now',chev2(),'addPerson2()')}</div>`); }; })(window.upcomingCB);
+window.drawList2=(function(orig){ return function(){ orig(); const r=document.querySelector('.rail2 .cbk'); if(r&&!document.querySelector('.rail2 .addp')) r.insertAdjacentHTML('afterend',`<button class="cbk addp" onclick="addPerson2()">Add a person<span>${ic2('lead',14)}</span></button>`); }; })(window.drawList2);
+// Demo mode keeps the new actions working without a server
+window.demoApi=(function(orig){ return function(action,body){ const D=window.__demo;
+  if(action==='save_contact'){ const e=phoneProblem(body.phone); if(e) throw new Error(e); return {ok:true}; }
+  if(action==='add_person'){ const e=phoneProblem(body.phone); if(e) throw new Error(e); return {ok:true,property_id:9e6+Date.now()%1e5}; }
+  if(action==='reminder') return {ok:true};
+  if(action==='save_lead'&&body.lead&&'phone' in body.lead){ const e=phoneProblem(body.lead.phone); if(e) throw new Error(e); }
+  return orig(action,body); }; })(window.demoApi);
