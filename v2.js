@@ -13,7 +13,7 @@ const P2={
  tag:'M3 12V4h8l10 10-8 8zM7.5 8h.01', trend:'M3 17l6-6 4 4 8-8M15 7h6v6',
  bed:'M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7M3 14h18M7 9V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2',
  land:'M4 4h16v16H4zM4 10h5V4M15 20v-6h5', bath:'M4 12h16v2a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM6 12V6a2 2 0 0 1 4 0', car:'M5 17h14M6 17l1.6-5.5h8.8L18 17M5 17v2M19 17v2M8 14.5h.01M16 14.5h.01', pin:'M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12M12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4',
- chev:'M9 6l6 6-6 6', back:'M15 6l-6 6 6 6', down:'M6 9l6 6 6-6', msg:'M4 5h16v11H8l-4 4zM8 10h8',
+ chev:'M9 6l6 6-6 6', menu:'M4 6h16M4 12h16M4 18h10', back:'M15 6l-6 6 6 6', down:'M6 9l6 6 6-6', msg:'M4 5h16v11H8l-4 4zM8 10h8',
  star:'M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z', warn:'M12 3l10 18H2zM12 10v5M12 18h.01',
  ban:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M5.6 5.6l12.8 12.8', cal:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
  search:'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14M20 20l-4-4', house:'M3 11l9-7 9 7v9H3z', send:'M4 12l16-8-6 16-3-7z', chart:'M4 20V10M10 20V4M16 20v-7M22 20H2',
@@ -1190,11 +1190,24 @@ const COL={no_answer:'#7C3AED',not_selling:'#d6455a',call_back:'#d97706',lead:'#
 document.addEventListener('click',e=>{ const h=e.target.closest('#main .ph2 h1, #main .pph2 h1'); if(!h) return; const b=document.getElementById('tabbtn')||document.getElementById('ptabbtn'); if(b&&b.offsetParent) navPop(b); });
 
 // ---------- Side bar on computers: every page one click away (the menu took 7 to 30 seconds to use) ----------
-const SIDEL={calls:'Calls',enquiry:'Call sheets',leads:'Leads',pipeline:'Appraisals',drops:'Card drops',insights:'Stats',settings:'Settings'};
+// Pipeline opens Leads, Appraisals and Listings when you point at it. The button at the top folds the bar down to just the icons.
+const SIDE=[['calls','Calls','phone'],['enquiry','Call sheets','msg'],['pipe','Pipeline','appr',[['leads','Leads','users'],['appraisal','Appraisals','appr'],['listed','Listings','star']]],['drops','Card drops','mail'],['insights','Stats','chart']];
+function sideFolded(){ try{ return localStorage.getItem('dp_side')==='1'; }catch{ return false; } }
+function sideFold(){ try{ localStorage.setItem('dp_side',sideFolded()?'0':'1'); }catch{} document.querySelector('.side2')?.classList.toggle('fold',sideFolded()); }
+function sideGo(k){ closePop2(); closeOv(); if(k==='appraisal'||k==='listed'){ S.pst=k; go('pipeline'); } else go(k); }
+function sideOn(k){ if(S.searching) return false; if(k==='appraisal'||k==='listed') return S.tab==='pipeline'&&(S.pst||'appraisal')===k; return S.tab===k; }
+function sideHTML(){ const nl=(S.leads||[]).filter(l=>newMatches(l).length).length;
+  const item=(k,l,ic,sub)=>`<button class="si2${sideOn(k)?' on':''}${sub?' sub':''}" onclick="sideGo('${k}')" title="${esc(l)}"${sideOn(k)?' aria-current="page"':''}>${ic2(ic,sub?16:19)}<span class="sl">${esc(l)}</span>${k==='leads'&&nl?'<i class="dot"></i>':''}</button>`;
+  const inPipe=['leads','pipeline'].includes(S.tab)&&!S.searching;
+  return `<nav class="side2${sideFolded()?' fold':''}" aria-label="Pages">
+   <div class="sh2"><span class="brand2">${ic2('phone',18,'#fff')}</span><span class="bn2">Prospect</span><button class="fold2" onclick="sideFold()" aria-label="Show icons only or icons and names">${ic2('menu',18)}</button></div>
+   <div class="sg2">${SIDE.map(([k,l,ic,kids])=>kids?`<div class="grp2${inPipe?' open':''}"><button class="si2${inPipe?' on':''}" onclick="this.parentElement.classList.toggle('open')" aria-expanded="${inPipe}" title="${l}">${ic2(ic,19)}<span class="sl">${l}</span><span class="car2">${ic2('down',14)}</span>${nl?'<i class="dot"></i>':''}</button><div class="kids2">${kids.map(([k2,l2,i2])=>item(k2,l2,i2,true)).join('')}</div></div>`:item(k,l,ic)).join('')}</div>
+   <div class="sf2">${item('settings','Settings','gear')}</div></nav>`; }
 window.render=(function(orig){ return async function(){ const p=orig(); const sh=document.getElementById('shell');
-  if(sh&&S.token&&!sh.querySelector('.side2')){ const nl=(S.leads||[]).filter(l=>newMatches(l).length).length;
-    sh.insertAdjacentHTML('afterbegin',`<nav class="side2" aria-label="Pages">${TABS2.map(([k])=>`<button class="${k===S.tab&&!S.searching?'on':''}" onclick="closePop2();closeOv();go('${k}')" aria-label="${esc(TABS2.find(t=>t[0]===k)[1])}"${k===S.tab?' aria-current="page"':''}><span class="si" style="--c:${NAVI[k][0]}">${ic2(NAVI[k][1],20,'#fff')}${k==='leads'&&nl?'<i class="dot"></i>':''}</span><span class="sl">${SIDEL[k]}</span></button>`).join('')}</nav>`); }
+  if(sh&&S.token&&!sh.querySelector('.side2')) sh.insertAdjacentHTML('afterbegin',sideHTML());
   return p; }; })(window.render);
+// the pipeline tabs inside the page also keep the side bar in step
+window.viewPipeline=(function(orig){ return async function(local){ const r=await orig(local); const s=document.querySelector('.side2'); if(s) s.outerHTML=sideHTML(); return r; }; })(window.viewPipeline);
 // Card drop pins are small: a tap within a finger's width of a pin now opens it
 (function(){ const t=setInterval(()=>{ if(!window.L||!L.canvas) return; clearInterval(t); const orig=L.canvas; L.canvas=o=>orig({...(o||{}),tolerance:10}); },500); })();
 // Lead panel: status, next action and edit details always showing; matching homes and older notes open (people opened them every time)

@@ -621,17 +621,37 @@ textarea[data-grow]{resize:none;min-height:42px;line-height:1.4;font:inherit;wid
 /* side bar on computers */
 .side2{display:none}
 @media (min-width:1000px){
-  .side2{display:flex;flex-direction:column;gap:4px;width:84px;flex:none;padding:12px 6px 12px 0}
-  .side2 button{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px!important;border:0!important;background:transparent!important;border-radius:12px!important;color:var(--t2)!important;cursor:pointer;min-height:0!important;height:auto!important}
-  .side2 button:hover{background:var(--rowbg)!important;color:var(--t1)!important}
-  .side2 button.on{background:var(--rowbg)!important;color:var(--t1)!important}
-  .side2 button.on .si{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--c)}
-  .side2 .si{width:38px;height:38px;border-radius:11px;background:var(--c);display:grid;place-items:center;position:relative}
-  .side2 .si .dot{position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#ef4444;border:2px solid var(--bg)}
-  .side2 .sl{font-size:11px;font-weight:600;line-height:1.15;text-align:center}
+  .side2{position:relative;z-index:40;display:flex;flex-direction:column;width:220px;flex:none;margin-right:clamp(0px,1.2vw,14px);background:var(--panel);border:1px solid var(--line2);border-radius:20px;padding:14px 10px;gap:6px;transition:width .18s ease}
+  .sh2{display:flex;align-items:center;gap:10px;padding:2px 6px 12px}
+  .brand2{width:32px;height:32px;border-radius:9px;background:var(--acc);display:grid;place-items:center;flex:none}
+  .bn2{font-weight:800;font-size:16px;flex:1;white-space:nowrap;overflow:hidden}
+  .fold2{background:none!important;border:0!important;color:var(--t2)!important;padding:6px!important;min-height:0!important;height:auto!important;border-radius:8px!important;cursor:pointer}
+  .fold2:hover{color:var(--t1)!important;background:var(--rowbg)!important}
+  .sg2{display:flex;flex-direction:column;gap:2px;flex:1;min-height:0;overflow:auto}
+  .sf2{border-top:1px solid var(--line2);padding-top:8px}
+  .si2{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px!important;border:0!important;background:transparent!important;border-radius:10px!important;color:var(--t2)!important;font-size:14.5px;font-weight:600;text-align:left;cursor:pointer;min-height:0!important;height:auto!important;position:relative;white-space:nowrap}
+  .si2:hover{color:var(--t1)!important;background:var(--rowbg)!important}
+  .si2.on{color:var(--accT)!important}
+  .si2.on:not(.sub){background:var(--rowbg)!important}
+  .si2 .sl{flex:1;overflow:hidden}
+  .si2 .dot{position:absolute;left:24px;top:7px;width:8px;height:8px;border-radius:50%;background:#ef4444}
+  .si2.sub{font-size:13.5px;font-weight:500;padding:8px 12px 8px 18px!important}
+  .si2.sub.on{background:color-mix(in srgb,var(--acc) 16%,transparent)!important}
+  .car2{display:grid;transition:transform .15s}
+  .grp2 .kids2{display:none;flex-direction:column;gap:2px;margin:2px 0 4px 21px;padding-left:8px;border-left:1px solid var(--line2)}
+  .grp2.open .kids2,.grp2:hover .kids2{display:flex}
+  .grp2.open .car2,.grp2:hover .car2{transform:rotate(180deg)}
+  /* folded: icons only, names show on hover, pipeline opens to the side */
+  .side2.fold{width:64px;padding:14px 8px}
+  .side2.fold .bn2,.side2.fold .sl,.side2.fold .car2{display:none}
+  .side2.fold .sh2{flex-direction:column;padding:2px 0 12px;gap:8px}
+  .side2.fold .si2{justify-content:center;padding:11px 0!important}
+  .side2.fold,.side2.fold .sg2{overflow:visible}
+  .side2.fold .grp2{position:relative}
+  .side2.fold .grp2 .kids2{display:none;position:absolute;left:54px;top:0;z-index:30;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:6px;margin:0;min-width:160px;box-shadow:0 12px 30px rgba(0,0,0,.4)}
+  .side2.fold .grp2:hover .kids2{display:flex}
+  .side2.fold .grp2 .kids2 .sl{display:block}
+  .side2.fold .grp2 .kids2 .si2{justify-content:flex-start;padding:8px 12px!important}
   .top2 .tabbtn svg{display:none}
 }
-.lmore2{margin-top:6px}
-@keyframes pulse2k{0%{box-shadow:0 0 0 0 rgba(147,192,255,.9)}100%{box-shadow:0 0 0 14px rgba(147,192,255,0)}}
-.bar2x.pulse2{animation:pulse2k .9s ease-out 2;border-radius:14px}
-@media (prefers-reduced-motion:reduce){.bar2x.pulse2{animation:none;outline:3px solid var(--accT)}}
+@media (prefers-reduced-motion:reduce){.side2,.car2{transition:none}}
