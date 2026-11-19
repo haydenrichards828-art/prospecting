@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=44">
+<link rel="stylesheet" href="v2.css?v=45">
 </head>
 <body>
 <div id="app"></div>
@@ -236,6 +236,7 @@ function demoApi(action, body){
     versions:[{version:2,weights:{turnover:34,probate:30,withdrawn:24,downsize:6,upsize:10,crm:10,da_major:18,da_reno:2,landlord:40},approved:false,notes:"Held back calls: current weights 2.6 per 100 at the top of the list, proposed 3.1, random 1.4."},{version:1,weights:{turnover:30,probate:30,withdrawn:20,downsize:10,upsize:10,crm:10,da_major:20,da_reno:5,landlord:40},approved:true}],
     last_runs:[{job:"daily_list",ok:true,detail:"800 rows (v1)",created_at:new Date().toISOString()},{job:"da_import",ok:true,detail:"12 local DAs",created_at:new Date().toISOString()}],failed:false,settings:D.settings,times:D.times,
     funnel:[...Array(8)].map((_,i)=>({week:new Date(Date.now()-i*7*864e5).toISOString().slice(0,10),calls:i===0?120+D.calls:[0,430,465,410,390,452,400,380][i],answered:i===0?38+D.connected:[0,131,150,122,118,140,126,110][i],call_appraisals:i===0?1+D.appr:[0,3,4,2,3,5,3,2][i],appraisals:i===0?1+D.appr:[0,4,4,3,3,5,4,2][i],listings:i===0?0:[0,1,1,0,1,2,0,1][i],sold:i<3?0:[0,0,0,1,0,1,0,0][i]})),
+    cohort:(()=>{ const mk=(n,r,a,l)=>({homes:n+D.calls,reached:r+D.connected,appraisals:a+D.appr,listed:l}); return {"7":mk(96,61,2,0),"30":mk(410,262,9,3),"90":mk(1180,742,27,9),"all":mk(1180,742,27,9)}; })(),
     sources:Object.entries(D.pipe.reduce((m,x)=>{const k=x.source||"calls";m[k]=m[k]||{source:k,appraisals:0,listings:0,sold:0};m[k].appraisals++;if(x.stage==="listed"||x.stage==="sold")m[k].listings++;if(x.stage==="sold")m[k].sold++;return m;},{})).map(([k,v])=>v),
     week:{this:{calls:420+D.calls,connected:130+D.connected,appraisals:4+D.appr},last:{calls:380,connected:120,appraisals:2},pipeline:{appraisal:D.pipe.filter(x=>x.stage==="appraisal").length,listed:D.pipe.filter(x=>x.stage==="listed").length,sold:0,lost:0},new_listings_week:1}});
   const first=n=>((people(n)[0]||"there").split(" ")[0]);
@@ -1655,7 +1656,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=50"></script>
+<script src="v2.js?v=51"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

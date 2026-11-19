@@ -531,3 +531,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .newtag{background:none!important;color:#5ee08f!important;padding:0!important;margin-right:8px!important;font-size:13px!important;font-weight:700!important;border-radius:0!important}
 .drops2 > .chips{flex-wrap:nowrap!important;width:fit-content}
 @media (max-width:899px){.drops2 > .chips button{padding:0 9px}.drops2 > .chips .muted{padding:0 6px}}
+
+.fun2{display:grid;grid-template-columns:150px minmax(0,1fr) 44px 190px;gap:12px;align-items:center;font-size:15px;margin:12px 0}
+.fun2 b{text-align:right}.fun2 em{font-style:normal;color:var(--t2);font-size:14px;text-align:right;white-space:nowrap}.fun2 em span{font-weight:700;font-size:15px}.fun2 em small{font-size:12px;color:var(--t2);opacity:.75;margin-left:6px}
+@media (max-width:899px){.fun2{grid-template-columns:minmax(0,1fr) 36px 150px;row-gap:6px;margin:14px 0}.fun2 .hbt2{grid-column:1/-1;grid-row:2}}

@@ -483,6 +483,15 @@ function heatGrid2(times){
    <div class="hgrid2"><span></span>${hrs.map(h=>`<span class="hx2">${h%2?'':hl2(h)}</span>`).join('')}${g.map((row,di)=>`<span class="hy2">${days[di]}</span>${row.map((v,hi)=>cell(v,di,hi)).join('')}`).join('')}</div>
    <div class="leg2"><span><i style="background:var(--acc)"></i>Best times</span><span><i style="background:#2c333e"></i>Average</span><span><i style="background:#1c2129"></i>Quiet</span><span><i style="background:#14181e"></i>Not enough calls</span></div>`;
 }
+function funnel2(ov){
+  const k={week:'7',month:'30',quarter:'90'}[S.period||'week'], c=(ov.cohort||{})[k]||{}, h=+c.homes||0;
+  const per=v=>h?Math.round(1000*v/h)/10:0, f1=v=>String(v).replace(/\.0$/,'');
+  const steps=[['Called',h,null],['Answered',+c.reached||0,75],['Appraisal booked',+c.appraisals||0,5],['Listed',+c.listed||0,3]];
+  if(!h) return `<section class="sec2"><div class="gh2" style="margin:0"><span>From call to listing</span></div><p class="emptyline" style="margin:0">No calls logged in this period yet.</p></section>`;
+  return `<section class="sec2"><div class="gh2" style="margin:0"><span>From call to listing</span><b>${f1(per(+c.listed||0))} listings per 100</b></div>
+   ${steps.map(([l,v,g],i)=>{ const p=per(v), ok=g!=null&&p>=g; return `<div class="fun2"><span>${l}</span><div class="hbt2"><i style="width:${v?Math.max(1.5,v/h*100):0}%;background:${i===0?'#3a4250':ok?'var(--ap)':'var(--acc)'}"></i></div><b>${v.toLocaleString()}</b><em>${i?`<span style="color:${ok?'#5ee08f':'var(--t1)'}">${f1(p)}</span> per 100 <small>goal ${g}</small>`:''}</em></div>`; }).join('')}
+   <p class="emptyline" style="margin:12px 0 0">Each home counts once. Appraisals and listings count whenever they come after the first call.${h<300?` Settles after about 300 homes, ${h} so far.`:''}</p></section>`;
+}
 const hm2=s=>{ s=Math.round(s||0); const h=Math.floor(s/3600), m=Math.round((s%3600)/60); return h?`${h}h ${m}m`:`${m}m`; };
 function paintInsights(ov){
   S.period=S.period||'week';
@@ -500,6 +509,7 @@ function paintInsights(ov){
     <div style="display:flex;align-items:baseline;gap:10px"><span class="big2" style="color:${rate>=t?'#5ee08f':'var(--t1)'}">${rate.toFixed(1)}</span><span style="color:var(--t2)">goal ${t}</span><span style="margin-left:auto;color:${status[1]};font-weight:700;text-align:right">${status[0]}</span></div>
     <div class="meter2"><i style="width:${Math.min(100,rate/t*100)}%;background:${rate>=t?'var(--ap)':'var(--acc)'}"></i></div>
     <div class="pair2"><span><b>${grp('Algorithm')}</b> from the list</span><span><b>${grp('Control')}</b> from random picks</span></div></section>
+   ${funnel2(ov)}
    <section class="sec2"><div class="gh2" style="margin:0"><span>Calls a ${S.period}</span>${ch?`<b class="big2" style="font-size:32px;color:var(--t1)">${ch.now}</b>`:''}</div>${ch?ch.svg:'<p class="emptyline">No calls logged yet.</p>'}</section>
    <section class="sec2"><div class="gh2" style="margin:0"><span>Best time to call</span></div>${heatGrid2(ov.times)}</section>
    <section class="sec2"><div class="gh2" style="margin:0"><span>Suburbs booking appraisals, last 90 days</span>${subs.length?`<b>${subs.reduce((a,s)=>a+s.n,0)} booked</b>`:''}</div>
