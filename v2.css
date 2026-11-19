@@ -731,3 +731,69 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 .lmenu2 hr{border:0;border-top:1px solid var(--line2);margin:4px 2px}
 .lhead{align-items:flex-start;gap:4px}
 .ldrows4[hidden],.snd2[hidden]{display:none!important}
+
+/* ===== Audit fixes, 20 Nov ===== */
+/* white text on the result colours now passes 4.5:1, faint text lifted to pass on rows */
+:root,:root:not(.x){--ns:#c0354a;--cb:#b45309;--ld:#2563eb;--ap:#15803d;--acc:#2563eb;--t3:#858e9c}
+/* phone typing bar: small labels under the icons */
+#acc2 .bar2x button{flex-direction:column;gap:2px;padding:2px 0!important}
+.sl3{font-size:10px;line-height:11px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+#acc2 .bar2x button{height:48px!important}
+/* follow up queue */
+.fqb2{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 6px 0 12px!important;border-radius:8px!important;background:color-mix(in srgb,var(--cb) 18%,var(--rowbg))!important;border:1px solid color-mix(in srgb,var(--cb) 45%,transparent)!important;color:var(--cbT)!important;font-weight:700;font-size:14px!important;min-height:0!important;cursor:pointer}
+.fqb2 span{background:var(--cb);color:#fff;border-radius:6px;padding:4px 10px;margin-left:4px}
+.fqh2{font-size:12px;font-weight:700;color:var(--cbT);text-transform:none;margin-bottom:2px}
+.fqrow2{display:flex;gap:8px}.fqrow2>.primary,.fqrow2>#lead_save{flex:1}
+.fqs2{height:auto!important;min-height:44px;padding:0 18px!important}
+#ln_fu.need2 button{box-shadow:0 0 0 2px var(--cb)}
+/* appraisal time on the Appraisals list */
+.apt3{display:inline-flex;align-items:center;gap:5px;margin-left:8px;padding:2px 8px;border-radius:6px;font-size:12.5px;font-weight:700;background:color-mix(in srgb,var(--ap) 20%,transparent);color:#7ee2a8;cursor:pointer;vertical-align:2px}
+.apt3.none{background:var(--btn);color:var(--t2)}.apt3.soon{background:var(--ap);color:#fff}
+/* quick add */
+.qa2{display:flex;flex-direction:column;gap:10px}
+.qa2 input,.qa2 textarea{width:100%;height:46px;padding:0 12px;font-size:16px}
+.qa2 textarea{height:auto;padding:10px 12px;min-height:46px}
+.qr2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ql2{font-size:13px;font-weight:700;color:var(--t2);margin-top:4px}.ql2 span{font-weight:500;color:var(--t3)}
+.qc2{display:flex;flex-wrap:wrap;gap:6px}
+.qc2 button{height:40px;min-height:0!important;padding:0 14px!important;background:var(--btn)!important;border:1px solid var(--line2)!important;color:var(--t1)!important;font-weight:600;font-size:14.5px!important}
+.qc2 button.on{background:var(--acc)!important;border-color:var(--acc)!important;color:#fff!important}
+.qwrap2{position:relative}
+.qhits2{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.qhits2:empty{display:none}
+.qhits2 button{display:flex;align-items:center;gap:10px;text-align:left;padding:8px 10px!important;min-height:0!important;height:auto!important;background:var(--rowbg)!important;border:1px solid var(--line2)!important;color:var(--t1)!important}
+.qhits2 button svg{color:var(--t2);flex:none}.qhits2 span{display:flex;flex-direction:column;min-width:0}.qhits2 b{font-size:14.5px}.qhits2 em{font-style:normal;font-size:12.5px;color:var(--t2)}
+.qhits2 button.dup{border-color:color-mix(in srgb,var(--cb) 50%,transparent)!important}
+.qlink2{display:flex;align-items:center;gap:6px;font-size:13px;color:#7ee2a8}
+.qdup2{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:8px 10px!important;min-height:0!important;height:auto!important;background:color-mix(in srgb,var(--cb) 16%,var(--rowbg))!important;border:1px solid color-mix(in srgb,var(--cb) 45%,transparent)!important;color:var(--cbT)!important;font-size:13.5px!important;font-weight:600}
+#qa_go{margin-top:6px}
+/* one tap notes */
+.nch2{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:6px 0 2px;flex:none}
+.nch2::-webkit-scrollbar{display:none}
+.nch2 button{flex:none;height:32px;min-height:0!important;padding:0 11px!important;background:var(--rowbg)!important;border:1px solid var(--line2)!important;color:var(--t2)!important;font-size:13px!important;font-weight:600;border-radius:16px!important;white-space:nowrap}
+.nch2 button:hover{color:var(--t1)!important;border-color:var(--t3)!important}
+/* phone bottom bar */
+#tb2{display:none}
+@media (max-width:899px){
+  body.hastb2 #tb2{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:35;background:var(--panel);border-top:1px solid var(--line2);padding:4px 4px calc(4px + env(safe-area-inset-bottom))}
+  #tb2 button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:50px;min-height:0!important;padding:0!important;background:none!important;border:0!important;color:var(--t2)!important;font-size:11px!important;font-weight:700}
+  #tb2 button.on{color:var(--accT)!important}
+  body.hastb2 #shell{height:calc(100dvh - 58px - env(safe-area-inset-bottom))!important}
+  body.hastb2 #demobar ~ #shell,body.hastb2 #demobar ~ #app #shell{height:calc(100dvh - 82px - env(safe-area-inset-bottom))!important}
+  body.typing #tb2{display:none!important}
+  body.typing.hastb2 #shell{height:100dvh!important}
+  body.hastb2 .tabbtn svg{display:none}
+}
+/* card drops filters */
+.dfb2{display:inline-flex;align-items:center;gap:6px;height:34px;min-height:0!important;padding:0 12px!important;background:var(--btn)!important;border:0!important;color:var(--t1)!important;font-weight:600;font-size:14px!important;position:relative;margin-left:auto}
+.dfb2.on{background:var(--acc)!important;color:#fff!important}
+.dfb2 i{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--cb)}
+.dflt2[hidden]{display:none!important}
+.dflt2{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dflt2 .chips{margin:0}
+.qdup2.info{background:var(--rowbg)!important;border-color:var(--line2)!important;color:var(--t1)!important}
+.lsave.fqrow2{display:flex!important;gap:8px}
+.lsave.fqrow2 #lead_save{flex:1 1 auto!important;width:auto!important}
+.lsave.fqrow2 .fqs2{flex:0 0 96px!important;width:96px!important}
+.apt3{align-self:flex-start;width:max-content;margin:3px 0 2px;display:flex}
+.qdup2.err{display:block}
