@@ -990,7 +990,7 @@ window.demoApi=(function(orig){ return function(action,body){ const D=window.__d
 // ---------- Street View: a photo of the front of the house, from Google, through our server so the key stays private ----------
 const SV_URL=API.replace(/\/api$/,'/streetview'); S.sv=S.sv||{};
 async function svGet(pid,size){ const k=pid+':'+size; if(S.sv[k]) return S.sv[k]; if(S.svOff||DEMO) return null;
-  S.sv[k]=(async()=>{ try{ const r=await fetch(`${SV_URL}?pid=${pid}&size=${size}`,{headers:{'x-session':S.token||''}});
+  S.sv[k]=(async()=>{ try{ const r=await fetch(`${SV_URL}?pid=${pid}&size=${size}&v=2`,{headers:{'x-session':S.token||''}});
       if(r.status===503||r.status===429||r.status===401){ S.svOff=true; return null; } if(!r.ok) return null;
       return {url:URL.createObjectURL(await r.blob()),date:r.headers.get('X-Pano-Date')||''}; }catch{ S.sv[k]=null; return null; } })();
   return S.sv[k]; }
