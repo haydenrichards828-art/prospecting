@@ -1045,3 +1045,30 @@ window.record=(function(orig){ return async function(id,o,cb){ if(o==='listed'&&
 // Tap the name on the call screen to fix names and numbers straight away
 window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); if(!r) return;
   document.querySelectorAll('#main .nm2, #main .pidr2 h1').forEach(h=>{ h.classList.add('edn2'); h.title='Tap to edit names and numbers'; h.onclick=()=>{ S.ecFrom=null; S.ecFromSearch=false; editContact2(r.property_id); }; }); }; })(window.drawCall2);
+
+// ---------- Reminders: a popup when follow ups and call backs fall due, so nothing slips ----------
+// Checks on opening and every 5 minutes. Each item pops up once a day; Later hides it for an hour.
+// With permission, the computer or phone also shows its own notification while the app is open.
+const RKEY='remind_seen_v1';
+function rSeen(){ try{ const o=JSON.parse(localStorage.getItem(RKEY)||'{}'); return o.d===todayKey()?o:{d:todayKey(),k:{}}; }catch{ return {d:todayKey(),k:{}}; } }
+function rSave(o){ try{ localStorage.setItem(RKEY,JSON.stringify(o)); }catch{} }
+function dueItems(){ const now=Date.now(), t=todayKey(), out=[];
+  (S.leads||[]).forEach(l=>{ if(l.follow_up&&l.follow_up<=t&&!/closed|do not contact|listing won/i.test(l.status||'')) out.push({k:'l'+l.id+':'+l.follow_up,title:leadTitle(l),sub:l.follow_up<t?`Follow up was due ${dayMon(l.follow_up)}`:'Follow up due today',act:`openLead(${l.id})`,over:l.follow_up<t}); });
+  (S.callbacks||[]).forEach(c=>{ if(c.callback_at&&new Date(c.callback_at).getTime()<=now+5*60e3) out.push({k:'c'+c.property_id+':'+c.callback_at,title:people(c.owner_name)[0]||c.street_address||'Call back',sub:`Call back ${new Date(c.callback_at).toLocaleTimeString('en-AU',{timeZone:'Australia/Sydney',hour:'numeric',minute:'2-digit'})}${c.notes?' · '+c.notes:''}`,act:`go('calls')`,over:false}); });
+  return out; }
+async function checkReminders(){ if(DEMO&&!window.__remindTest) return; if(!S.token&&!DEMO) return;
+  try{ if(!S.leads||Date.now()-(S.leadsAt||0)>10*60e3) await loadLeads(); }catch{}
+  const seen=rSeen(), now=Date.now(), items=dueItems().filter(i=>!(seen.k[i.k]>now)); if(!items.length) return;
+  items.forEach(i=>seen.k[i.k]=now+20*3600e3); rSave(seen); S.remind=items; paintReminders();
+  try{ if('Notification' in window&&Notification.permission==='granted'&&document.hidden){ const n=new Notification(items.length===1?items[0].title:`${items.length} follow ups due`,{body:items.slice(0,3).map(i=>i.title+': '+i.sub).join('\n'),tag:'prospect-remind'}); n.onclick=()=>{ window.focus(); n.close(); }; } }catch{} }
+function paintReminders(){ document.getElementById('rem2')?.remove(); const it=S.remind||[]; if(!it.length) return;
+  const askN='Notification' in window&&Notification.permission==='default';
+  document.body.insertAdjacentHTML('beforeend',`<div id="rem2" role="alertdialog" aria-label="Follow ups due"><div class="rh"><b>${it.length===1?'Follow up due':it.length+' follow ups due'}</b><button class="x" aria-label="Close" onclick="remClose()">${ic2('x',18)}</button></div>
+   <div class="rl">${it.slice(0,6).map((i,ix)=>`<button class="ri${i.over?' over':''}" onclick="remOpen(${ix})"><b>${esc(i.title)}</b><span>${esc(i.sub)}</span></button>`).join('')}${it.length>6?`<div class="rmore">and ${it.length-6} more on the Leads page</div>`:''}</div>
+   <div class="rf"><button class="b2" onclick="remLater()">Remind me in an hour</button>${askN?`<button class="b2" onclick="remAsk()">Also notify me</button>`:''}</div></div>`); }
+function remOpen(ix){ const i=(S.remind||[])[ix]; if(!i) return; S.remind.splice(ix,1); paintReminders(); new Function(i.act)(); }
+function remClose(){ S.remind=[]; paintReminders(); }
+function remLater(){ const seen=rSeen(), t=Date.now()+3600e3; (S.remind||[]).forEach(i=>seen.k[i.k]=t); rSave(seen); remClose(); toast('I’ll remind you in an hour'); }
+async function remAsk(){ try{ await Notification.requestPermission(); }catch{} paintReminders(); }
+setTimeout(checkReminders,4000); setInterval(checkReminders,5*60e3);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checkReminders(); });
