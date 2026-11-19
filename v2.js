@@ -612,32 +612,36 @@ async function restore2(i){ const x=S._rm[i]; if(!x) return;
   try{ await api("restore_removed",{ref:x.ref}); }catch(e){ return toast(e.message); }
   toast('Back on the list from tomorrow'); removedSheet(); }
 // ---------- Appraisals and listings: one tab per stage, tidy rows like the call list ----------
-const PST={appraisal:['Appraisals','Booked','appraisal_at'],listed:['Listed','Listed','listed_at'],sold:['Sold','Sold','sold_at'],lost:['Lost','Lost','lost_at']};
-const PNEXT={appraisal:[['listed','Mark listed'],['lost','Lost']],listed:[['sold','Mark sold'],['lost','Lost']],sold:[],lost:[['appraisal','Reopen']]};
-window.viewPipeline=async function(){
-  const rows=(await api("pipeline")).rows||[]; S.pipe=rows;
-  const cnt=k=>rows.filter(x=>x.stage===k).length;
+// Tabs: another agency's listing sits under Lost, but is kept apart so it never counts as one of ours
+const PST={appraisal:['Appraisals','Booked','appraisal_at'],listed:['Listed','Listed','listed_at'],sold:['Sold','Sold','sold_at'],withdrawn:['Withdrawn','Withdrawn','withdrawn_at'],lost:['Lost','Lost','lost_at'],listed_other:['Lost','Another agency','listed_other_at']};
+const PTABS=['appraisal','listed','sold','withdrawn','lost'], ptab=s=>s==='listed_other'?'lost':s;
+const PNEXT={appraisal:[['listed','Listed with us'],['listed_other','Another agency'],['lost','Lost']],listed:[['sold','Sold'],['withdrawn','Withdrawn']],withdrawn:[['listed','Relisted'],['listed_other','Another agency']],sold:[],lost:[['appraisal','Reopen']],listed_other:[['appraisal','Reopen']]};
+const pBad=s=>s==='lost'||s==='listed_other'||s==='withdrawn';
+function paintPipe(){ return window.viewPipeline(true); }
+window.viewPipeline=async function(local){
+  const rows=local===true&&S.pipe?S.pipe:((await api("pipeline")).rows||[]); S.pipe=rows;
+  const cnt=k=>rows.filter(x=>ptab(x.stage)===k).length;
   if(!PST[S.pst]) S.pst=cnt('appraisal')||!cnt('listed')?'appraisal':'listed';
-  const list=rows.filter(x=>x.stage===S.pst);
+  const list=rows.filter(x=>ptab(x.stage)===S.pst);
   const when=x=>{ const d=x[PST[x.stage][2]]||x.updated_at; return d?new Date(d).toLocaleDateString('en-AU',{timeZone:'Australia/Sydney',weekday:'short',day:'numeric',month:'short'}):''; };
   $("#main").innerHTML=`<div class="pp2">
    <div class="lh2 pph2"><h1>Appraisals and listings</h1>
-    <div class="seg2 mini">${Object.entries(PST).map(([k,v])=>`<button class="${S.pst===k?'on':''}" onclick="S.pst='${k}';viewPipeline()">${v[0]} <span style="opacity:.65">${cnt(k)}</span></button>`).join('')}</div>
+    <div class="seg2 mini">${PTABS.map(k=>[k,PST[k]]).map(([k,v])=>`<button class="${S.pst===k?'on':''}" onclick="S.pst='${k}';viewPipeline(true)">${v[0]} <span style="opacity:.65">${cnt(k)}</span></button>`).join('')}</div>
     <button class="b2 pri" style="height:40px;margin-left:auto" onclick="openAddPipe()" aria-label="Add appraisal or listing">${ic2('plus',18)}<span class="addt">Add</span></button></div>
    <div class="lg4 h"><span></span><span>Owner</span><span>${PST[S.pst][1]}</span><span>Last bought</span><span></span></div>
    ${list.length?list.map(x=>{ const u=aerialUrl(x,PH_SMALL[0],PH_SMALL[1]), id=x.property_id;
      return `<div class="lg4" onclick="pipeSheet(${id})">
       <div class="th3">${u?`<img src="${u}" alt="" loading="lazy" onerror="this.remove()">`:''}</div>
       <div class="nm3"><b>${esc(people(x.owner_name)[0]||'Owner unknown')}</b><span>${esc(x.street_address||'')}${x.suburb?', '+esc(x.suburb):''}</span>${x.notes?`<em class="pn4">${esc(x.notes)}</em>`:''}</div>
-      <div class="bt3"><b>${esc(when(x))}</b><span>From ${esc((SOURCES[x.source||'calls']||'calls').toLowerCase())}</span></div>
+      <div class="bt3"><b>${esc(when(x))}</b><span>${x.stage==='listed_other'?'Another agency listed':'From '+esc((SOURCES[x.source||'calls']||'calls').toLowerCase())}</span></div>
       <div class="bt3 pb4">${x.last_sale_date?`<b>${x.last_sale_price?esc(price2(x.last_sale_price)):'Price n/a'}</b><span>${String(x.last_sale_date).slice(0,4)}</span>`:'<span>No sale on record</span>'}</div>
-      <div class="ac4">${PNEXT[x.stage].map(([s2,l],i)=>`<button class="b2 ${i===0&&s2!=='lost'?'go4':''}" onclick="event.stopPropagation();setStage(${id},'${s2}')">${l}</button>`).join('')}${x.phone?`<button class="cl3" aria-label="Call" onclick="event.stopPropagation();if(callingAllowed())openUrl('tel:'+${JSON.stringify(String(x.phone))}.replace(/[^0-9+]/g,''))">${ic2('phone',18,'#fff')}</button>`:''}</div></div>`; }).join('')
+      <div class="ac4">${PNEXT[x.stage].map(([s2,l],i)=>`<button class="b2 ${i===0&&!pBad(s2)?'go4':''}" onclick="event.stopPropagation();setStage(${id},'${s2}')">${l}</button>`).join('')}${x.phone?`<button class="cl3" aria-label="Call" onclick="event.stopPropagation();if(callingAllowed())openUrl('tel:'+${JSON.stringify(String(x.phone))}.replace(/[^0-9+]/g,''))">${ic2('phone',18,'#fff')}</button>`:''}</div></div>`; }).join('')
    :`<div class="empty2"><b>No ${PST[S.pst][0].toLowerCase()} yet</b>${S.pst==='appraisal'?'Book one from the call list and it shows up here.':''}</div>`}
   </div>`;
 };
 function pipeSheet(id){ const x=(S.pipe||[]).find(r=>r.property_id===id); if(!x) return;
   openSheet2(esc(people(x.owner_name)[0]||x.street_address||'Property'),`<p class="hint2">${esc(x.street_address||'')}${x.suburb?', '+esc(x.suburb):''}</p>
-   <div class="g2">${PNEXT[x.stage].map(([s2,l])=>row2(s2==='lost'?'var(--ns)':s2==='appraisal'?'#4b5565':'var(--ap)',s2==='lost'?'x':'check',l,'',chev2(),`closeOv();setStage(${id},'${s2}')`)).join('')}
+   <div class="g2">${PNEXT[x.stage].map(([s2,l])=>row2(pBad(s2)?'var(--ns)':s2==='appraisal'?'#4b5565':'var(--ap)',pBad(s2)?'x':'check',l,{listed_other:'They listed with someone else. Not counted as ours',withdrawn:'Our listing came off the market',sold:'Our listing sold',listed:'They signed with Dignam'}[s2]||'',chev2(),`closeOv();setStage(${id},'${s2}')`)).join('')}
     ${row2('#4b5565','msg',x.notes?'Edit note':'Add a note',x.notes?esc(x.notes):'',chev2(),`closeOv();stageNote(${id})`)}
     ${row2('#4b5565','tag','Came from',esc(SOURCES[x.source||'calls']),chev2(),`pickSource(${id},'${x.source||'calls'}')`)}
     ${x.phone?row2('var(--ap)','phone','Call '+esc(x.phone),'',chev2(),`if(callingAllowed())openUrl('tel:${esc(String(x.phone).replace(/[^0-9+]/g,''))}')`):''}</div>`); }
@@ -864,3 +868,9 @@ window.openSearchProp=(function(orig){ return function(pid,inList){ orig(pid,inL
 // Enquiry call lists (owners near a home buyers are chasing) show as their own group, first in the list
 window.grp=(function(orig){ return function(r){ return r&&r.campaign?r.campaign:orig(r); }; })(window.grp);
 window.bySuburb=(function(orig){ return function(rows){ const c=rows.filter(r=>r.campaign).sort((a,b)=>a.rank-b.rank); return [...c,...orig(rows.filter(r=>!r.campaign))]; }; })(window.bySuburb);
+
+// A stage change moves the home straight away; the server catches up behind it
+window.setStage=async function(id,stage,notes){ const x=(S.pipe||[]).find(r=>r.property_id===id), prev=x&&{...x};
+  if(x){ x.stage=stage; x[(PST[stage]||[])[2]]=new Date().toISOString(); if(typeof notes==='string') x.notes=notes; x.updated_at=new Date().toISOString(); if(S.tab==='pipeline') paintPipe(); }
+  try{ await api("set_stage",{property_id:id,stage,notes}); toast('Moved to '+(stage==='listed_other'?'Lost (another agency)':PST[stage][0])); if(S.leads) loadLeads().catch(()=>{}); }
+  catch(e){ if(x) Object.assign(x,prev); if(S.tab==='pipeline') paintPipe(); toast("Couldn't move it. "+e.message); } };

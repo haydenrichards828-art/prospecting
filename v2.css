@@ -558,3 +558,4 @@ input.bad2{border-color:var(--bad)!important;box-shadow:0 0 0 2px var(--bad-bg)}
 .later2 .pd2 input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .later2 .pd2.on{border-color:var(--accT);background:var(--accent-bg)}
 @media (max-width:600px){.ap2{gap:8px 10px}.later2.sm{gap:6px}.later2.sm button,.later2.sm .pd2{padding:6px 4px;min-height:40px}.later2.sm b,.later2 .pd2 span{font-size:14px}.fl2 input{height:42px}}
+@media (max-width:600px){.pph2 .seg2{width:100%;display:flex}.pph2 .seg2 button{flex:1 1 auto;padding:0 6px!important;font-size:13px;white-space:nowrap;gap:3px}}
