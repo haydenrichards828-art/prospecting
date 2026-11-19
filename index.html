@@ -165,7 +165,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 .chipgrid.sm{gap:4px;margin-top:6px}.chipgrid.sm button{min-height:32px;padding:3px 9px;font-size:13px;gap:4px}
 .lrow .chipgrid.sm{margin-top:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.lrow .chipgrid.sm::-webkit-scrollbar{display:none}
 #sheet input.sm,#sheet select.sm{min-height:38px;padding:6px 8px;font-size:14px}#sheet input[type=date].sm{width:auto;flex:none;min-height:32px;padding:3px 6px}
-#sheet input.sm#b_sub_add{margin-top:6px}#sheet input.sm#d_motivation{margin-top:6px}
+#sheet input.sm#b_sub_add{margin-top:6px}#sheet #d_motivation{margin-top:6px}#sheet textarea.sm{min-height:38px;padding:7px 8px;font-size:14px;width:100%}
 .lsec.tight{margin-top:8px;padding-top:8px}.lsec.tight>summary{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lsec.tight>summary .muted{font-size:13px}
 .wcard{margin-top:8px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:linear-gradient(180deg,var(--accent-bg),var(--card) 70%)}
 .whead{display:flex;align-items:flex-start;gap:8px}.wlabel{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=52">
+<link rel="stylesheet" href="v2.css?v=53">
 </head>
 <body>
 <div id="app"></div>
@@ -1218,7 +1218,7 @@ function openLead(id, opts={}){
    ${id&&tel?`<div class="lcta"><a class="call" href="tel:${esc(tel)}"><i class="ti ti-phone"></i>Call ${esc(l.phone)}</a><a class="txt" href="${smsLink(l.phone,"")}"><i class="ti ti-message"></i>Text</a></div>`:""}
    ${id?`<div class="lcta lstat">${l.status==="Listing Won"?`<button class="listedbtn on" disabled><i class="ti ti-star-filled"></i>Listed</button>`:`<button class="listedbtn" onclick="markLeadListed(${id})"><i class="ti ti-star"></i>Listed</button>`}</div>`:""}
    ${opts.fresh?`<div class="banner info" style="margin:8px 0 0;padding:8px 10px"><i class="ti ti-sparkles"></i><div>Added to Leads. Fill in what they want below, then Save.</div></div>`:""}
-   ${id?`<div class="lcard"><textarea id="ln_body" rows="2" placeholder="What did they say?" class="lin"></textarea>
+   ${id?`<div class="lcard"><textarea id="ln_body" rows="2" data-grow placeholder="What did they say?" class="lin"></textarea>
     <div class="lk2">Follow up</div><div class="fu4" id="ln_fu">${[["Tomorrow",1],["1 week",7],["1 month",30]].map(([t,n])=>`<button onclick="S.ol.follow_up='${addDaysKey(n)}';pickOne(this)">${t}</button>`).join("")}<button onclick="const d=this.nextElementSibling;try{d.showPicker()}catch(e){d.click()}">Pick date</button><input type="date" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none" onchange="S.ol.follow_up=this.value;const b=this.previousElementSibling;pickOne(b);b.textContent=new Date(this.value+'T00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'})"></div></div>
     <details class="lmore"><summary>More: status, next action, edit contact ›</summary>
      <div class="lrow2"><select id="ln_status" class="sm" aria-label="Status">${LO.status.map(o=>`<option ${o===S.ol.status?"selected":""}>${o}</option>`).join("")}</select><select id="ln_next" class="sm" aria-label="Next action"><option value="">Next action</option>${LO.next_action.map(o=>`<option ${o===l.next_action?"selected":""}>${esc(o)}</option>`).join("")}</select></div>
@@ -1236,7 +1236,7 @@ function openLead(id, opts={}){
     <div class="lrow2"><input id="d_name" class="sm" placeholder="Name" value="${esc(l.name||"")}"><input id="d_phone" class="sm" inputmode="tel" placeholder="Phone" value="${esc(l.phone||"")}"></div>
     <div class="lrow2"><input id="d_address" class="sm" placeholder="Address" value="${esc(l.address||"")}"><input id="d_suburb" class="sm" list="sublist" placeholder="Suburb" value="${esc(l.suburb||"")}"></div>
     <div class="lrow3"><select id="d_lead_type" class="sm" aria-label="Lead type">${opt(LO.lead_type,l.lead_type)}</select><select id="d_source" class="sm" aria-label="Source">${opt(LO.source,l.source)}</select><select id="d_timeframe" class="sm" aria-label="Timeframe">${opt(LO.timeframe,l.timeframe)}</select></div>
-    <input id="d_motivation" class="sm" placeholder="Motivation or situation" value="${esc(l.motivation||"")}">
+    <textarea id="d_motivation" class="sm" rows="1" data-grow placeholder="Motivation or situation">${esc(l.motivation||"")}</textarea>
     <input id="d_rp_link" type="hidden" value="${esc(l.rp_link||"")}"></div>
    ${id&&hasCriteria(l.buy)?`<div class="lsec tight"><b>Matching Dignam homes</b>${!(S.listings||[]).length?` <span class="muted" style="font-size:13px">none loaded yet</span>`:(m1.length||m2.length)?(m1.length?m1.slice(0,5).map(mcard).join("")+(m1.length>5||m2.length?`<details><summary class="muted" style="font-size:13px;padding:6px 0">Show ${m1.length-Math.min(5,m1.length)+m2.length} more</summary>${m1.slice(5).map(mcard).join("")}${m2.length?`<div class="muted" style="font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin:12px 0 4px">Other areas</div>`+m2.map(mcard).join(""):""}</details>`:""):` <span class="muted" style="font-size:13px">nothing in their suburbs yet</span>`):` <span class="muted" style="font-size:13px">nothing matches yet</span>`}</div>`:""}
    ${notes.length?`<div class="lsec tight"><b>Notes</b>${notes.slice(0,2).map(fmtN).join("")}${notes.length>2?`<details><summary class="muted" style="font-size:13px">${notes.length-2} older note${notes.length-2===1?"":"s"}</summary>${notes.slice(2).map(fmtN).join("")}</details>`:""}</div>`:""}
@@ -1656,7 +1656,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=61"></script>
+<script src="v2.js?v=62"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

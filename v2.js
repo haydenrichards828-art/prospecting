@@ -831,7 +831,7 @@ function addPerson2(){ S.apWhen=null;
    <label class="fl2">Address<input id="ap_addr" placeholder="12 Smith Street" autocomplete="off"></label><label class="fl2">Suburb<input id="ap_sub" list="sublist2" autocomplete="off"></label></div>
    <datalist id="sublist2">${(typeof SUBURBS!=='undefined'?SUBURBS:[]).map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
    <div class="fl2">Call them back in<div class="later2 sm" id="ap_when">${LATER.map(([l,m])=>`<button onclick="S.apWhen=monthsAhead(${m});pickOne(this);$('#ap_date').value='';$('#ap_when .pd2').classList.remove('on')"><b>${l}</b></button>`).join('')}<label class="pd2"><span>Pick date</span><input type="date" id="ap_date" onchange="S.apWhen=this.value?sydToISO(this.value+'T10:00'):null;pickOne(null,'#ap_when');this.parentElement.classList.toggle('on',!!this.value);this.previousElementSibling.textContent=this.value?longLab(S.apWhen):'Pick date'"></label></div></div>
-   <label class="fl2">Note<input id="ap_note" placeholder="Sold 12 Smith St in November, wants a check in" autocomplete="off"></label>
+   <label class="fl2">Note<textarea id="ap_note" rows="1" data-grow placeholder="Sold 12 Smith St in November, wants a check in"></textarea></label>
    <button class="b2 pri" id="ap_go" onclick="savePerson2()">Add to call backs</button>`); setTimeout(()=>$('#ap_name')?.focus(),50); }
 async function savePerson2(){ const v=k=>$('#ap_'+k).value.trim(), e=phoneProblem(v('phone'));
   if(e) return phoneBad($('#ap_phone'),e);
@@ -922,7 +922,7 @@ function eMore(id){ const c=(S.erows||[]).find(x=>x.id===id); if(!c) return;
     ${row2('#6366f1','users',c.lead_id?'Open buyer lead':'Make a buyer lead','Keeps them for matching homes later',chev2(),`eLead(${id})`)}</div>
    <div class="g2">${['not_coming','not_looking','bought','wrong_number'].map(k=>row2(EOUT[k][1],'x',EOUT[k][0],'',c.outcome===k?ic2('check',18,'var(--accT)'):'',`closeOv();eSet(${id},'${k}')`)).join('')}
     ${c.outcome?row2('#4b5565','back','Clear the result','Back to the top of the list','',`closeOv();eSet(${id},null)`):''}</div>
-   <label class="fl2">Note<input id="en_note" value="${esc(c.note||'')}" placeholder="Coming Saturday with partner" onchange="eSet(${id},(S.erows.find(x=>x.id===${id})||{}).outcome||null,this.value)"></label>
+   <label class="fl2">Note<textarea id="en_note" rows="1" data-grow placeholder="Coming Saturday with partner" onchange="eSet(${id},(S.erows.find(x=>x.id===${id})||{}).outcome||null,this.value)">${esc(c.note||'')}</textarea></label>
    <div class="g2">${row2('var(--ns)','ban','<span style="color:var(--nsT)">Do not call</span>','Never call this number again','',`closeOv();eSet(${id},'do_not_call')`)}</div>`); }
 async function eLead(id){ closeOv(); try{ const r=await api("econtact_lead",{id}); const c=(S.erows||[]).find(x=>x.id===id); if(c) c.lead_id=r.lead_id; await loadLeads(); openLead(r.lead_id); }catch(e){ toast(e.message); } }
 function elSettings(id){ const L=(S.el||[]).find(x=>x.id===id); if(!L) return;
@@ -1011,3 +1011,8 @@ function svThumbs(sel,re){ if(S.svOff||DEMO||!('IntersectionObserver' in window)
     svGet(pid,'small').then(p=>{ if(!p||!t.isConnected) return; let im=t.querySelector('img'); if(!im){ im=document.createElement('img'); im.alt=''; t.prepend(im); } im.onerror=null; im.src=p.url; }); }),{rootMargin:'200px'});
   document.querySelectorAll(sel).forEach(row=>{ const m=(row.getAttribute('onclick')||'').match(re), th=row.querySelector('.th3'); if(m&&th){ th.dataset.svp=m[1]; io.observe(th); } }); }
 // Rows keep the free aerial; a paid street photo loads only for the person you open
+
+// Note boxes grow with what you type (up to half the screen, then they scroll), so a long note never runs off the edge
+function growTA(t){ if(!t||!t.matches('textarea[data-grow]')) return; t.style.height='auto'; t.style.height=Math.min(t.scrollHeight+2,innerHeight*0.5)+'px'; t.style.overflowY=t.scrollHeight+2>innerHeight*0.5?'auto':'hidden'; }
+document.addEventListener('input',e=>growTA(e.target),true);
+new MutationObserver(ms=>{ for(const m of ms) m.addedNodes.forEach(n=>{ if(n.nodeType!==1) return; (n.matches?.('textarea[data-grow]')?[n]:[...n.querySelectorAll('textarea[data-grow]')]).forEach(t=>requestAnimationFrame(()=>growTA(t))); }); }).observe(document.body,{childList:true,subtree:true});
