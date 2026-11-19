@@ -18,7 +18,7 @@ const P2={
  ban:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M5.6 5.6l12.8 12.8', cal:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
  search:'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14M20 20l-4-4', house:'M3 11l9-7 9 7v9H3z', send:'M4 12l16-8-6 16-3-7z', chart:'M4 20V10M10 20V4M16 20v-7M22 20H2',
  gear:'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
- mail:'M3 6h18v12H3zM3 7l9 6 9-6', plus:'M12 5v14M5 12h14', check:'M5 12l5 5 9-10',
+ mail:'M3 6h18v12H3zM3 7l9 6 9-6', plus:'M12 5v14M5 12h14', flag:'M5 21V4M5 4h11l-2 4 2 4H5', user:'M18 21v-2a4 4 0 0 0-4-4h-4a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8', check:'M5 12l5 5 9-10',
  users:'M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M21 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8',
  eye:'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6', fire:'M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-4-1-6 1-9z', drop:'M12 3l6 8a6 6 0 1 1-12 0z'
 };
@@ -1227,3 +1227,37 @@ window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const 
 document.addEventListener('visibilitychange',()=>{ if(document.hidden||!S.tm||!S.tm.back||Date.now()-S.tm.back>1500) return;
   document.querySelectorAll('#main .bar2x').forEach(b=>{ b.classList.remove('pulse2'); void b.offsetWidth; b.classList.add('pulse2'); });
   if(desk2()){ const n=document.getElementById('note2'); if(n&&!n.value) n.focus(); } });
+
+// Lead panel bottom: one clean list. Each row shows its current value; tap to change it right there. Status and next step save straight away.
+const LST2=[['Active','Active'],['Not Ready','Not ready'],['Appraisal Booked','Appraisal booked'],['Appraisal Done','Appraisal done'],['Listing Won','Listed with us'],['Listing Lost','Listed elsewhere'],['Do Not Contact','Do not contact'],['Closed','Closed']];
+function lrowHTML(k,ic,label,val,on){ return `<button class="lr2" data-k="${k}" onclick="${on}"><span class="lri2">${ic2(ic,17)}</span><span class="lrt2"><span>${label}</span><b class="${val?'':'none'}">${val||'Not set'}</b></span>${chev2()}</button><div class="lrx2" id="lrx_${k}" hidden></div>`; }
+function lrToggle(k,html){ const x=document.getElementById('lrx_'+k); if(!x) return; const open=x.hidden; document.querySelectorAll('.lrx2').forEach(e=>{ e.hidden=true; e.innerHTML=''; }); document.querySelectorAll('.lr2').forEach(e=>e.classList.remove('open')); if(!open) return; x.innerHTML=html; x.hidden=false; x.previousElementSibling.classList.add('open'); }
+function lrPick(id,field,val){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;
+  const sel=document.getElementById(field==='status'?'ln_status':'ln_next'); if(sel) sel.value=val;
+  const prev=l[field]; l[field]=val||null; if(field==='status') S.ol.status=val;
+  const p={id,body:'',status:field==='status'?val:(document.getElementById('ln_status')?.value||l.status||'Active'),next_action:field==='next_action'?(val||null):(document.getElementById('ln_next')?.value||null)};
+  const r=document.querySelector(`.lr2[data-k="${field}"] b`); if(r){ r.textContent=field==='status'?(LST2.find(s=>s[0]===val)||[0,val])[1]:(val||'Not set'); r.classList.toggle('none',!val); }
+  lrToggle(field);
+  api('lead_note',p).then(()=>{ toast(field==='status'?'Status saved':'Next step saved'); if(S.tab==='leads') drawLeads(); })
+   .catch(e=>{ l[field]=prev; toast("Couldn't save that. "+e.message); });
+  if(val==='Listing Won'&&l.property_id) api('set_stage',{property_id:l.property_id,stage:'listed'}).catch(()=>{}); }
+window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const sh=document.getElementById('sheet'); if(!sh||!id) return;
+  const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;
+  sh.querySelector('.lstat')?.remove();
+  const lm=sh.querySelector('details.lmore'); if(lm){ lm.hidden=true; }
+  const wv=document.getElementById('wview_box'); const hasB=hasCriteria(l.buy); if(wv&&!hasB) wv.hidden=true;
+  const st=(LST2.find(s=>s[0]===(l.status||'Active'))||[0,l.status])[1];
+  const who=[fmtPh2(l.phone||''),[l.address,l.suburb].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
+  const chips=(field,list,cur)=>`<div class="lrc2">${list.map(([v,t])=>`<button class="${v===cur?'on':''}" onclick="lrPick(${id},'${field}','${v.replace(/'/g,'')}')">${esc(t)}</button>`).join('')}</div>`;
+  const stHTML=chips('status',LST2,l.status||'Active').replace(/"/g,'&quot;');
+  const nxHTML=chips('next_action',[['','None'],...LO.next_action.map(v=>[v,v])],l.next_action||'').replace(/"/g,'&quot;');
+  const rows=`<div class="lrows2">
+    ${lrowHTML('status','flag','Status',st,`lrToggle('status',this.dataset.h)`).replace('data-k="status"',`data-k="status" data-h="${stHTML}"`)}
+    ${lrowHTML('next_action','skip','Next step',l.next_action||'',`lrToggle('next_action',this.dataset.h)`).replace('data-k="next_action"',`data-k="next_action" data-h="${nxHTML}"`)}
+    ${lrowHTML('who','user','Their details',who,`editDetails();this.classList.toggle('open')`)}
+    ${hasB?'':lrowHTML('buy','search','What they want to buy','',`editWants(true);this.style.display='none'`)}
+  </div>`;
+  const card=sh.querySelector('.lcard'); if(card) card.insertAdjacentHTML('afterend',rows);
+  const de=document.getElementById('deditor'), wr=sh.querySelector('.lr2[data-k="who"]'); if(de&&wr) wr.nextElementSibling.after(de);
+  const we=document.getElementById('weditor'), br=sh.querySelector('.lr2[data-k="buy"]'); if(we&&br) br.nextElementSibling.after(we);
+}; })(window.openLead);
