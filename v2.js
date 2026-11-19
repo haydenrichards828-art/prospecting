@@ -236,6 +236,7 @@ function extraRows(r){
   if(e.rent) out.push(['Rent guide',`$${e.rent}/wk`,`${e.rent_beds&&/^\d$/.test(e.rent_beds)?e.rent_beds+' bed ':''}${/^\d+\//.test(r.street_address||'')?'units':'houses'} nearby`,false]);
   if(e.cdc){ const w=String(e.cdc.what||'').split(';')[0].trim()||'Building work';
     out.push([w,mon(e.cdc.d),/approv|determin|issued/i.test(e.cdc.status||'')?'approved':String(e.cdc.status||'lodged').toLowerCase(),true]); }
+  if(e.lease) out.splice(1,0,['Rental','Rented out',`leased through ${e.lease}`,true]);
   if(e.heritage&&out.length<4) out.push(['Heritage','Yes',String(e.heritage).slice(0,30),false]);
   return out.length?`<div class="xg2">${out.slice(0,4).map(([l,v,s,hot])=>`<div class="xr2"><span>${esc(l)}</span><b>${esc(v)}</b>${s?`<em class="${hot?'hot':''}">${esc(s)}</em>`:''}</div>`).join('')}</div>`:'';
 }
