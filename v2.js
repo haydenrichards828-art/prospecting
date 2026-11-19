@@ -1284,5 +1284,5 @@ window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const 
   const it=(k,ic,t,v='')=>`<button onclick="lmenuGo('${k}')">${ic2(ic,17)}<span>${t}</span>${v?`<em>${esc(v)}</em>`:''}</button>`;
   const x=sh.querySelector('.lhead .lact');
   if(x) x.insertAdjacentHTML('beforebegin',`<div class="ldw2"><button class="ldots2" onclick="lmenuOpen(this)" aria-label="More options" aria-haspopup="menu">${ic2('more',20)}</button>
-   <div id="lmenu2" class="lmenu2" role="menu" hidden>${it('status','flag','Status',st)}${it('next_action','skip','Next step',l.next_action||'')}${it('who','user','Edit name, phone, address')}${it('buy','search','What they want to buy')}<hr>${it('send','msg','Send info')}${it('refer','users','Refer')}</div></div>`);
+   <div id="lmenu2" class="lmenu2" role="menu" hidden>${it('status','flag','Status',st)}${it('next_action','skip','Next step',l.next_action||'')}${it('who','user','Edit')}${it('buy','search','What they want to buy')}<hr>${it('send','msg','Send info')}${it('refer','users','Refer')}</div></div>`);
 }; })(window.openLead);
