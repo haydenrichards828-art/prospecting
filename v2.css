@@ -718,3 +718,16 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 .lrc2 button.on{background:var(--acc)!important;border-color:var(--acc)!important;color:#fff!important}
 .lrows2 ~ .deditor,.lrows2 .deditor{margin:0}
 .lrows2 .deditor,.lrows2 .weditor{padding:10px 12px;background:var(--sub);border-top:1px solid var(--line2)}
+/* three dot menu on the lead panel */
+.ldw2{position:relative;flex:none}
+.ldots2{width:38px;height:38px;min-height:0!important;padding:0!important;display:grid;place-items:center;background:transparent!important;border:0!important;color:var(--t2)!important}
+.ldots2:hover,.ldots2.on{background:var(--btn)!important;color:var(--t1)!important}
+.lmenu2{position:absolute;right:0;top:42px;z-index:60;min-width:250px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:6px;box-shadow:0 14px 34px #0009;display:flex;flex-direction:column}
+.lmenu2[hidden]{display:none}
+.lmenu2 button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 10px!important;min-height:0!important;height:auto!important;background:transparent!important;border:0!important;color:var(--t1)!important;font-size:14.5px!important;font-weight:600;text-align:left;border-radius:6px!important}
+.lmenu2 button:hover{background:var(--btn)!important}
+.lmenu2 button svg{color:var(--t2);flex:none}.lmenu2 span{flex:1}
+.lmenu2 em{font-style:normal;font-size:13px;color:var(--t3);font-weight:500}
+.lmenu2 hr{border:0;border-top:1px solid var(--line2);margin:4px 2px}
+.lhead{align-items:flex-start;gap:4px}
+.lrows2[hidden],.snd2[hidden]{display:none!important}

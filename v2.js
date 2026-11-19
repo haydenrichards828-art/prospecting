@@ -1261,3 +1261,28 @@ window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const 
   const de=document.getElementById('deditor'), wr=sh.querySelector('.lr2[data-k="who"]'); if(de&&wr) wr.nextElementSibling.after(de);
   const we=document.getElementById('weditor'), br=sh.querySelector('.lr2[data-k="buy"]'); if(we&&br) br.nextElementSibling.after(we);
 }; })(window.openLead);
+
+// Simpler lead panel: the extras live behind a three dot menu next to the close button
+function lmenuOpen(btn){ const m=document.getElementById('lmenu2'); if(!m) return; const show=m.hidden; m.hidden=!show; btn.classList.toggle('on',show);
+  if(show) setTimeout(()=>document.addEventListener('click',function c(e){ if(!e.target.closest('#lmenu2,.ldots2')){ m.hidden=true; btn.classList.remove('on'); document.removeEventListener('click',c); } }),0); }
+function lmenuGo(k){ const m=document.getElementById('lmenu2'); if(m) m.hidden=true; document.querySelector('.ldots2')?.classList.remove('on');
+  const rows=document.querySelector('.lrows2');
+  if(k==='status'||k==='next_action'){ if(!rows) return; rows.hidden=false; rows.querySelectorAll('.lr2').forEach(r=>r.style.display=r.dataset.k===k?'':'none');
+    const r=rows.querySelector(`.lr2[data-k="${k}"]`); lrToggle(k,r.dataset.h); rows.scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
+  if(k==='who'){ const d=document.getElementById('deditor'); if(d){ d.hidden=false; d.scrollIntoView({block:'nearest',behavior:'smooth'}); d.querySelector('input')?.focus(); } return; }
+  if(k==='buy'){ editWants(true); document.getElementById('weditor')?.scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
+  const b=[...document.querySelectorAll('.snd2 button')].find(x=>x.textContent.includes(k==='send'?'Send info':'Refer')); b?.click(); }
+window.lrPick=(function(orig){ return function(...a){ orig(...a); const rows=document.querySelector('.lrows2'); if(rows) rows.hidden=true;
+  const sub=document.querySelector('.lhead .lsub b'); const l=(S.leads||[]).find(x=>x.id===a[0]); if(a[1]==='status'&&l){ const t=(LST2.find(s=>s[0]===l.status)||[0,l.status])[1]; if(sub) sub.textContent=t; }
+  const mb=[...document.querySelectorAll('#lmenu2 button')].find(b=>b.getAttribute('onclick')===`lmenuGo('${a[1]}')`); if(mb&&l){ let em=mb.querySelector('em'); const v=a[1]==='status'?(LST2.find(s=>s[0]===l.status)||[0,l.status])[1]:(l.next_action||''); if(!em&&v){ em=document.createElement('em'); mb.append(em); } if(em) em.textContent=v; } }; })(window.lrPick);
+window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const sh=document.getElementById('sheet'); if(!sh||!id) return;
+  const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;
+  const rows=sh.querySelector('.lrows2'); if(rows){ rows.hidden=true;
+    ['deditor','weditor'].forEach(i=>{ const e=document.getElementById(i); if(e) rows.after(e); }); }
+  sh.querySelector('.snd2')?.setAttribute('hidden','');
+  const st=(LST2.find(s=>s[0]===(l.status||'Active'))||[0,l.status])[1];
+  const it=(k,ic,t,v='')=>`<button onclick="lmenuGo('${k}')">${ic2(ic,17)}<span>${t}</span>${v?`<em>${esc(v)}</em>`:''}</button>`;
+  const x=sh.querySelector('.lhead .lact');
+  if(x) x.insertAdjacentHTML('beforebegin',`<div class="ldw2"><button class="ldots2" onclick="lmenuOpen(this)" aria-label="More options" aria-haspopup="menu">${ic2('more',20)}</button>
+   <div id="lmenu2" class="lmenu2" role="menu" hidden>${it('status','flag','Status',st)}${it('next_action','skip','Next step',l.next_action||'')}${it('who','user','Edit name, phone, address')}${it('buy','search','What they want to buy')}<hr>${it('send','msg','Send info')}${it('refer','users','Refer')}</div></div>`);
+}; })(window.openLead);
