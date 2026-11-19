@@ -33,7 +33,7 @@ const OUT2=[
 const OC2={no_answer:['#7C3AED','var(--naT)','phone'],not_interested:['var(--ns)','var(--nsT)','x'],call_back:['var(--cb)','var(--cbT)','clock'],lead:['var(--ld)','var(--accT)','lead'],appraisal:['var(--ap)','#5ee08f','appr'],listed:['var(--lst)','var(--lstT)','star'],do_not_call:['var(--ns)','var(--nsT)','ban']};
 const MONF=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONS=MONF.map(m=>m.slice(0,3));
-const TABS2=[['calls','Calls'],['enquiry','Open home calls'],['leads','Leads'],['pipeline','Appraisals and Listings'],['drops','Card drops'],['insights','Stats'],['settings','Settings']];
+const TABS2=[['calls','Calls'],['enquiry','Call sheets'],['leads','Leads'],['pipeline','Appraisals and Listings'],['drops','Card drops'],['insights','Stats'],['settings','Settings']];
 const LVL2={Strong:['var(--acc)','#93c0ff'],Medium:['#6366f1','#a5b4fc'],Light:['#475063','var(--t2)'],Note:['#b45309','#ffc864']};
 
 // ---------- small helpers ----------
@@ -897,10 +897,10 @@ async function viewEnquiry(){
 }
 function paintEnquiry(){
   const L=(S.el||[]).find(x=>x.id===S.elid), live=(S.el||[]).filter(x=>!x.archived), old=(S.el||[]).filter(x=>x.archived);
-  const rail=`<nav class="rail2" aria-label="Open home lists"><button class="cbk" onclick="importSheet()">Import from CRM<span>${ic2('plus',14)}</span></button>
+  const rail=`<nav class="rail2" aria-label="Call sheets"><button class="cbk" onclick="importSheet()">Import from CRM<span>${ic2('plus',14)}</span></button>
    ${live.map(x=>`<button class="${x.id===S.elid?'on':''}" onclick="openEList(${x.id})" title="${esc(x.address||x.title)}">${esc(shortAddr(x.address||x.title))}<span>${x.total-x.done}</span></button>`).join('')}
    ${old.length?`<div class="rh2">Finished</div>`+old.map(x=>`<button class="${x.id===S.elid?'on':''}" onclick="openEList(${x.id})">${esc(shortAddr(x.address||x.title))}<span>${x.coming}</span></button>`).join(''):''}</nav>`;
-  if(!L){ $("#main").innerHTML=`<div class="list2">${rail}<div class="lm2"><div class="empty2"><b>No open home lists yet</b>Export the enquiries for a listing from the CRM, then tap Import from CRM. A spreadsheet or copied rows both work.<button class="b2 pri" onclick="importSheet()">Import from CRM</button></div></div></div>`; return; }
+  if(!L){ $("#main").innerHTML=`<div class="list2">${rail}<div class="lm2"><div class="empty2"><b>No call sheets yet</b>Export the enquiries for a listing from the CRM, then tap Import from CRM. A spreadsheet or copied rows both work.<button class="b2 pri" onclick="importSheet()">Import from CRM</button></div></div></div>`; return; }
   const rows=S.erows||[], left=rows.filter(c=>!c.outcome||c.outcome==='no_answer').length;
   const addr=L.address?`${L.address}${L.suburb?', '+L.suburb:''}`:L.title;
   $("#main").innerHTML=`<div class="list2">${rail}<div class="lm2">
