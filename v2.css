@@ -797,3 +797,6 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 .lsave.fqrow2 .fqs2{flex:0 0 96px!important;width:96px!important}
 .apt3{align-self:flex-start;width:max-content;margin:3px 0 2px;display:flex}
 .qdup2.err{display:block}
+/* toasts never block a tap on the buttons under them, and sit above the result buttons on the phone */
+.toast{pointer-events:none}.toast button{pointer-events:auto}
+@media (max-width:899px){ body.hastb2 .toast{bottom:calc(214px + env(safe-area-inset-bottom))} }
