@@ -36,6 +36,7 @@ const MONS=MONF.map(m=>m.slice(0,3));
 // One colour and icon per page, used in the menu and the side bar
 const NAVI={calls:['#3b82f6','phone'],enquiry:['#d97706','msg'],leads:['#6366f1','users'],pipeline:['#0d9488','appr'],drops:['#db2777','mail'],insights:['#16a34a','chart'],settings:['#4b5565','gear']};
 const TABS2=[['calls','Calls'],['enquiry','Call sheets'],['leads','Leads'],['pipeline','Appraisals and Listings'],['drops','Card drops'],['insights','Stats'],['settings','Settings']];
+const RC2={users:'#7c3aed',tag:'#d97706',trend:'#16a34a',land:'#0d9488',clock:'#2563eb',house:'#db2777',bed:'#0891b2',fire:'#dc2626',drop:'#0284c7',cal:'#b45309'};   // each kind of reason has its own colour
 const LVL2={Strong:['var(--acc)','#93c0ff'],Medium:['#6366f1','#a5b4fc'],Light:['#475063','var(--t2)'],Note:['#b45309','#ffc864']};
 
 // ---------- small helpers ----------
@@ -269,7 +270,7 @@ function drawCall2(){
     <div><h1 class="nm2">${esc(nm)}</h1>${ppl.length>1?`<div class="also2">Also on file: ${ppl.slice(1).map(esc).join(', ')}</div>`:''}<button class="ad2 cp2" onclick="copyAddr(${id})" title="Copy address for RP Data">${ic2('pin',21)}<span>${addr}</span><span class="cpl">Copy</span></button>${dignamLine(r)}</div>
     ${tag}${warnBox(r)}
     ${numBtn(r,'num2')}
-    ${why.length?`<div class="whyl2"><div class="wl2" style="grid-template-columns:repeat(${Math.min(why.length,4)},minmax(0,1fr))">${why.slice(0,4).map(([i,t,l])=>`<div class="wc2" style="--c:${LVL2[l][0]};--t:${LVL2[l][1]}"><span class="ti2">${ic2(i,18,'#fff')}</span><span><b>${esc(t)}</b><em>${l}</em></span></div>`).join('')}</div></div>`:''}
+    ${why.length?`<div class="whyl2"><div class="wl2" style="grid-template-columns:repeat(${Math.min(why.length,4)},minmax(0,1fr))">${why.slice(0,4).map(([i,t,l])=>`<div class="wc2" style="--c:${RC2[i]||LVL2[l][0]};--t:${LVL2[l][1]}"><span class="ti2">${ic2(i,18,'#fff')}</span><span><b>${esc(t)}</b><em>${l}</em></span></div>`).join('')}</div></div>`:''}
     <label class="nw2"><span class="h"><span class="lab2">Note <span class="nsaved" style="font-weight:500;color:var(--t3)">${note?'· saved':''}</span></span><span class="kb2">N</span></span>
      <textarea class="note2" id="note2" data-note placeholder="Type while you talk" oninput="setNote(${id},this.value)">${esc(note)}</textarea></label>
     ${barHTML2(id)}
@@ -328,7 +329,7 @@ function details2(id,tab){
   const r=queue().find(x=>x.property_id===id); if(!r) return;
   const R=reasonOf(r), hist=histRows(r);
   const body={calls:()=>callCards2(r),
-   why:()=>`<div class="g2">${whyRows(r).map(([i,t,l])=>row2(LVL2[l][0],i,esc(t),`<span style="color:${LVL2[l][1]};font-weight:700">${l}</span>`)).join('')}</div><div class="g2" style="padding:14px 16px"><b style="display:block;margin-bottom:4px">${esc(R.head)}</b><span style="color:var(--t2)">${esc(R.sub)}</span></div>`,
+   why:()=>`<div class="g2">${whyRows(r).map(([i,t,l])=>row2(RC2[i]||LVL2[l][0],i,esc(t),`<span style="color:${LVL2[l][1]};font-weight:700">${l}</span>`)).join('')}</div><div class="g2" style="padding:14px 16px"><b style="display:block;margin-bottom:4px">${esc(R.head)}</b><span style="color:var(--t2)">${esc(R.sub)}</span></div>`,
    history:()=>`${photo2(r,'height:190px',true)}<div class="g2" style="padding:16px;display:flex;flex-direction:column;gap:14px">${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):'<span class="emptyline">No sales on record</span>'}</div>
      <div class="g2">${[['bed',[r.bedrooms>0?r.bedrooms+' bed':null,r.baths>0?r.baths+' bath':null,r.cars>0?r.cars+' car':null].filter(Boolean).join(', ')||'Not known yet','Rooms'],['clock',yrsSince(r.last_sale_date)!=null?yrsSince(r.last_sale_date)+' years':'Not known','Owned'],['trend',String(r.street_sales_12m||0),'Street sales this year']].map(([i,v,l])=>row2('#4b5565',i,esc(v),l)).join('')}</div>
 `}[tab]();
