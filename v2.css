@@ -663,13 +663,11 @@ textarea[data-grow]{resize:none;min-height:42px;line-height:1.4;font:inherit;wid
 .b2,.rp2,.ends2 button,.ib2,.num2,.pnum2,.vseg,.seg,.seg2,.g2,.cc2,.warn2,.photo2,.ltab2,.toast,.sugg2,.msg2 .opts2 button,.opts3 button,.later2 button,.later2 .pd2,#rem2,.hb2,.tpl2,.cl3,.th3,.rs2,.wc2,.wl2,details.sec,.dsplit .dmap,textarea.note2,textarea.pnote2,button,.btnlike,input,select,textarea{border-radius:8px!important}
 .vseg button,.seg button,.seg2 button,.si2{border-radius:6px!important}
 .tag2,.kb2{border-radius:5px!important}
-/* outcome bar: one neutral strip, coloured icon and a thin coloured base line */
-.bar2x{gap:1px;border-radius:8px!important;background:var(--line2);border:1px solid var(--line2)}
-.bar2x button{background:var(--rowbg)!important;color:var(--t1)!important;font-weight:600!important;box-shadow:inset 0 -2px 0 var(--c);position:relative}
-.bar2x button svg{stroke:color-mix(in srgb,var(--c) 70%,#fff)}
-.bar2x button:hover{filter:none;background:color-mix(in srgb,var(--c) 14%,var(--rowbg))!important}
-.bar2x button:active{background:color-mix(in srgb,var(--c) 24%,var(--rowbg))!important}
-.bar2x .k{color:var(--t3);opacity:1}
+/* outcome bar: full colour blocks */
+.bar2x{border-radius:8px!important}
+.bar2x button{background:var(--c)!important;color:#fff!important}
+.bar2x button svg{stroke:#fff}
+.bar2x button:hover{filter:brightness(1.1)}
 /* row icons: muted tile, colour carried by the glyph */
 .tile{background:var(--sub)!important;border:1px solid var(--line2);color:color-mix(in srgb,var(--c,#9ba4b2) 65%,#fff);border-radius:7px!important}
 .tile svg{stroke:currentColor}
