@@ -1192,7 +1192,7 @@ document.addEventListener('click',e=>{ const h=e.target.closest('#main .ph2 h1, 
 // ---------- Side bar on computers: every page one click away (the menu took 7 to 30 seconds to use) ----------
 // Pipeline opens Leads, Appraisals and Listings when you point at it. The button at the top folds the bar down to just the icons.
 const SIDE=[['calls','Calls','phone'],['enquiry','Call sheets','msg'],['pipe','Pipeline','appr',[['leads','Leads','users'],['appraisal','Appraisals','appr'],['listed','Listings','star']]],['drops','Card drops','mail'],['insights','Stats','chart']];
-const LOGO2=`<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11.5 12 3.5l9.5 8"/><path d="M5.5 13v7.5h13V13"/><path d="M10.2 20.5v-3.3a1.8 1.8 0 0 1 3.6 0v3.3"/></svg>`;
+const LOGO2=`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6 21.2 10.3V18.9H10.4L5.6 22.2 6.3 18.9H2.8V10.3Z" fill="#3b82f6" stroke="#3b82f6" stroke-width="1.6" stroke-linejoin="round"/><rect x="8.9" y="10.4" width="6.2" height="6.2" rx=".9" fill="#f5b544"/><path d="M12 10.4v6.2M8.9 13.5h6.2" stroke="#3b82f6" stroke-width="1.1"/></svg>`;
 function sideFolded(){ try{ return localStorage.getItem('dp_side')==='1'; }catch{ return false; } }
 function sideFold(){ try{ localStorage.setItem('dp_side',sideFolded()?'0':'1'); }catch{} sideApply(); }
 function sideW(){ let w=220; try{ w=+localStorage.getItem('dp_side_w')||220; }catch{} return Math.min(380,Math.max(170,w)); }

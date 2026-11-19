@@ -702,3 +702,6 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 }
 .brand2.bsm{width:26px;height:26px;border-radius:7px;background:var(--acc);display:inline-grid;place-items:center;flex:none}
 .brand2.bsm svg{width:16px;height:16px}
+/* logo is its own shape, no tile behind it */
+.brand2,.brand2.bsm{background:none!important;border-radius:0!important}
+.brand2 svg{width:30px;height:30px}.brand2.bsm svg{width:24px;height:24px}
