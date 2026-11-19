@@ -160,9 +160,10 @@ function photo2(r,style,big,on=true){ const sz=big?PH_BIG:PH_SMALL, u=aerialUrl(
 function ensureExtras(){
   if(!$("#pop2")) document.body.insertAdjacentHTML('beforeend','<div id="popscrim2" onclick="closePop2()"></div><div id="pop2" role="menu"></div><div id="acc2"></div>');
 }
-function tabName(){ return S.searching?'Search':(TABS2.find(t=>t[0]===S.tab)||[,S.tab==='messages'?'Texts':S.tab==='pipeline'?'Pipeline':'Prospect'])[1]; }
+const PTITLE2={appraisal:'Appraisals',listed:'Listings',sold:'Sold',withdrawn:'Withdrawn',lost:'Lost'};
+function tabName(){ if(!S.searching&&S.tab==='pipeline') return PTITLE2[S.pst||'appraisal']||'Appraisals'; return S.searching?'Search':(TABS2.find(t=>t[0]===S.tab)||[,S.tab==='messages'?'Texts':'Prospect'])[1]; }
 function hasDot(){ return (S.ov?.ready_texts||0)>0 || (S.leads||[]).some(l=>newMatches(l).length); }
-function tabBtn(id){ return `<button class="tabbtn" id="${id}" onclick="navPop(this)" aria-haspopup="true">${tabName()}${ic2('down',18)}${hasDot()?'<span class="dot"></span>':''}</button>`; }
+function tabBtn(id){ return `<span class="tabbtn" id="${id}">${tabName()}</span>`; }
 function vseg2(){ return S.tab==='calls'&&!S.searching?`<div class="vseg">${[['call','Calling'],['list','List']].map(([k,l])=>`<button class="${S.view===k?'on':''}" onclick="setView('${k}')">${l}</button>`).join('')}</div>`:''; }
 function setView(v){ S.view=v; S.dialer=v!=='list'; try{localStorage.setItem("dp_view",v)}catch{} if(v==='list') S.pick=null; render(); }
 function navPop(btn){
@@ -626,7 +627,7 @@ window.viewPipeline=async function(local){
   const list=rows.filter(x=>ptab(x.stage)===S.pst);
   const when=x=>{ const d=x[PST[x.stage][2]]||x.updated_at; return d?new Date(d).toLocaleDateString('en-AU',{timeZone:'Australia/Sydney',weekday:'short',day:'numeric',month:'short'}):''; };
   $("#main").innerHTML=`<div class="pp2">
-   <div class="lh2 pph2"><h1>Appraisals and Listings</h1>
+   <div class="lh2 pph2"><h1>${PTITLE2[S.pst||'appraisal']||'Appraisals'}</h1>
     <div class="seg2 mini">${PTABS.map(k=>[k,PST[k]]).map(([k,v])=>`<button class="${S.pst===k?'on':''}" onclick="S.pst='${k}';viewPipeline(true)">${v[0]} <span style="opacity:.65">${cnt(k)}</span></button>`).join('')}</div>
     <button class="b2 pri" style="height:40px;margin-left:auto" onclick="openAddPipe()" aria-label="Add appraisal or listing">${ic2('plus',18)}<span class="addt">Add</span></button></div>
    <div class="lg4 h"><span></span><span>Owner</span><span>${PST[S.pst][1]}</span><span>Last bought</span><span></span></div>
@@ -1188,7 +1189,7 @@ const COL={no_answer:'#7C3AED',not_selling:'#d6455a',call_back:'#d97706',lead:'#
   ov.addEventListener('click',e=>{ if(e.target!==ov) return;
     if(dirty&&Date.now()-warned>4000){ warned=Date.now(); toast('You typed something here. Tap outside again to close without saving.'); return; }
     dirty=false; warned=0; closeOv(); }); })();
-document.addEventListener('click',e=>{ const h=e.target.closest('#main .ph2 h1, #main .pph2 h1'); if(!h) return; const b=document.getElementById('tabbtn')||document.getElementById('ptabbtn'); if(b&&b.offsetParent) navPop(b); });
+// (page titles are plain titles now; the sidebar and the phone's bottom bar move between pages)
 
 // ---------- Side bar on computers: every page one click away (the menu took 7 to 30 seconds to use) ----------
 // Pipeline opens Leads, Appraisals and Listings when you point at it. The button at the top folds the bar down to just the icons.
@@ -1196,11 +1197,11 @@ const SIDE=[['calls','Calls','phone'],['enquiry','Call sheets','msg'],['pipe','P
 const LOGO2=`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2.2" width="20" height="15.6" rx="4.2" fill="#3b82f6"/><path d="M5.2 16.8 4.4 22.4 10.6 17.4z" fill="#3b82f6" stroke="#3b82f6" stroke-width="1" stroke-linejoin="round"/><rect x="15.3" y="5.3" width="1.7" height="3.4" rx=".4" fill="#fff"/><path d="M5.8 9.9 12 5l6.2 4.9" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.9 9.4 12 5.4l5.1 4v6.3H6.9z" fill="#fff"/><path d="M10.5 15.7v-4a.4.4 0 0 1 .4-.4h2.2a.4.4 0 0 1 .4.4v4z" fill="#3b82f6"/></svg>`;
 function sideFolded(){ try{ return localStorage.getItem('dp_side')==='1'; }catch{ return false; } }
 function sideFold(){ try{ localStorage.setItem('dp_side',sideFolded()?'0':'1'); }catch{} sideApply(); }
-function sideW(){ let w=220; try{ w=+localStorage.getItem('dp_side_w')||220; }catch{} return Math.min(380,Math.max(170,w)); }
+function sideW(){ let w=184; try{ w=+localStorage.getItem('dp_side_w')||184; }catch{} return Math.min(380,Math.max(150,w)); }
 function sideApply(){ const n=document.querySelector('.side2'); if(!n) return; const f=sideFolded(); n.classList.toggle('fold',f); n.style.width=f?'':sideW()+'px'; }
-function sideReset(){ try{ localStorage.setItem('dp_side_w','220'); localStorage.setItem('dp_side','0'); }catch{} sideApply(); }
+function sideReset(){ try{ localStorage.setItem('dp_side_w','184'); localStorage.setItem('dp_side','0'); }catch{} sideApply(); }
 function sideDrag(e){ const n=document.querySelector('.side2'); if(!n) return; e.preventDefault(); const now=Date.now(); if(now-(window._rzT||0)<400){ window._rzT=0; return sideReset(); } let moved=false; const x0=n.getBoundingClientRect().left; n.classList.add('drag'); document.body.classList.add('rzing');
-  const mv=ev=>{ moved=true; const w=ev.clientX-x0; const fold=w<120; try{ localStorage.setItem('dp_side',fold?'1':'0'); if(!fold) localStorage.setItem('dp_side_w',String(Math.round(Math.min(380,Math.max(170,w))))); }catch{} sideApply(); };
+  const mv=ev=>{ moved=true; const w=ev.clientX-x0; const fold=w<120; try{ localStorage.setItem('dp_side',fold?'1':'0'); if(!fold) localStorage.setItem('dp_side_w',String(Math.round(Math.min(380,Math.max(150,w))))); }catch{} sideApply(); };
   const up=()=>{ window._rzT=moved?0:Date.now(); n.classList.remove('drag'); document.body.classList.remove('rzing'); removeEventListener('pointermove',mv); removeEventListener('pointerup',up); };
   addEventListener('pointermove',mv); addEventListener('pointerup',up); }
 function sideGo(k){ closePop2(); closeOv(); if(k==='appraisal'||k==='listed'){ S.pst=k; go('pipeline'); } else go(k); }
@@ -1352,6 +1353,7 @@ window.viewPipeline=(function(orig){ return async function(local){ const r=await
   { const seg=document.querySelector('#main .pph2 .seg2.mini'); if(seg){ if(desk2()) seg.remove(); else seg.querySelectorAll('button').forEach(b=>{ const k=(b.getAttribute('onclick')||'').match(/S.pst='(\w+)'/); if(k&&!['appraisal','listed'].includes(k[1])) b.remove(); }); }
     const pst=S.pst||'appraisal', n=k=>(S.pipe||[]).filter(x=>ptab(x.stage)===k).length, ex=['sold','withdrawn','lost'].filter(k=>n(k));
     if(pst!=='appraisal'&&(ex.length||pst!=='listed')){ document.querySelector('#main .pp2')?.insertAdjacentHTML('beforeend',`<div class="pex2">${pst!=='listed'?`<button onclick="S.pst='listed';viewPipeline(true)">Back to listings</button>`:''}${ex.filter(k=>k!==pst).map(k=>`<button onclick="S.pst='${k}';viewPipeline(true)">${n(k)} ${PST[k][0].toLowerCase()}</button>`).join('')}</div>`); } }
+  document.querySelectorAll('.tabbtn').forEach(t=>t.textContent=tabName());
   }catch(e){} return r; }; })(window.viewPipeline);
 function apptEdit2(id){ const x=(S.pipe||[]).find(p=>p.property_id===id)||{}; openSheet2('Appraisal time',`<input type="datetime-local" id="apt3" value="${x.appt_at?sydInput(new Date(x.appt_at)):sydInput(new Date(Date.now()+864e5)).slice(0,11)+'10:00'}" step="900" style="height:52px;border-radius:8px;padding:0 14px">
    <button class="b2 pri" onclick="apptSave2(${id})">Save time</button>`); }

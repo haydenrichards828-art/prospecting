@@ -816,3 +816,11 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 }
 /* the red "new matches" dots are gone: the Leads list already marks new matches on each lead */
 .tabbtn .dot,.si2 .dot,.ndot{display:none!important}
+.tabbtn{cursor:default}
+/* tighter sidebar */
+@media (min-width:1000px){
+  .side2{padding:10px 6px!important;margin-right:clamp(0px,0.8vw,10px)!important}
+  .side2 .si2{padding:8px 10px!important;gap:10px;font-size:14px}
+  .side2 .sh2{padding:2px 4px 8px}
+  .grp2 .kids2{margin-left:16px!important}
+}
