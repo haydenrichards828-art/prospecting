@@ -874,3 +874,8 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 .bh3 button,.cb3>*,.bm3{min-height:0!important}
 .bh3 .ad3{padding:0!important;width:28px!important;height:28px!important}
 .pg2.bp3{padding-top:16px}
+@media(min-width:900px){
+ .pg2:has(.ltab3),.pg2.bp3{padding:12px 16px 24px!important;max-width:none!important}
+ .pg2:has(.ltab3) .ph2{margin-bottom:12px}
+ .pg2:has(.ltab3) .ph2 h1{font-size:22px}
+}
