@@ -888,3 +888,6 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
  .pg2:has(.ltab3) .lt3>*:first-child,.pg2:has(.ltab3) .lg3{padding-left:20px}
  .pg2:has(.ltab3) .fqb2,.pg2:has(.ltab3) .seg2,.pg2:has(.ltab3) .b2.pri{height:36px!important;min-height:0!important}
 }
+/* Folded sidebar: an invisible bridge over the gap so the menu stays open while the pointer moves across to it */
+.side2.fold .grp2 .kids2::before{content:"";position:absolute;left:-24px;top:-8px;bottom:-8px;width:24px}
+.side2.fold .grp2:hover .kids2,.side2.fold .grp2:focus-within .kids2{display:flex}
