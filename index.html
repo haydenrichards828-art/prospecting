@@ -440,7 +440,7 @@ function paintCalls(){
   const ready = ov.ready_texts||0;
   const quiet = bestTimeBanner(ov.times).includes("banner warn") ? bestTimeBanner(ov.times) : "";
   $("#main").innerHTML = `
-   ${ov.failed?`<div class="banner bad"><i class="ti ti-alert-triangle"></i><div>Something didn't run overnight. <a href="#" onclick="go('insights');return false" style="color:inherit;font-weight:600">See details</a></div></div>`:""}
+
    ${quiet}
    <div class="top"><div class="prog" id="prog"></div>
     <div class="seg"><button class="${S.type==="seller"?"on":""}" onclick="S.type='seller';S.page=0;render()">Sellers</button><button class="${S.type==="landlord"?"on":""}" onclick="S.type='landlord';S.page=0;render()">Landlords</button></div>
@@ -1660,7 +1660,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=104"></script>
+<script src="v2.js?v=105"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

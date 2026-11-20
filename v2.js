@@ -215,7 +215,7 @@ function drawProg(){
 function curCall(){ const all=queue(); if(S.pick){ const p=all.find(r=>r.property_id===S.pick); if(p) return p; S.pick=null; } return all.find(r=>!r.today_outcome&&!S.skipped.has(r.property_id)); }
 function drawList(){ if(S.tab!=='calls'||S.searching||!$("#main")) return; $("#main").className='v2main'; if(S.view==='list') return drawList2(); drawCall2(); }
 function hoursStrip(){ if(callingAllowed()) return ''; return `<div class="hline2">${ic2('clock',16)}Outside legal calling hours. Next window ${nextWindowText()}. Only call if they asked you to call at this time.</div>`; }
-function failStrip(){ return S.ov?.failed?`<div class="hline2" style="color:var(--nsT);background:#d6455a1a;border-color:#d6455a44">${ic2('warn',16)}Something didn't run overnight.&nbsp;<a href="#" onclick="go('insights');return false" style="color:inherit">See details</a></div>`:''; }
+function failStrip(){ return ''; }   // the overnight job warning is not shown
 function barHTML2(id,small){ return `<div class="bar2x">${OUT2.map(o=>`<button style="--c:${o.bg}" onclick="act2(${id},'${o.o}')" ${small?`onmousedown="event.preventDefault()" aria-label="${o.lab}"`:''}>${ic2(o.icon,small?18:20)}${small?`<span class="sl3">${o.lab}</span>`:`<span>${o.lab}</span><span class="k">${o.key}</span>`}</button>`).join('')}</div>`; }
 function setNote(id,v){ if(v.trim()) notes[id]=v; else delete notes[id]; document.querySelectorAll('.nsaved').forEach(x=>x.textContent=v.trim()?'· saved':''); document.querySelectorAll('textarea[data-note]').forEach(t=>{ if(t!==document.activeElement) t.value=v; }); }
 function numBtn(r,cls){
