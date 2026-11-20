@@ -879,3 +879,4 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
  .pg2:has(.ltab3) .ph2{margin-bottom:12px}
  .pg2:has(.ltab3) .ph2 h1{font-size:22px}
 }
+@media(min-width:900px){.pg2:has(.ltab3) .ph2 h1{display:none}.pg2:has(.ltab3) .ph2{justify-content:flex-end}}
