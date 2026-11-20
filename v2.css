@@ -824,3 +824,5 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
   .side2 .sh2{padding:2px 4px 8px}
   .grp2 .kids2{margin-left:16px!important}
 }
+/* one search box only: the top bar search on a computer, the search button on the phone */
+@media (min-width:900px){ .psrch{display:none!important} }

@@ -175,7 +175,7 @@ function navPop(btn){
   const r=btn.getBoundingClientRect(), pop=$("#pop2"); pop.innerHTML=body; pop.style.left=r.left+'px'; pop.style.top=(r.bottom+8)+'px'; pop.classList.add('show'); $("#popscrim2").classList.add('show');
 }
 function closePop2(){ $("#pop2")?.classList.remove('show'); $("#popscrim2")?.classList.remove('show'); }
-function v2search(v){ const m=$("#main"); if(m) m.className='v2main old'; S.psearch=S.psearch||!!v; hSearch(v); }
+function v2search(v){ const m=$("#main"); if(m) m.className='v2main old'; if(!desk2()) S.psearch=S.psearch||!!v; hSearch(v); }
 function togglePS(){ S.psearch=!S.psearch; if(!S.psearch&&S.sq){ S.sq=''; hSearch(''); return; } render(); if(S.psearch) setTimeout(()=>$("#hq2")?.focus(),30); }
 
 async function render(){
