@@ -1528,7 +1528,7 @@ async function board3(local){
   const ls=(S.leads||[]).slice().sort((a,b)=>(a.follow_up||'9999').localeCompare(b.follow_up||'9999'));
   const ap=rows.filter(x=>x.stage==='appraisal'), li=rows.filter(x=>x.stage==='listed');
   const n=d=>dueIn(d);
-  const lc=ls.slice(0,6).map(l=>{ const d=n(l.follow_up); return card3({buyer:hasCriteria(l.buy),photo:aerialUrl(l,PH_SMALL[0],PH_SMALL[1]),name:leadTitle(l),
+  const lc=ls.slice(0,5).map(l=>{ const d=n(l.follow_up); return card3({buyer:hasCriteria(l.buy),photo:aerialUrl(l,PH_SMALL[0],PH_SMALL[1]),name:leadTitle(l),
     key:d===null?'No date':d<0?`${-d} day${d===-1?'':'s'} overdue`:d===0?'Today':dayK3(l.follow_up),cls:d!==null&&d<0?'od':d===0?'td':'',sub:[ltype3(l),l.next_action].filter(Boolean).join(', '),
     addr:[l.address,l.suburb].filter(Boolean).join(', '),open:`openLead(${l.id})`,
     acts:l.phone?`<a class="call" href="tel:${esc(telOf(l.phone))}" aria-label="Call">${ic2('phone',16)}</a><a href="${smsLink(l.phone,'')}" aria-label="Text">${ic2('msg',16)}</a>`:''}); });
