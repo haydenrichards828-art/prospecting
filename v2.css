@@ -880,3 +880,11 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
  .pg2:has(.ltab3) .ph2 h1{font-size:22px}
 }
 @media(min-width:900px){.pg2:has(.ltab3) .ph2 h1{display:none}.pg2:has(.ltab3) .ph2{justify-content:flex-end}}
+/* Leads edge to edge, like the mockup: the table runs to the sides, the controls sit in one slim strip above it */
+@media(min-width:900px){
+ .pg2:has(.ltab3){padding:0 0 24px!important}
+ .pg2:has(.ltab3) .ph2{margin:0;padding:10px 20px;min-height:60px;box-sizing:border-box;border-bottom:1px solid #363e4b}
+ .pg2:has(.ltab3) .ltab3{border:0;border-radius:0}
+ .pg2:has(.ltab3) .lt3>*:first-child,.pg2:has(.ltab3) .lg3{padding-left:20px}
+ .pg2:has(.ltab3) .fqb2,.pg2:has(.ltab3) .seg2,.pg2:has(.ltab3) .b2.pri{height:36px!important;min-height:0!important}
+}
