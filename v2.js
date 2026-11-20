@@ -1539,7 +1539,7 @@ async function board3(local){
   const lic=li.map(x=>pc(x,'Listed '+when3(x,'listed_at'),'',src(x).replace(/^f/,'F')));
   const col=(k,title,count,cards,go,add,more)=>`<section class="bc3 ${k}"><div class="bh3"><button onclick="${go}">${title}</button><span>${count}</span><button class="ad3" aria-label="Add" onclick="${add}">${ic2('plus',16)}</button></div>${cards.join('')||'<p class="be3">Nothing here yet</p>'}<button class="bm3" onclick="${go}">${more}${ic2('chev',14)}</button></section>`;
   $("#main").className='v2main';
-  $("#main").innerHTML=`<div class="pg2"><div class="ph2"><h1>Pipeline</h1><span class="muted" style="font-size:14px">${ls.length+ap.length+li.length} people</span></div><div class="bd3">
+  $("#main").innerHTML=`<div class="pg2 bp3"><div class="bd3">
     ${col('ld','Leads',ls.length,lc,"go('leads')",'openLead(null)',`View all ${ls.length} leads`)}
     ${col('ap','Appraisals',ap.length,apc,"sideGo('appraisal')",'openAddPipe()','Open Appraisals')}
     ${col('ls','Listings',li.length,lic,"sideGo('listed')",'openAddPipe()','Open Listings')}</div></div>`;
