@@ -1596,11 +1596,15 @@ async function mapExtras3(){ if(!S.map||S.tab!=='drops') return;
     pin(x.lat,x.lng,x.stage==='listed'?'#0d9488':'#15803d',`<b>${x.stage==='listed'?'Our listing':'Our appraisal'}</b><br>${esc([x.street_address,x.suburb].filter(Boolean).join(', '))}<br><span style="color:#667">Drop the neighbours</span>`); }
   try{ if(!S.rsales) S.rsales=(await api("recent_sales")).rows||[]; }catch{ S.rsales=[]; }
   const k=v=>v>=1e6?'$'+(v/1e6).toFixed(2).replace(/0$/,'').replace(/\.0$/,'')+'m':'$'+Math.round(v/1e3)+'k';
-  for(const s of S.rsales){ L.marker([s.lat,s.lng],{icon:L.divIcon({className:'sale3',html:`<span>${k(+s.price)}</span>`,iconSize:null})})
+  // zoomed out: a small dot per sale; close in: the price tag, so they never pile up
+  const near=S.map.getZoom()>=16;
+  if(!S._salesZoom){ S._salesZoom=true; S.map.on('zoomend',()=>{ const n=S.map.getZoom()>=16; if(n!==S._salesNear){ S._salesNear=n; mapExtras3(); } }); }
+  S._salesNear=near;
+  for(const s of S.rsales){ (near?L.marker([s.lat,s.lng],{icon:L.divIcon({className:'sale3',html:`<span>${k(+s.price)}</span>`,iconSize:null})}):L.circleMarker([s.lat,s.lng],{radius:4,weight:1.5,color:'#111419',fillColor:'#f6c026',fillOpacity:1}))
     .bindPopup(`<b>Sold ${k(+s.price)}</b><br>${esc(s.addr)}, ${esc(s.suburb||'')}<br><span style="color:#667">${new Date(s.d).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}</span>`).addTo(g); }
   // streets already dropped: a small date tag where the street sits
   const byId=new Map((S.drops||[]).map(x=>[x.id,x]));
-  for(const st of S.streets||[]){ const ds=(st.ids||[]).map(id=>byId.get(id)).filter(x=>x&&isDropped(x)); if(!ds.length||ds.length<(st.ids||[]).length) continue;
+  for(const st of near?(S.streets||[]):[]){ const ds=(st.ids||[]).map(id=>byId.get(id)).filter(x=>x&&isDropped(x)); if(!ds.length||ds.length<(st.ids||[]).length) continue;
     const last=ds.map(x=>x.dropped_at).sort().pop(), p=(st.paths||[])[0]; if(!p||!p.length) continue; const m=p[Math.floor(p.length/2)];
     L.marker([m[1],m[0]],{icon:L.divIcon({className:'dd3',html:`<span>Dropped ${new Date(last).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</span>`,iconSize:null}),interactive:false}).addTo(g); }
   S.dext=g.addTo(S.map); }
