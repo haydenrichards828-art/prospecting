@@ -25,6 +25,9 @@ Prospect is a calling and pipeline tool for one real estate prospector (Marlowe,
 9. Page titles are plain titles, not menus. Pipeline pages are titled Appraisals and Listings.
 10. No red notification dots. No overnight job warnings in the app.
 11. App copy: plain words, no dashes.
+12. Accent stays the current blue, #2563eb (decided 20 November).
+13. Dark mode only, no light theme (decided 20 November).
+14. Keep today's density; refine it, do not make it more spacious (decided 20 November).
 
 ## Foundations as measured (grep, 20 November)
 
@@ -49,7 +52,8 @@ Prospect is a calling and pipeline tool for one real estate prospector (Marlowe,
 
 Static HTML, CSS and vanilla JavaScript on GitHub Pages, Supabase backend. No framework, no build step. Inter from Google Fonts.
 
-## Open questions for the owner
+## Design system and mockups (20 November)
 
-- Accent colour: keep the current blue, or choose a brand colour for a sellable product.
-- Light theme as an option for selling to other agencies, or dark only.
+The tokens, brand book and twelve components live in the Prospect design system: https://claude.ai/artifact/BKsy6wTh6ryg6mxrrmSQY7
+Mockups of the call screen, Leads list and lead panel, desktop and phone: https://claude.ai/artifact/YMTPfxcFYqWLVgfmQvA5KS
+Both are proposals for approval. The app has not been changed to match them yet.
