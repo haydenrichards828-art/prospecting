@@ -1463,3 +1463,37 @@ window.hSearch=function(v){ S.sq=v; clearTimeout(searchT); const q=v.trim();
   runSearch(q,pre);
   if(SC2.has(key)) return;
   searchT=setTimeout(async()=>{ try{ const r=await api('search',{q}); SC2.set(key,r); if(SC2.size>200) SC2.delete(SC2.keys().next().value); if(S.searching&&S.sq.trim()===q) runSearch(q,r); }catch(e){} },70); };
+
+// ---------- More tracking: errors and slowness, undos and backtracks, search success, calls with no result ----------
+// Same rules as the rest: labels, counts and timings only, never anything typed or read off the screen.
+(function(){ if(typeof uxPush!=='function') return;
+  // 1. Every server request: slow ones (over 1.5s) and failed ones are recorded
+  const wrapApi=fn=>async function(action,body){ const t0=performance.now(); try{ const r=await fn(action,body); const ms=Math.round(performance.now()-t0); if(ms>1500) uxPush('api',{g:'api:'+action,dt:ms,m:{ok:true}}); return r; }
+    catch(e){ const ms=Math.round(performance.now()-t0); uxPush('api',{g:'api:'+action,dt:ms,m:{ok:false,offline:!navigator.onLine}}); throw e; } };
+  window.api=wrapApi(window.api); if(window.api2) window.api2=wrapApi(window.api2);
+  addEventListener('offline',()=>uxPush('offline',{})); addEventListener('online',()=>uxPush('online',{}));
+  // 2. Undo taps
+  document.addEventListener('click',e=>{ if(e.target.closest('#toast #undo')){ const msg=($('#toast')?.firstChild?.textContent||'').trim().replace(/\d{3,}/g,'#').slice(0,40); uxPush('undo',{g:'undo:'+(/^(Saved|Added|Already)/.test(msg)?'open':msg.replace(/ saved$/,'').toLowerCase())}); } },true);
+  // 3. A sheet closed without choosing anything
+  let sheetAt=0, sheetTitle='', sheetUsed=false;
+  window.openSheet2=(function(o){ return function(title,...a){ sheetAt=Date.now(); sheetTitle=String(title).replace(/<[^>]+>/g,'').replace(/(with|call) [A-Z][\w']+( [A-Z][\w']+)*/g,'$1 #').slice(0,40); sheetUsed=false; return o(title,...a); }; })(window.openSheet2);
+  document.addEventListener('click',e=>{ if(sheetAt&&e.target.closest('#sheet .sb2 button, #sheet .sb2 a, #sheet .sb2 input, #sheet .sb2 textarea')) sheetUsed=true; },true);
+  window.closeOv=(function(o){ return function(...a){ if(sheetAt&&!sheetUsed&&$('#ov.show')&&$('#sheet.v2s')) uxPush('abandon',{g:'sheet:'+sheetTitle,dt:Date.now()-sheetAt}); sheetAt=0; return o(...a); }; })(window.closeOv);
+  // 4. A lead opened again within 15 seconds of saving it
+  let lastSave={id:null,at:0};
+  window.toast2=(function(o){ return function(msg,label,fn){ if(/^Saved/.test(msg)) lastSave={id:S.ol&&S.ol.id,at:Date.now()}; return o(msg,label,fn); }; })(window.toast2);
+  window.openLead=(function(o){ return function(id,opts){ if(id&&lastSave.id===id&&Date.now()-lastSave.at<15e3&&!(opts&&opts.saved)) uxPush('reopen',{g:'lead',dt:Date.now()-lastSave.at}); return o(id,opts); }; })(window.openLead);
+  // 5. Search: how long the search was and whether a result got opened
+  let sStart=0, sLen=0, sOpened=false;
+  window.hSearch=(function(o){ return function(v){ const q=String(v||'').trim();
+    if(q&&!sStart){ sStart=Date.now(); sOpened=false; }
+    if(q) sLen=q.length;
+    if(!q&&sStart){ uxPush('search',{g:'search',dt:Date.now()-sStart,m:{len:sLen,opened:sOpened}}); sStart=0; }
+    return o(v); }; })(window.hSearch);
+  ['openSearchLead','openSearchProp','openSearchListing'].forEach(n=>{ if(window[n]) window[n]=(function(o){ return function(...a){ if(sStart&&!sOpened){ sOpened=true; uxPush('search',{g:'search',dt:Date.now()-sStart,m:{len:sLen,opened:true,kind:n.replace('openSearch','').toLowerCase()}}); sStart=Date.now(); } return o(...a); }; })(window[n]); });
+  // 6. A call dialled but no result logged for it
+  const pend=new Map();
+  window.markDial=(function(o){ return function(pid){ pend.set(pid,Date.now()); return o(pid); }; })(window.markDial);
+  window.record=(function(o){ return async function(id,...a){ pend.delete(id); const now=Date.now(); for(const [p,t] of pend){ if(p!==id){ uxPush('nooutcome',{p,dt:now-t}); pend.delete(p); } } return o(id,...a); }; })(window.record);
+  window.skip2=(function(o){ return function(id){ if(pend.has(id)){ uxPush('nooutcome',{p:id,dt:Date.now()-pend.get(id),m:{skipped:true}}); pend.delete(id); } return o(id); }; })(window.skip2);
+})();
