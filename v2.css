@@ -889,7 +889,7 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
  .pg2:has(.ltab3) .fqb2,.pg2:has(.ltab3) .seg2,.pg2:has(.ltab3) .b2.pri{height:36px!important;min-height:0!important}
 }
 /* Folded sidebar: an invisible bridge over the gap so the menu stays open while the pointer moves across to it */
-.side2.fold .grp2 .kids2::before{content:"";position:absolute;left:-24px;top:-8px;bottom:-8px;width:24px}
+.side2.fold .grp2 .kids2::before{content:"";position:absolute;left:-26px;top:-8px;bottom:-8px;width:26px}
 .side2.fold .grp2:hover .kids2,.side2.fold .grp2:focus-within .kids2{display:flex}
 @media(min-width:900px){
  .lg4{grid-template-columns:64px minmax(240px,2fr) minmax(170px,1fr) 120px 400px!important;padding:12px 20px!important}
@@ -911,3 +911,7 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 @media(min-width:900px){ .pg2.pl3{padding:0 0 24px!important;max-width:none!important} .pg2.pl3 .ph2{margin:0;padding:10px 20px;min-height:60px;box-sizing:border-box;border-bottom:1px solid #363e4b;justify-content:space-between} .pg2.pl3 .ltab3{border:0;border-radius:0} .pg2.pl3 .b2.pri{height:36px!important} }
 .cd3{padding:8px 6px 8px 8px}.ph3{flex-basis:52px;height:52px}.cb3{flex-direction:row;align-items:flex-start}
 .ck3,.ca3{font-size:13px}
+/* the folded menu was opening behind the page and the resize handle: lift the sidebar above both */
+.side2.fold{z-index:40}
+.side2.fold:not([style*="position"]){position:relative}
+.side2.fold .rz2{pointer-events:none}
