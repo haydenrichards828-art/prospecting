@@ -353,12 +353,12 @@ function hSearch(v){
 const sWords=q=>q.toLowerCase().replace(/[,/]/g," ").split(/\s+/).filter(Boolean);
 const sHay=(...xs)=>xs.map(x=>String(x??"")).join(" ").toLowerCase()+" "+xs.map(x=>String(x??"").replace(/\D/g,"")).join(" ");
 const sHit=(words,hay)=>words.every(w=>hay.includes(w));
-async function runSearch(q){
+async function runSearch(q, pre){
   const seq=++searchSeq, words=sWords(q);
   const calls=[...(S.callbacks||[]),...(S.rows||[])].filter((r,i,a)=>a.findIndex(x=>x.property_id===r.property_id)===i)
     .filter(r=>sHit(words,sHay(r.owner_name,r.phone,r.street_address,r.suburb))).slice(0,15);
   let res={leads:[],props:[],listings:[]};
-  try { res=await api("search",{q}); } catch(e){ if(seq!==searchSeq) return; $("#main").innerHTML=`<div class="empty"><i class="ti ti-wifi-off"></i>${esc(e.message)}</div>`; return; }
+  if (pre) res=pre; else try { res=await api("search",{q}); } catch(e){ if(seq!==searchSeq) return; $("#main").innerHTML=`<div class="empty"><i class="ti ti-wifi-off"></i>${esc(e.message)}</div>`; return; }
   if (seq!==searchSeq || !S.searching) return;
   S.sres={...res,calls};
   const fmtPh=p=>esc(fmtPh2(p));
@@ -1660,7 +1660,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=102"></script>
+<script src="v2.js?v=103"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

@@ -1446,3 +1446,20 @@ window.paintInsights=(function(orig){ return function(...a){ const r=orig(...a);
 window.viewSettings=(function(orig){ return async function(...a){ const r=await orig(...a); try{ const ov=S.ovFull||await api('overview'); const pend=(ov.versions||[]).filter(v=>!v.approved);
   if(pend.length){ const v=pend[0]; document.querySelector('#main .setw2 .ph2')?.insertAdjacentHTML('afterend',`<div class="warn2" style="color:var(--accT);margin-bottom:14px">${ic2('trend',18)}<div style="flex:1"><b>A better call order is ready.</b> <span style="color:var(--t2)">${esc(weightsPlain2(v))}</span>
      <div style="display:flex;gap:8px;margin-top:10px"><button class="b2 pri" style="height:40px" onclick="approve(${v.version})">Use it</button><button class="b2" style="height:40px" onclick="reject(${v.version})">Not now</button></div></div></div>`); } }catch(e){} return r; }; })(window.viewSettings);
+
+// Search: results from the first letter, shown straight away from what is already on the phone, then filled in from the server.
+// Answers are remembered, so typing on or deleting back is instant.
+const SC2=new Map();
+function sLocal2(q,base){ const w=sWords(q), hit=(...xs)=>sHit(w,sHay(...xs));
+  const leads=(base?base.leads:(S.leads||[])).filter(l=>hit(l.name,l.phone,l.address,l.suburb)).slice(0,20);
+  const props=(base?base.props:[]).filter(p=>hit(p.owner_name,p.phone,p.owner2_name,p.phone2,p.street_address,p.suburb));
+  const listings=(base?base.listings:(S.listings||[])).filter(t=>hit(t.address,t.suburb)).slice(0,10);
+  return {leads,props,listings}; }
+window.hSearch=function(v){ S.sq=v; clearTimeout(searchT); const q=v.trim();
+  if(!q){ if(S.searching){ S.searching=false; const back=S.prevTab||'calls'; S.prevTab=null; go(back); setTimeout(()=>{ const i=$('#hq')||$('#hq2'); if(i){ i.value=v; i.focus(); } },0); } return; }
+  if(!S.searching){ S.searching=true; S.prevTab=S.tab; }
+  const key=q.toLowerCase(); let pre=SC2.get(key);
+  if(!pre){ let k=key; while(k.length>1&&!SC2.has(k)) k=k.slice(0,-1); const b=SC2.get(k); pre=sLocal2(q,b&&key.startsWith(k)?b:null); }
+  runSearch(q,pre);
+  if(SC2.has(key)) return;
+  searchT=setTimeout(async()=>{ try{ const r=await api('search',{q}); SC2.set(key,r); if(SC2.size>200) SC2.delete(SC2.keys().next().value); if(S.searching&&S.sq.trim()===q) runSearch(q,r); }catch(e){} },70); };
