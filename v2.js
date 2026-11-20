@@ -951,16 +951,41 @@ function importSheet(listId){ const ts=(S.listings||[]).slice(); S.imp=null;
   openSheet2(listId?'Add more enquiries':'Import enquiries',`${listId?'':`<label class="fl2">Property<select id="im_listing"><option value="">Pick a Dignam listing</option>${ts.map(t=>`<option value="${t.id}">${esc(t.address)}${t.suburb?', '+esc(t.suburb):''}</option>`).join('')}<option value="other">Something else</option></select></label>
    <label class="fl2" id="im_titlew" hidden>Name for this list<input id="im_title" placeholder="12 Smith St, Bulli"></label>
    <label class="fl2">Open home day and time<input type="datetime-local" id="im_open"></label>`}
-   <label class="fl2">Export from the CRM (CSV or Excel)<input type="file" id="im_file" accept=".csv,.xlsx,.xls,text/csv" onchange="impFile(this.files[0])"></label>
+   <label class="fl2">Export from the CRM (CSV, Excel or PDF)<input type="file" id="im_file" accept=".csv,.xlsx,.xls,.pdf,text/csv,application/pdf" onchange="impFile(this.files[0])"></label>
    <label class="fl2">Or paste the rows<textarea id="im_paste" rows="3" placeholder="Copy the enquiry list in the CRM, including the headings, and paste it here" oninput="impParse(this.value)"></textarea></label>
    <p class="hint2" id="im_res" aria-live="polite"></p>
    <button class="b2 pri" id="im_go" onclick="impGo(${listId||'null'})" disabled>Import</button>`,listId?`elSettings(${listId})`:null);
   const s=$('#im_listing'); if(s) s.onchange=()=>{ $('#im_titlew').hidden=s.value!=='other'; }; }
 async function impFile(f){ if(!f) return; $('#im_res').textContent='Reading…';
   try{ let rows;
-    if(/\.xlsx?$/i.test(f.name)){ const X=await import('https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs'); const wb=X.read(await f.arrayBuffer(),{cellDates:true}); rows=X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''}); }
+    if(/\.pdf$/i.test(f.name)||f.type==='application/pdf') rows=await pdfRows(f);
+    else if(/\.xlsx?$/i.test(f.name)){ const X=await import('https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs'); const wb=X.read(await f.arrayBuffer(),{cellDates:true}); rows=X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''}); }
     else rows=parseCSV(await f.text());
     impRows(rows); }catch(e){ $('#im_res').textContent="Couldn't read that file. "+e.message; } }
+// A PDF report from the CRM: the text is read page by page and laid back out as rows under the column headings.
+// With no headings, each line that holds a phone number or email becomes one person.
+async function pdfRows(f){
+  const pdfjs=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs');
+  pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+  const doc=await pdfjs.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise, lines=[];
+  for(let p=1;p<=doc.numPages;p++){ const tc=await (await doc.getPage(p)).getTextContent();
+    const its=tc.items.filter(i=>i.str&&i.str.trim()).map(i=>({s:i.str.trim(),x:i.transform[4],y:i.transform[5],w:i.width||0})).sort((a,b)=>b.y-a.y||a.x-b.x);
+    let cur=null; for(const it of its){ if(!cur||Math.abs(cur.y-it.y)>3){ cur={items:[]}; lines.push(cur); cur.y=it.y; } cur.items.push(it); } }
+  lines.forEach(l=>l.items.sort((a,b)=>a.x-b.x));
+  const isHead=l=>{ const t=l.items.map(i=>i.s.toLowerCase()).join(' '); return /name/.test(t)&&/mobile|phone|email/.test(t); };
+  const hi=lines.findIndex(isHead);
+  if(hi>=0){ const heads=[]; for(const it of lines[hi].items){ const h=heads[heads.length-1]; if(h&&it.x-(h.x+h.w)<8){ h.s+=' '+it.s; h.w=it.x+it.w-h.x; } else heads.push({...it}); }
+    const rows=[heads.map(h=>h.s)];
+    for(const l of lines.slice(hi+1)){ if(isHead(l)) continue;
+      const r=heads.map(()=>[]); for(const it of l.items){ let k=0; heads.forEach((h,j)=>{ if(it.x>=h.x-6) k=j; }); r[k].push(it.s); }
+      const cells=r.map(c=>c.join(' '));
+      if(!cells[0]&&rows.length>1&&!/\d{6}/.test(cells.join(''))){ const prev=rows[rows.length-1]; cells.forEach((c,j)=>{ if(c) prev[j]=(prev[j]?prev[j]+' ':'')+c; }); continue; }  // a wrapped line belongs to the row above
+      rows.push(cells); }
+    return rows; }
+  const out=[['Name','Mobile','Email']];
+  for(const l of lines){ const t=l.items.map(i=>i.s).join(' '); const ph=(t.match(/(\+?61\s?|0)4[\d ]{8,11}\d/)||t.match(/\(?0[2-8]\)?[\d ]{8,10}\d/)||[''])[0], em=(t.match(/[\w.+-]+@[\w-]+\.[\w.]+/)||[''])[0];
+    if(!ph&&!em) continue; out.push([t.replace(ph,'').replace(em,'').replace(/\s{2,}/g,' ').trim(),ph.trim(),em]); }
+  return out; }
 function impParse(t){ if(!t.trim()){ $('#im_res').textContent=''; $('#im_go').disabled=true; return; }
   const rows=t.includes('\t')?t.split(/\r?\n/).filter(l=>l.trim()).map(l=>l.split('\t')):parseCSV(t); impRows(rows); }
 function impDate(v){ v=String(v||'').trim(); let m=v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/); if(m){ const y=+m[3]<100?2000+ +m[3]:+m[3]; return `${y}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`; }
