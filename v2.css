@@ -922,3 +922,7 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 .wkb3{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;min-height:38px;margin-bottom:8px;border-radius:8px;border:1px solid #363e4b;background:none;color:#93c0ff;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 /* no gap or rounded corners between the sidebar and the page: one continuous surface split by a line */
 @media(min-width:900px){ .side2{margin:0!important;border-radius:0!important;border-right:1px solid #232831!important} #shell>.panel{border-radius:0!important} }
+
+.wk4{display:flex;align-items:center;gap:8px;margin-bottom:8px}.wk4 label{font-size:13px;color:#a3acb9;white-space:nowrap}
+.wk4 select{flex:1;min-width:0;height:38px;border-radius:8px;border:1px solid #636d7e;background:#111419;color:#f2f4f7;font:inherit;font-size:14px;padding:0 8px}
+.wk4 .wkb3{width:auto;flex:none;margin:0;padding:0 14px}

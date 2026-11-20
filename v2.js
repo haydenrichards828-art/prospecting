@@ -1639,7 +1639,13 @@ window.drawDropLayer=(function(orig){ return function(...a){ const r=orig(...a);
 // gaps between streets shortest, and the route between them comes from OpenStreetMap's walking router.
 function ends3(pts){ const c=pts.reduce((a,p)=>[a[0]+p[0]/pts.length,a[1]+p[1]/pts.length],[0,0]), d=(p,q)=>L.latLng(p).distanceTo(q);
   const a=pts.reduce((b,p)=>d(p,c)>d(b,c)?p:b,pts[0]), b=pts.reduce((m,p)=>d(p,a)>d(m,a)?p:m,pts[0]); return [a,b]; }
-async function walk3(){ const gs=(S._best||[]).filter(x=>x.pts&&x.pts.length); if(gs.length<2||!S.map) return toast('Not enough streets to plan a walk');
+// Suburbs to walk, best first: ranked by their best street still to drop
+function walkSubs3(){ const m=new Map(); for(const g of dropGroups('street')){ const sub=g.k.split(', ').pop(); const o=m.get(sub)||{sub,best:0,n:0}; o.best=Math.max(o.best,g.avg); o.n++; m.set(sub,o); }
+  return [...m.values()].filter(o=>o.n>=2).sort((a,b)=>b.best-a.best); }
+async function walk3(){ const sub=document.getElementById('wksub')?.value||S.walkSub||walkSubs3()[0]?.sub; S.walkSub=sub;
+  // every good street in that one suburb (up to 15), so the walk never leaves it or walks past a red street without dropping it
+  const gs=dropGroups('street').filter(g=>g.k.split(', ').pop()===sub&&g.pts&&g.pts.length).slice(0,15);
+  if(gs.length<2||!S.map) return toast(`Not enough streets left to drop in ${sub||'that suburb'}`);
   const left=gs.map(g=>({g,e:ends3(g.pts)})), d=(p,q)=>L.latLng(p).distanceTo(q);
   const first=left.shift(), stops=[{g:first.g,a:first.e[0],b:first.e[1]}];
   while(left.length){ const cur=stops[stops.length-1].b; let bi=0,bd=1e12,flip=false;
@@ -1662,4 +1668,5 @@ async function walk3(){ const gs=(S._best||[]).filter(x=>x.pts&&x.pts.length); i
     S.walk=L.layerGroup([L.polyline(wps,{color:'#93c0ff',weight:4,dashArray:'2 8',lineCap:'round'}),...marks]).addTo(S.map);
     S.map.fitBounds(wps,{padding:[40,40]}); toast(`Couldn't get walking directions just now, so this shows the order only. ${stops.length} streets, start at 1.`); }
 }
-window.drawBest=(function(orig){ return function(...a){ const r=orig(...a); const b=document.getElementById('best'); if(b&&S.dgroup==='street'&&(S._best||[]).length>1) b.insertAdjacentHTML('afterbegin',`<button class="wkb3" onclick="walk3()">${ic2('pin',16)} Plan a walk through these streets</button>`); return r; }; })(window.drawBest);
+window.drawBest=(function(orig){ return function(...a){ const r=orig(...a); const b=document.getElementById('best'); const subs=b?walkSubs3():[]; if(b&&subs.length){ const cur=subs.some(o=>o.sub===S.walkSub)?S.walkSub:subs[0].sub;
+    b.insertAdjacentHTML('afterbegin',`<div class="wk4"><label for="wksub">Walk in</label><select id="wksub" onchange="S.walkSub=this.value">${subs.map(o=>`<option${o.sub===cur?' selected':''}>${esc(o.sub)}</option>`).join('')}</select><button class="wkb3" onclick="walk3()">${ic2('pin',16)} Plan a walk</button></div>`); } return r; }; })(window.drawBest);
