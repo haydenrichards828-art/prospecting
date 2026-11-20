@@ -1503,7 +1503,7 @@ function ltype3(l){ return hasCriteria(l.buy)?'Buyer':'Seller'; }
 function dayK3(k){ return new Date(k+'T00:00:00').toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}); }
 function dueTxt3(l){ const n=dueIn(l.follow_up); const t=n===null?'No date':n<0?`${-n} day${n===-1?'':'s'} overdue`:n===0?'Today':dayK3(l.follow_up);
   return `<b class="due3 ${n===null?'q':n<0?'od':n===0?'td':''}">${esc(t)}</b>`; }
-function nwm3(l){ const n=newMatches(l).length; return n?`<em class="nm3">${n} new match${n>1?'es':''}</em>`:''; }
+function nwm3(l){ const n=newMatches(l).length; return n?`<em class="nwm3">${n} new match${n>1?'es':''}</em>`:''; }
 function leadsTable3(ls){
   const G=[['Overdue','od',n=>n!==null&&n<0],['Today','td',n=>n===0],['Next 7 days','',n=>n>0&&n<=7],['Later','',n=>n>7],['No follow up date','',n=>n===null]];
   const sub=l=>[l.address,l.suburb].filter(Boolean).join(', ');
