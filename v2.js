@@ -1497,3 +1497,55 @@ window.hSearch=function(v){ S.sq=v; clearTimeout(searchT); const q=v.trim();
   window.record=(function(o){ return async function(id,...a){ pend.delete(id); const now=Date.now(); for(const [p,t] of pend){ if(p!==id){ uxPush('nooutcome',{p,dt:now-t}); pend.delete(p); } } return o(id,...a); }; })(window.record);
   window.skip2=(function(o){ return function(id){ if(pend.has(id)){ uxPush('nooutcome',{p:id,dt:Date.now()-pend.get(id),m:{skipped:true}}); pend.delete(id); } return o(id); }; })(window.skip2);
 })();
+
+// ---------- CRM look (20 Nov): Leads as a grouped table, the lead docked beside the list, Pipeline as a board ----------
+function ltype3(l){ return hasCriteria(l.buy)?'Buyer':'Seller'; }
+function dayK3(k){ return new Date(k+'T00:00:00').toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}); }
+function dueTxt3(l){ const n=dueIn(l.follow_up); const t=n===null?'No date':n<0?`${-n} day${n===-1?'':'s'} overdue`:n===0?'Today':dayK3(l.follow_up);
+  return `<b class="due3 ${n===null?'q':n<0?'od':n===0?'td':''}">${esc(t)}</b>`; }
+function nwm3(l){ const n=newMatches(l).length; return n?`<em class="nm3">${n} new match${n>1?'es':''}</em>`:''; }
+function leadsTable3(ls){
+  const G=[['Overdue','od',n=>n!==null&&n<0],['Today','td',n=>n===0],['Next 7 days','',n=>n>0&&n<=7],['Later','',n=>n>7],['No follow up date','',n=>n===null]];
+  const sub=l=>[l.address,l.suburb].filter(Boolean).join(', ');
+  const btns=l=>l.phone?`<a href="${smsLink(l.phone,'')}" onclick="event.stopPropagation()" aria-label="Text">${ic2('msg',17)}</a><a class="call" href="tel:${esc(telOf(l.phone))}" onclick="event.stopPropagation()" aria-label="Call">${ic2('phone',17)}</a>`:'';
+  return `<div class="ltab3"><div class="lt3 h"><span>Lead</span><span>Type</span><span>Due</span><span class="c3">Address</span><span class="c3">Last spoke</span><span class="c3"></span></div>${G.map(([g,c,f])=>{ const xs=ls.filter(l=>f(dueIn(l.follow_up))); if(!xs.length) return '';
+    return `<div class="lg3 ${c}"><i></i><b>${g}</b><span>${xs.length}</span></div>`+xs.map(l=>`<div class="lt3${S.ol&&S.ol.id===l.id&&$('#ov').classList.contains('show')?' sel':''}" data-id="${l.id}" onclick="openLead(${l.id})" data-lq="${esc([l.name,l.address,l.suburb,l.phone].join(' ').toLowerCase())}">
+      <span class="n3"><b>${esc(leadTitle(l))}</b>${nwm3(l)}</span><span>${ltype3(l)}</span><span>${dueTxt3(l)}</span><span class="c3">${esc(sub(l))}</span><span class="c3">${l.last_contact?esc(dayMon(l.last_contact)):'<i>Never</i>'}</span><span class="c3 b3">${btns(l)}</span></div>`).join(''); }).join('')}</div>`; }
+window.drawLeads=(function(orig){ return function(){ orig(); if(S.lview==='listings'||!desk2()) return; const t=document.querySelector('#main .ltab2'); if(!t) return;
+  t.outerHTML=leadsTable3((S.leads||[]).slice().sort((a,b)=>(a.follow_up||'9999').localeCompare(b.follow_up||'9999'))); }; })(window.drawLeads);
+// The open lead is marked in the list, which stays in view beside it
+window.openLead=(function(orig){ return function(id,opts){ const r=orig(id,opts); document.querySelectorAll('.lt3[data-id]').forEach(x=>x.classList.toggle('sel',+x.dataset.id===id)); return r; }; })(window.openLead);
+window.closeOv=(function(orig){ return function(...a){ const r=orig(...a); document.querySelectorAll('.lt3.sel').forEach(x=>x.classList.remove('sel')); return r; }; })(window.closeOv);
+
+// Pipeline board: one column per stage. Click a column name to open that full page, a name to open the person.
+function when3(x,k){ const d=x[k]||x.updated_at; return d?new Date(d).toLocaleDateString('en-AU',{timeZone:'Australia/Sydney',weekday:'short',day:'numeric',month:'short'}):''; }
+function card3(o){ const ph=o.buyer?`<span class="ph3 b">${ic2('search',18)}</span>`:`<span class="ph3">${ic2('house',20)}${o.photo?`<img src="${o.photo}" alt="" loading="lazy" onerror="this.remove()">`:''}</span>`;
+  return `<div class="cd3">${ph}<div class="cx3"><button class="cn3" onclick="${o.open}">${esc(o.name)}</button><span class="ck3"><b class="${o.cls||''}">${esc(o.key)}</b>${o.sub?`&nbsp;&nbsp;${esc(o.sub)}`:''}</span><span class="ca3">${esc(o.addr)}</span></div><div class="cb3">${o.acts}</div></div>`; }
+function telBtn3(p){ return p?`<button aria-label="Call" class="call" onclick="if(callingAllowed())openUrl('tel:${esc(String(p).replace(/[^0-9+]/g,''))}')">${ic2('phone',16)}</button>`:''; }
+async function board3(local){
+  const rows=local===true&&S.pipe?S.pipe:((await api("pipeline")).rows||[]); S.pipe=rows;
+  if(!S.leads) await loadLeads().catch(()=>{});
+  const ls=(S.leads||[]).slice().sort((a,b)=>(a.follow_up||'9999').localeCompare(b.follow_up||'9999'));
+  const ap=rows.filter(x=>x.stage==='appraisal'), li=rows.filter(x=>x.stage==='listed');
+  const n=d=>dueIn(d);
+  const lc=ls.slice(0,6).map(l=>{ const d=n(l.follow_up); return card3({buyer:hasCriteria(l.buy),photo:aerialUrl(l,PH_SMALL[0],PH_SMALL[1]),name:leadTitle(l),
+    key:d===null?'No date':d<0?`${-d} day${d===-1?'':'s'} overdue`:d===0?'Today':dayK3(l.follow_up),cls:d!==null&&d<0?'od':d===0?'td':'',sub:[ltype3(l),l.next_action].filter(Boolean).join(', '),
+    addr:[l.address,l.suburb].filter(Boolean).join(', '),open:`openLead(${l.id})`,
+    acts:l.phone?`<a class="call" href="tel:${esc(telOf(l.phone))}" aria-label="Call">${ic2('phone',16)}</a><a href="${smsLink(l.phone,'')}" aria-label="Text">${ic2('msg',16)}</a>`:''}); });
+  const pc=(x,key,cls,sub)=>card3({photo:aerialUrl(x,PH_SMALL[0],PH_SMALL[1]),name:people(x.owner_name)[0]||'Owner unknown',key,cls,sub,addr:[x.street_address,x.suburb].filter(Boolean).join(', '),
+    open:`pipeSheet(${x.property_id})`,acts:telBtn3(x.phone)+`<button aria-label="Move to the next stage" onclick="pipeSheet(${x.property_id})">${ic2('more',16)}</button>`});
+  const src=x=>'from '+(SOURCES[x.source||'calls']||'calls').toLowerCase();
+  const apc=ap.map(x=>x.appt_at?pc(x,'Appraisal '+new Date(x.appt_at).toLocaleString('en-AU',{timeZone:'Australia/Sydney',weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}),'',`Booked ${when3(x,'appraisal_at')}, ${src(x)}`):pc(x,'Set a time','td',`Booked ${when3(x,'appraisal_at')}, ${src(x)}`));
+  const lic=li.map(x=>pc(x,'Listed '+when3(x,'listed_at'),'',src(x).replace(/^f/,'F')));
+  const col=(k,title,count,cards,go,add,more)=>`<section class="bc3 ${k}"><div class="bh3"><button onclick="${go}">${title}</button><span>${count}</span><button class="ad3" aria-label="Add" onclick="${add}">${ic2('plus',16)}</button></div>${cards.join('')||'<p class="be3">Nothing here yet</p>'}<button class="bm3" onclick="${go}">${more}${ic2('chev',14)}</button></section>`;
+  $("#main").className='v2main';
+  $("#main").innerHTML=`<div class="pg2"><div class="ph2"><h1>Pipeline</h1><span class="muted" style="font-size:14px">${ls.length+ap.length+li.length} people</span></div><div class="bd3">
+    ${col('ld','Leads',ls.length,lc,"go('leads')",'openLead(null)',`View all ${ls.length} leads`)}
+    ${col('ap','Appraisals',ap.length,apc,"sideGo('appraisal')",'openAddPipe()','Open Appraisals')}
+    ${col('ls','Listings',li.length,lic,"sideGo('listed')",'openAddPipe()','Open Listings')}</div></div>`;
+  const s=document.querySelector('.side2'); if(s) s.outerHTML=sideHTML();
+  document.querySelectorAll('.tabbtn').forEach(t=>t.textContent='Pipeline');
+}
+window.viewPipeline=(function(orig){ return async function(local){ if(S.pst==='board') return board3(local); return orig(local); }; })(window.viewPipeline);
+window.sideGo=(function(orig){ return function(k){ if(k==='board'){ closePop2(); closeOv(); S.pst='board'; return go('pipeline'); } return orig(k); }; })(window.sideGo);
+window.sideHTML=(function(orig){ return function(){ return orig().replace(`onclick="this.parentElement.classList.toggle('open')"`,`onclick="this.parentElement.classList.add('open');sideGo('board')"`); }; })(window.sideHTML);
