@@ -934,3 +934,11 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 #wkp3 li i{display:grid;place-items:center;width:22px;height:22px;border-radius:99px;background:#2563eb;color:#fff;font:700 12px Inter,system-ui,sans-serif;font-style:normal;flex:none}
 #wkp3 li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#wkp3 li em{font-style:normal;font-size:12px;color:#858e9c}#wkp3 p{margin:0;padding:8px 12px;font-size:12px;color:#858e9c}
 .wkh3 button{min-height:0!important}
+
+.wka3 i{position:absolute;width:0;height:0;border-left:8px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent;transform-origin:center}
+.wks3 span,.wkf3 span{display:inline-block;transform:translate(-50%,-130%);padding:3px 8px;border-radius:6px;color:#fff;font:700 12px Inter,system-ui,sans-serif;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);white-space:nowrap}
+.wks3 span{background:#15803d}.wkf3 span{background:#111419}
+.wk3 span{width:18px!important;height:18px!important;font-size:11px!important}
+#wkp3 ol{max-height:46vh;overflow:auto}#wkp3 li.go{padding:4px 12px 4px 16px;font-size:13px;color:#a3acb9}#wkp3 li.go i{background:none;color:#858e9c;width:16px;height:16px}
+#wkp3 li.end i{background:#111419;border:1px solid #636d7e}
+#wkp3 li:first-child i{background:#15803d}
