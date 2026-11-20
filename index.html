@@ -1480,7 +1480,7 @@ function paintInsights(ov){
     <table><tr><th>Group</th><th>Answered</th><th>Appraisals</th><th>Per 100</th></tr>
     ${(ov.groups||[]).length ? ov.groups.map(g=>`<tr><td>${g.grp} v${g.version??"?"}</td><td>${g.connected}</td><td>${g.appraisals}</td><td>${g.rate??0}</td></tr>`).join("") : `<tr><td colspan="4" class="muted">No calls yet.</td></tr>`}</table>
     <p class="muted">Current weights: ${Object.entries(live?.weights||{}).map(([k,w])=>`${k} ${w}`).join(", ")}. Every Sunday it tests better weights against your results and asks you here before changing anything.</p></div></details>
-   ${ov.failed?`<p class="muted" style="color:var(--bad)">A background update didn't finish. Hayden can see the details.</p>`:""}`;
+`;
   drawEff();
 }
 async function drawEff(days){ if(days) S.effDays=days; days=S.effDays||7; const el=$("#eff"); if(!el) return;
@@ -1660,7 +1660,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=105"></script>
+<script src="v2.js?v=106"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>
