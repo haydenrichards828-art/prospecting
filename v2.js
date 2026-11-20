@@ -1567,3 +1567,53 @@ function pipeTable3(local){
    ${list.length?`<div class="ltab3">${head}${body}</div>`:`<div class="empty2"><b>No ${P[0].toLowerCase()} yet</b>${S.pst==='appraisal'?'Book one from the call list and it shows up here.':''}</div>`}</div>`;
 }
 window.viewPipeline=(function(orig){ return async function(local){ const r=await orig(local); if(S.pst!=='board'&&desk2()&&PST[S.pst]) pipeTable3(); return r; }; })(window.viewPipeline);
+
+// Pipeline board: drag a card into another column to move them along. Leads to Appraisals books it, Appraisals to Listings lists it.
+function dragStart3(e,kind,id){ e.dataTransfer.setData('text/plain',JSON.stringify({kind,id})); e.dataTransfer.effectAllowed='move'; document.body.classList.add('dragging3'); }
+function dragEnd3(){ document.body.classList.remove('dragging3'); document.querySelectorAll('.bc3.over').forEach(c=>c.classList.remove('over')); }
+async function drop3(e,col){ e.preventDefault(); dragEnd3(); let d; try{ d=JSON.parse(e.dataTransfer.getData('text/plain')); }catch{ return; }
+  const from=d.kind; if(from===col) return;
+  if(from==='ld'){ const l=(S.leads||[]).find(x=>x.id===d.id); if(!l) return;
+    if(!l.property_id) return toast('This lead has no house linked. Use + on Appraisals to add it.');
+    if(col==='ap') return setStage(l.property_id,'appraisal'); if(col==='ls') return setStage(l.property_id,'listed'); return; }
+  if(col==='ld'){ const x=(S.pipe||[]).find(r=>r.property_id===d.id); return x&&x.lead_id?pipeLead(x.lead_id):pipeMakeLead(d.id); }
+  return setStage(d.id,col==='ap'?'appraisal':'listed'); }
+window.board3=(function(orig){ return async function(local){ const r=await orig(local);
+  const cols=document.querySelectorAll('.bd3 .bc3');
+  cols.forEach(c=>{ const k=c.classList.contains('ap')?'ap':c.classList.contains('ls')?'ls':'ld';
+    c.addEventListener('dragover',e=>{ e.preventDefault(); c.classList.add('over'); }); c.addEventListener('dragleave',e=>{ if(!c.contains(e.relatedTarget)) c.classList.remove('over'); });
+    c.addEventListener('drop',e=>drop3(e,k));
+    c.querySelectorAll('.cd3').forEach(cd=>{ const o=cd.querySelector('.cn3')?.getAttribute('onclick')||''; const m=o.match(/\((\d+)\)/); if(!m) return;
+      cd.draggable=true; cd.addEventListener('dragstart',e=>dragStart3(e,k,+m[1])); cd.addEventListener('dragend',dragEnd3); }); });
+  return r; }; })(window.board3);
+
+// Card drop map extras: our appraisals and listings, recent sales with price, the date each street was last dropped, and a walking route
+async function mapExtras3(){ if(!S.map||S.tab!=='drops') return;
+  if(S.dext){ S.map.removeLayer(S.dext); S.dext=null; }
+  const g=L.layerGroup(); const pin=(lat,lng,c,html)=>L.circleMarker([lat,lng],{radius:8,weight:3,color:'#fff',fillColor:c,fillOpacity:1}).bindPopup(html).addTo(g);
+  try{ if(!S.pipe) S.pipe=(await api("pipeline")).rows||[]; }catch{}
+  for(const x of S.pipe||[]){ if(x.lat==null||!['appraisal','listed'].includes(x.stage)) continue;
+    pin(x.lat,x.lng,x.stage==='listed'?'#0d9488':'#15803d',`<b>${x.stage==='listed'?'Our listing':'Our appraisal'}</b><br>${esc([x.street_address,x.suburb].filter(Boolean).join(', '))}<br><span style="color:#667">Drop the neighbours</span>`); }
+  try{ if(!S.rsales) S.rsales=(await api("recent_sales")).rows||[]; }catch{ S.rsales=[]; }
+  const k=v=>v>=1e6?'$'+(v/1e6).toFixed(2).replace(/0$/,'').replace(/\.0$/,'')+'m':'$'+Math.round(v/1e3)+'k';
+  for(const s of S.rsales){ L.marker([s.lat,s.lng],{icon:L.divIcon({className:'sale3',html:`<span>${k(+s.price)}</span>`,iconSize:null})})
+    .bindPopup(`<b>Sold ${k(+s.price)}</b><br>${esc(s.addr)}, ${esc(s.suburb||'')}<br><span style="color:#667">${new Date(s.d).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}</span>`).addTo(g); }
+  // streets already dropped: a small date tag where the street sits
+  const byId=new Map((S.drops||[]).map(x=>[x.id,x]));
+  for(const st of S.streets||[]){ const ds=(st.ids||[]).map(id=>byId.get(id)).filter(x=>x&&isDropped(x)); if(!ds.length||ds.length<(st.ids||[]).length) continue;
+    const last=ds.map(x=>x.dropped_at).sort().pop(), p=(st.paths||[])[0]; if(!p||!p.length) continue; const m=p[Math.floor(p.length/2)];
+    L.marker([m[1],m[0]],{icon:L.divIcon({className:'dd3',html:`<span>Dropped ${new Date(last).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</span>`,iconSize:null}),interactive:false}).addTo(g); }
+  S.dext=g.addTo(S.map); }
+window.drawDropLayer=(function(orig){ return function(...a){ const r=orig(...a); setTimeout(mapExtras3,0); return r; }; })(window.drawDropLayer);
+
+function walk3(){ const gs=(S._best||[]).filter(x=>x.pts&&x.pts.length); if(gs.length<2||!S.map) return toast('Not enough streets to plan a walk');
+  const c=g=>{ const n=g.pts.length; return [g.pts.reduce((a,p)=>a+p[0],0)/n,g.pts.reduce((a,p)=>a+p[1],0)/n]; };
+  const pts=gs.map(g=>({g,c:c(g)})), out=[pts.shift()];
+  while(pts.length){ const last=out[out.length-1].c; let bi=0,bd=1e9; pts.forEach((p,i)=>{ const d=L.latLng(last).distanceTo(p.c); if(d<bd){bd=d;bi=i;} }); out.push(pts.splice(bi,1)[0]); }
+  let km=0; for(let i=1;i<out.length;i++) km+=L.latLng(out[i-1].c).distanceTo(out[i].c)/1000;
+  if(S.walk) S.map.removeLayer(S.walk);
+  S.walk=L.layerGroup([L.polyline(out.map(p=>p.c),{color:'#93c0ff',weight:4,dashArray:'2 8',lineCap:'round'}),
+    ...out.map((p,i)=>L.marker(p.c,{icon:L.divIcon({className:'wk3',html:`<span>${i+1}</span>`,iconSize:null})}).bindPopup(`<b>${i+1}. ${esc(p.g.k)}</b>`))]).addTo(S.map);
+  S.map.fitBounds(out.map(p=>p.c),{padding:[40,40]});
+  toast(`${out.length} streets, about ${km.toFixed(1)} km between them. Follow the numbers.`); }
+window.drawBest=(function(orig){ return function(...a){ const r=orig(...a); const b=document.getElementById('best'); if(b&&S.dgroup==='street'&&(S._best||[]).length>1) b.insertAdjacentHTML('afterbegin',`<button class="wkb3" onclick="walk3()">${ic2('pin',16)} Plan a walk through these streets</button>`); return r; }; })(window.drawBest);
