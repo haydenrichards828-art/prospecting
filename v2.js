@@ -1643,30 +1643,39 @@ function ends3(pts){ const c=pts.reduce((a,p)=>[a[0]+p[0]/pts.length,a[1]+p[1]/p
 function walkSubs3(){ const m=new Map(); for(const g of dropGroups('street')){ const sub=g.k.split(', ').pop(); const o=m.get(sub)||{sub,best:0,n:0}; o.best=Math.max(o.best,g.avg); o.n++; m.set(sub,o); }
   return [...m.values()].filter(o=>o.n>=2).sort((a,b)=>b.best-a.best); }
 async function walk3(){ const sub=document.getElementById('wksub')?.value||S.walkSub||walkSubs3()[0]?.sub; S.walkSub=sub;
-  // every good street in that one suburb (up to 15), so the walk never leaves it or walks past a red street without dropping it
-  const gs=dropGroups('street').filter(g=>g.k.split(', ').pop()===sub&&g.pts&&g.pts.length).slice(0,15);
+  // the 8 best streets in one suburb: about an hour's walk, easy to follow
+  const gs=dropGroups('street').filter(g=>g.k.split(', ').pop()===sub&&g.pts&&g.pts.length).slice(0,8);
   if(gs.length<2||!S.map) return toast(`Not enough streets left to drop in ${sub||'that suburb'}`);
-  const left=gs.map(g=>({g,e:ends3(g.pts)})), d=(p,q)=>L.latLng(p).distanceTo(q);
-  const first=left.shift(), stops=[{g:first.g,a:first.e[0],b:first.e[1]}];
-  while(left.length){ const cur=stops[stops.length-1].b; let bi=0,bd=1e12,flip=false;
-    left.forEach((s,i)=>{ const d0=d(cur,s.e[0]), d1=d(cur,s.e[1]); if(d0<bd){bd=d0;bi=i;flip=false;} if(d1<bd){bd=d1;bi=i;flip=true;} });
-    const s=left.splice(bi,1)[0]; stops.push({g:s.g,a:flip?s.e[1]:s.e[0],b:flip?s.e[0]:s.e[1]}); }
-  if(S.walk) S.map.removeLayer(S.walk);
-  const wps=stops.flatMap(s=>[s.a,s.b]);
-  toast('Working out the walk…');
-  let line=null, km=0, mins=0;
+  const d=(p,q)=>L.latLng(p).distanceTo(q), items=gs.map(g=>({g,e:ends3(g.pts)}));
+  // order: start from the best street, nearest next, then untangle any crossings (2 opt)
+  const order=[items.shift()]; while(items.length){ const c=order[order.length-1].e; let bi=0,bd=1e12; items.forEach((s,i)=>{ const v=Math.min(d(c[0],s.e[0]),d(c[0],s.e[1]),d(c[1],s.e[0]),d(c[1],s.e[1])); if(v<bd){bd=v;bi=i;} }); order.push(items.splice(bi,1)[0]); }
+  const mid=s=>[(s.e[0][0]+s.e[1][0])/2,(s.e[0][1]+s.e[1][1])/2], len=o=>o.slice(1).reduce((a,s,i)=>a+d(mid(o[i]),mid(s)),0);
+  for(let pass=0,better=true;better&&pass<20;pass++){ better=false; for(let a=1;a<order.length-1;a++) for(let b=a+1;b<order.length;b++){ const t=[...order.slice(0,a),...order.slice(a,b+1).reverse(),...order.slice(b+1)]; if(len(t)+1<len(order)){ order.splice(0,order.length,...t); better=true; } } }
+  // walk each street end to end, entering at the end nearest the last one
+  const stops=[]; for(const s of order){ const prev=stops.length?stops[stops.length-1].b:null; const flip=prev&&d(prev,s.e[1])<d(prev,s.e[0]); stops.push({g:s.g,a:flip?s.e[1]:s.e[0],b:flip?s.e[0]:s.e[1]}); }
+  if(S.walk) S.map.removeLayer(S.walk); if(S.dext) S.map.removeLayer(S.dext);
+  const wps=stops.flatMap(s=>[s.a,s.b]); toast('Working out the walk…');
+  let line=null, km=0;
   try{ const u='https://routing.openstreetmap.de/routed-foot/route/v1/driving/'+wps.map(p=>`${p[1].toFixed(6)},${p[0].toFixed(6)}`).join(';')+'?overview=full&geometries=geojson';
-    const r=await fetch(u,{signal:AbortSignal.timeout(15000)}); const j=await r.json();
-    if(j.code!=='Ok'||!j.routes?.length) throw new Error(j.message||j.code);
-    line=j.routes[0].geometry.coordinates.map(([x,y])=>[y,x]); km=j.routes[0].distance/1000; mins=Math.round(km/4.5*60);
+    const j=await (await fetch(u,{signal:AbortSignal.timeout(15000)})).json(); if(j.code!=='Ok'||!j.routes?.length) throw new Error(j.message||j.code);
+    line=j.routes[0].geometry.coordinates.map(([x,y])=>[y,x]); km=j.routes[0].distance/1000;
     if(!S.map._osrm3){ S.map._osrm3=true; S.map.attributionControl?.addAttribution('Walking route: <a href="https://routing.openstreetmap.de" target="_blank" rel="noopener">FOSSGIS OSRM</a>'); }
-  }catch(e){ console.warn('walk route',e); }
-  const marks=stops.map((s,i)=>L.marker(s.a,{icon:L.divIcon({className:'wk3',html:`<span>${i+1}</span>`,iconSize:null})}).bindPopup(`<b>${i+1}. ${esc(s.g.k)}</b><br>Start here and walk to the other end`));
-  if(line){ S.walk=L.layerGroup([L.polyline(line,{color:'#1d4ed8',weight:7,opacity:.35,lineCap:'round',lineJoin:'round'}),L.polyline(line,{color:'#93c0ff',weight:3.5,lineCap:'round',lineJoin:'round'}),...marks]).addTo(S.map);
-    S.map.fitBounds(line,{padding:[40,40]}); toast(`${stops.length} streets, a ${km.toFixed(1)} km walk, about ${mins} min. Start at 1.`); }
-  else{ for(let i=1;i<wps.length;i++) km+=d(wps[i-1],wps[i])/1000;
-    S.walk=L.layerGroup([L.polyline(wps,{color:'#93c0ff',weight:4,dashArray:'2 8',lineCap:'round'}),...marks]).addTo(S.map);
-    S.map.fitBounds(wps,{padding:[40,40]}); toast(`Couldn't get walking directions just now, so this shows the order only. ${stops.length} streets, start at 1.`); }
+  }catch(e){ console.warn('walk route',e); for(let i=1;i<wps.length;i++) km+=d(wps[i-1],wps[i])/1000; }
+  const mins=Math.round(km/4.5*60)+stops.reduce((a,s)=>a+s.g.ids.length,0)/2|0;   // walking plus about 30 seconds a letterbox
+  // the connecting walk is thin and quiet; the streets to drop are thick and bright, numbered where each one starts
+  const streetsOf=k=>(S.streets||[]).filter(st=>`${st.street}, ${st.suburb}`===k).flatMap(st=>st.paths||[]).map(p=>p.map(([x,y])=>[y,x]));
+  const layers=[L.polyline(line||wps,{color:'#93c0ff',weight:3,opacity:.75,dashArray:line?null:'2 8',lineCap:'round',lineJoin:'round'})];
+  stops.forEach((s,i)=>{ for(const p of streetsOf(s.g.k)) layers.push(L.polyline(p,{color:'#2563eb',weight:8,opacity:.9,lineCap:'round'}).bindTooltip(`${i+1}. ${esc(s.g.k.split(', ')[0])}`)); });
+  const pin=(p,html)=>L.marker(p,{icon:L.divIcon({className:'wk3',html,iconSize:null})});
+  stops.forEach((s,i)=>layers.push(pin(s.a,`<span>${i+1}</span>`).bindPopup(`<b>${i+1}. ${esc(s.g.k)}</b><br>${s.g.ids.length} letterboxes`)));
+  S.walk=L.layerGroup(layers).addTo(S.map); S.map.fitBounds(wps,{padding:[40,40]});
+  // the steps, in order, in the side panel
+  const b=document.getElementById('best'); document.getElementById('wkp3')?.remove();
+  b?.insertAdjacentHTML('afterbegin',`<div id="wkp3"><div class="wkh3"><b>Walk in ${esc(sub)}</b><span>${km.toFixed(1)} km, about ${Math.round(mins/5)*5||5} min</span><button onclick="walkClear3()">Clear</button></div>
+    <ol>${stops.map((s,i)=>`<li onclick="S.map.fitBounds(${JSON.stringify([s.a,s.b])},{padding:[60,60],maxZoom:18})"><i>${i+1}</i><span>${esc(s.g.k.split(', ')[0])}</span><em>${s.g.ids.length} letterboxes</em></li>`).join('')}</ol>
+    ${line?'':'<p>Walking directions weren\'t available, so this shows the order only.</p>'}</div>`);
+  toast(`${stops.length} streets in ${sub}. Start at 1.`);
 }
+function walkClear3(){ if(S.walk) S.map.removeLayer(S.walk); S.walk=null; document.getElementById('wkp3')?.remove(); if(S.dext) S.dext.addTo(S.map); }
 window.drawBest=(function(orig){ return function(...a){ const r=orig(...a); const b=document.getElementById('best'); const subs=b?walkSubs3():[]; if(b&&subs.length){ const cur=subs.some(o=>o.sub===S.walkSub)?S.walkSub:subs[0].sub;
     b.insertAdjacentHTML('afterbegin',`<div class="wk4"><label for="wksub">Walk in</label><select id="wksub" onchange="S.walkSub=this.value">${subs.map(o=>`<option${o.sub===cur?' selected':''}>${esc(o.sub)}</option>`).join('')}</select><button class="wkb3" onclick="walk3()">${ic2('pin',16)} Plan a walk</button></div>`); } return r; }; })(window.drawBest);
