@@ -1549,3 +1549,21 @@ async function board3(local){
 window.viewPipeline=(function(orig){ return async function(local){ if(S.pst==='board') return board3(local); return orig(local); }; })(window.viewPipeline);
 window.sideGo=(function(orig){ return function(k){ if(k==='board'){ closePop2(); closeOv(); S.pst='board'; return go('pipeline'); } return orig(k); }; })(window.sideGo);
 window.sideHTML=(function(orig){ return function(){ return orig().replace(`onclick="this.parentElement.classList.toggle('open')"`,`onclick="this.parentElement.classList.add('open');sideGo('board')"`); }; })(window.sideHTML);
+
+// Appraisals and Listings in the same layout as Leads: edge to edge table, a line between every column, a slim strip above
+function pipeTable3(local){
+  const rows=S.pipe||[], list=rows.filter(x=>ptab(x.stage)===S.pst), P=PST[S.pst];
+  const when=x=>{ const d=x[PST[x.stage][2]]||x.updated_at; return d?new Date(d).toLocaleDateString('en-AU',{timeZone:'Australia/Sydney',weekday:'short',day:'numeric',month:'short'}):''; };
+  const key=x=>{ if(x.stage==='appraisal'){ return x.appt_at?`<b class="due3">${esc(new Date(x.appt_at).toLocaleString('en-AU',{timeZone:'Australia/Sydney',weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}))}</b>`:`<b class="due3 td">Set a time</b>`; } return `<b class="due3">${esc(when(x))}</b>`; };
+  const sub=x=>x.stage==='appraisal'?when(x):(x.stage==='listed_other'?'Another agency':'From '+(SOURCES[x.source||'calls']||'calls').toLowerCase());
+  const head=`<div class="pt3 h"><span>Owner</span><span>Address</span><span>${P[1]==='Booked'?'Appraisal':P[1]}</span><span>${S.pst==='appraisal'?'Booked':'Came from'}</span><span>Last bought</span><span></span></div>`;
+  const body=list.map(x=>{ const u=aerialUrl(x,PH_SMALL[0],PH_SMALL[1]), id=x.property_id;
+    return `<div class="pt3" onclick="pipeSheet(${id})"><span class="n3"><span class="th4">${ic2('house',14)}${u?`<img src="${u}" alt="" loading="lazy" onerror="this.remove()">`:''}</span><b>${esc(people(x.owner_name)[0]||'Owner unknown')}</b></span>
+     <span>${esc([x.street_address,x.suburb].filter(Boolean).join(', '))}</span><span>${key(x)}</span><span>${esc(sub(x))}</span>
+     <span>${x.last_sale_date?`<b class="due3">${x.last_sale_price?esc(price2(x.last_sale_price)):'Price n/a'}</b>&nbsp;${String(x.last_sale_date).slice(0,4)}`:'<i>No sale on record</i>'}</span>
+     <span class="ac3">${PNEXT[x.stage].map(([s2,l],i)=>`<button class="${i===0&&!pBad(s2)?'go':''}" onclick="event.stopPropagation();setStage(${id},'${s2}')">${l}</button>`).join('')}${x.phone?`<button class="cl" aria-label="Call" onclick="event.stopPropagation();if(callingAllowed())openUrl('tel:'+${JSON.stringify(String(x.phone))}.replace(/[^0-9+]/g,''))">${ic2('phone',16)}</button>`:''}</span></div>`; }).join('');
+  $("#main").className='v2main';
+  $("#main").innerHTML=`<div class="pg2 pl3"><div class="ph2"><span class="muted" style="font-size:14px">${list.length} ${list.length===1?'person':'people'}</span><button class="b2 pri" onclick="openAddPipe()" aria-label="Add">${ic2('plus',18)}<span>Add</span></button></div>
+   ${list.length?`<div class="ltab3">${head}${body}</div>`:`<div class="empty2"><b>No ${P[0].toLowerCase()} yet</b>${S.pst==='appraisal'?'Book one from the call list and it shows up here.':''}</div>`}</div>`;
+}
+window.viewPipeline=(function(orig){ return async function(local){ const r=await orig(local); if(S.pst!=='board'&&desk2()&&PST[S.pst]) pipeTable3(); return r; }; })(window.viewPipeline);
