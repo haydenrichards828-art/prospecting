@@ -1635,14 +1635,31 @@ async function mapExtras3(){ if(!S.map||S.tab!=='drops') return;
   S.dext=g.addTo(S.map); }
 window.drawDropLayer=(function(orig){ return function(...a){ const r=orig(...a); setTimeout(mapExtras3,0); return r; }; })(window.drawDropLayer);
 
-function walk3(){ const gs=(S._best||[]).filter(x=>x.pts&&x.pts.length); if(gs.length<2||!S.map) return toast('Not enough streets to plan a walk');
-  const c=g=>{ const n=g.pts.length; return [g.pts.reduce((a,p)=>a+p[0],0)/n,g.pts.reduce((a,p)=>a+p[1],0)/n]; };
-  const pts=gs.map(g=>({g,c:c(g)})), out=[pts.shift()];
-  while(pts.length){ const last=out[out.length-1].c; let bi=0,bd=1e9; pts.forEach((p,i)=>{ const d=L.latLng(last).distanceTo(p.c); if(d<bd){bd=d;bi=i;} }); out.push(pts.splice(bi,1)[0]); }
-  let km=0; for(let i=1;i<out.length;i++) km+=L.latLng(out[i-1].c).distanceTo(out[i].c)/1000;
+// Walking route along the real footpaths: each street is walked end to end, in the order that keeps the
+// gaps between streets shortest, and the route between them comes from OpenStreetMap's walking router.
+function ends3(pts){ const c=pts.reduce((a,p)=>[a[0]+p[0]/pts.length,a[1]+p[1]/pts.length],[0,0]), d=(p,q)=>L.latLng(p).distanceTo(q);
+  const a=pts.reduce((b,p)=>d(p,c)>d(b,c)?p:b,pts[0]), b=pts.reduce((m,p)=>d(p,a)>d(m,a)?p:m,pts[0]); return [a,b]; }
+async function walk3(){ const gs=(S._best||[]).filter(x=>x.pts&&x.pts.length); if(gs.length<2||!S.map) return toast('Not enough streets to plan a walk');
+  const left=gs.map(g=>({g,e:ends3(g.pts)})), d=(p,q)=>L.latLng(p).distanceTo(q);
+  const first=left.shift(), stops=[{g:first.g,a:first.e[0],b:first.e[1]}];
+  while(left.length){ const cur=stops[stops.length-1].b; let bi=0,bd=1e12,flip=false;
+    left.forEach((s,i)=>{ const d0=d(cur,s.e[0]), d1=d(cur,s.e[1]); if(d0<bd){bd=d0;bi=i;flip=false;} if(d1<bd){bd=d1;bi=i;flip=true;} });
+    const s=left.splice(bi,1)[0]; stops.push({g:s.g,a:flip?s.e[1]:s.e[0],b:flip?s.e[0]:s.e[1]}); }
   if(S.walk) S.map.removeLayer(S.walk);
-  S.walk=L.layerGroup([L.polyline(out.map(p=>p.c),{color:'#93c0ff',weight:4,dashArray:'2 8',lineCap:'round'}),
-    ...out.map((p,i)=>L.marker(p.c,{icon:L.divIcon({className:'wk3',html:`<span>${i+1}</span>`,iconSize:null})}).bindPopup(`<b>${i+1}. ${esc(p.g.k)}</b>`))]).addTo(S.map);
-  S.map.fitBounds(out.map(p=>p.c),{padding:[40,40]});
-  toast(`${out.length} streets, about ${km.toFixed(1)} km between them. Follow the numbers.`); }
+  const wps=stops.flatMap(s=>[s.a,s.b]);
+  toast('Working out the walk…');
+  let line=null, km=0, mins=0;
+  try{ const u='https://routing.openstreetmap.de/routed-foot/route/v1/driving/'+wps.map(p=>`${p[1].toFixed(6)},${p[0].toFixed(6)}`).join(';')+'?overview=full&geometries=geojson';
+    const r=await fetch(u,{signal:AbortSignal.timeout(15000)}); const j=await r.json();
+    if(j.code!=='Ok'||!j.routes?.length) throw new Error(j.message||j.code);
+    line=j.routes[0].geometry.coordinates.map(([x,y])=>[y,x]); km=j.routes[0].distance/1000; mins=Math.round(km/4.5*60);
+    if(!S.map._osrm3){ S.map._osrm3=true; S.map.attributionControl?.addAttribution('Walking route: <a href="https://routing.openstreetmap.de" target="_blank" rel="noopener">FOSSGIS OSRM</a>'); }
+  }catch(e){ console.warn('walk route',e); }
+  const marks=stops.map((s,i)=>L.marker(s.a,{icon:L.divIcon({className:'wk3',html:`<span>${i+1}</span>`,iconSize:null})}).bindPopup(`<b>${i+1}. ${esc(s.g.k)}</b><br>Start here and walk to the other end`));
+  if(line){ S.walk=L.layerGroup([L.polyline(line,{color:'#1d4ed8',weight:7,opacity:.35,lineCap:'round',lineJoin:'round'}),L.polyline(line,{color:'#93c0ff',weight:3.5,lineCap:'round',lineJoin:'round'}),...marks]).addTo(S.map);
+    S.map.fitBounds(line,{padding:[40,40]}); toast(`${stops.length} streets, a ${km.toFixed(1)} km walk, about ${mins} min. Start at 1.`); }
+  else{ for(let i=1;i<wps.length;i++) km+=d(wps[i-1],wps[i])/1000;
+    S.walk=L.layerGroup([L.polyline(wps,{color:'#93c0ff',weight:4,dashArray:'2 8',lineCap:'round'}),...marks]).addTo(S.map);
+    S.map.fitBounds(wps,{padding:[40,40]}); toast(`Couldn't get walking directions just now, so this shows the order only. ${stops.length} streets, start at 1.`); }
+}
 window.drawBest=(function(orig){ return function(...a){ const r=orig(...a); const b=document.getElementById('best'); if(b&&S.dgroup==='street'&&(S._best||[]).length>1) b.insertAdjacentHTML('afterbegin',`<button class="wkb3" onclick="walk3()">${ic2('pin',16)} Plan a walk through these streets</button>`); return r; }; })(window.drawBest);
