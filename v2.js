@@ -379,7 +379,6 @@ function drawList2(){
    <nav class="rail2" aria-label="Suburbs"><div class="seg2 mini lt5"><button class="${S.type==='seller'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button>${subs.some(x=>x[0]===SOL_GROUP)?`<button class="${S.lsub===SOL_GROUP?'on':''}" onclick="S.lsub=SOL_GROUP;drawList()">Solicitors <span style="opacity:.7">${(subs.find(x=>x[0]===SOL_GROUP)||[])[1]}</span></button>`:''}</div><button class="cbk" onclick="upcomingCB()">Booked call backs<span>${ic2('chev',14)}</span></button>${cbs.length?`<button class="cbk ${S.lsub==='Call backs'?'on':''}" onclick="S.lsub='Call backs';drawList()">Call backs<span>${cbs.filter(r=>!r.today_outcome).length}</span></button>`:''}${subs.filter(([s])=>s!==SOL_GROUP).map(([s,n])=>`<button class="${s===S.lsub?'on':''}" onclick="S.lsub=this.dataset.s;drawList()" data-s="${esc(s)}">${esc(s)}<span>${n}</span></button>`).join('')}</nav>
    <div class="lm2">
     <div class="lh2 lh4"><div class="seg2 mini lt4"><button class="${S.type==='seller'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button>${subs.some(x=>x[0]===SOL_GROUP)?`<button class="${S.lsub===SOL_GROUP?'on':''}" onclick="S.lsub=SOL_GROUP;drawList()">Solicitors <span style="opacity:.7">${(subs.find(x=>x[0]===SOL_GROUP)||[])[1]}</span></button>`:''}</div></div>
-    <div class="lg3 h"><span></span><span>Name</span><span>Why they're on the list</span><span>Last bought</span><span>Last contact</span><span></span></div>
     <div class="lr2" id="lrows2">${rows.length?rows.map((r,ix)=>{ const div=r.today_outcome&&(ix===0||!rows[ix-1].today_outcome)?'<div class="div3">Called today</div>':''; const y=yrsSince(r.last_sale_date), id=r.property_id, ws=r.callback?[['cal','Call back '+dayMon(r.callback_at),'Note']]:whyRows(r).slice(0,3);
       const ph=(r.signals||[]).includes('probate')&&!(r.solicitor&&r.phone)?null:r.phone, u=aerialUrl(r,PH_SMALL[0],PH_SMALL[1]);
       const rooms=[r.bedrooms>0?r.bedrooms+' bd':'',r.baths>0?r.baths+' ba':'',r.cars>0?r.cars+' car':''].filter(Boolean).join(' · ');
@@ -387,10 +386,7 @@ function drawList2(){
       return div+`<div class="lg3${r.today_outcome?' done':''}" onclick="open2(${id})">
       <div class="th3">${u?`<img src="${u}" alt="" loading="lazy" onerror="this.remove()">`:''}</div>
       <div class="nm3"><b>${esc(people(r.owner_name)[0]||'Owner unknown')}</b><span>${esc(r.street_address||'')}${S.lsub===SOL_GROUP&&r.suburb?', '+esc(r.suburb):''}</span></div>
-      <div class="why3">${(()=>{ const all=ws.map(w=>w[1]), dk=all.filter(t=>!/^Owned /.test(t)), d=dk.length?dk:(all.length?['Long time owner']:[]);
-        const fmt=a=>a.length?`<b>${esc(a[0])}</b>${a.length>1?', '+a.slice(1).map(esc).join(', '):''}`:'';
-        return `<span class="wd3">${fmt(d)}</span><span class="wm3">${fmt(all)}</span>`; })()}</div>
-      <div class="bt3">${bought}</div>
+      <div class="why3"><b class="wy4">${esc(short4(ws))}</b><span class="wb4">${r.last_sale_date?'Bought '+String(r.last_sale_date).slice(0,4)+(r.last_sale_price?' for '+esc(price2(r.last_sale_price)):''):'No sale on record'}</span></div>
       <div class="lc3">${lastC(r)}</div>
       <div class="ac3">${ph&&!r.today_outcome?`<button class="cl3" aria-label="Call ${esc(people(r.owner_name)[0]||'')}" onclick="event.stopPropagation();open2(${id});if(callingAllowed())openUrl('tel:'+${JSON.stringify(String(ph).replace(/\s/g,''))}.replace(/[^0-9+]/g,''))">${ic2('phone',18,'#fff')}</button>`:''}<span class="ch3">${chev2()}</span></div></div>`; }).join(''):'<p class="emptyline" style="padding:28px">Nobody left here today.</p>'}</div>
    </div></div>`;
@@ -1738,3 +1734,12 @@ window.drawList2=(function(orig){ return function(){ orig(); try{
   if(lists.length) lists[0].before(head('Lists'));
   if(subs.length) subs[0].before(head('Suburbs'));
 }catch(e){} }; })(window.drawList2);
+
+// One short reason per person on the call list: the list's own name already says which home it is near
+function short4(ws){ const all=(ws||[]).map(w=>w[1]).filter(Boolean), d=all.filter(t=>!/^Owned /.test(t)); let t=(d[0]||all[0]||'Long time owner');
+  const m=(t.match(/\((\d+ m)\)/)||t.match(/(\d+ m) from /)||[])[1];
+  if(/^Same complex/.test(t)) return 'Same complex';
+  if(/^Same street/.test(t)) return 'Same street'+(m?', '+m:'');
+  if(/^Similar unit/.test(t)) return 'Similar unit'+(m?', '+m:'');
+  if(/^(?:House )?\d+ m from /.test(t)) return m+' away';
+  return t.replace(/,.*$/,''); }

@@ -964,3 +964,12 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 @media (max-width:899px){.rh5{display:none}.rl5{display:contents}.rail2 .rn5{font-style:normal}}
 @media (min-width:900px){.rl5 button{min-width:0;padding:0 6px!important}.rl5 button>span{display:none}}
 @media (min-width:900px){.rl5{grid-template-columns:1fr;gap:4px}.rl5 button{height:32px;justify-content:flex-start!important;padding:0 10px!important}.rl5 button>span{display:inline-flex;margin-left:auto}}
+/* Call list rows: two short lines per column, price folded into the reason column */
+.why3 .wy4{display:block;font-size:15px;line-height:20px;font-weight:700;color:#f2f4f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.why3 .wb4{display:block;font-size:13px;line-height:18px;color:#a3acb9;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (min-width:900px){.lg3{grid-template-columns:64px minmax(0,1.2fr) minmax(0,1.3fr) 190px 76px!important}}
+/* Sellers / Landlords / Solicitors switch: three equal parts that never overlap */
+.rail2 .lt5{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))}
+.rail2 .lt5 button{overflow:hidden;text-overflow:ellipsis}.rail2 .lt5 button span{display:none}
+/* Sidebar header: the name always fits next to the logo and the fold button */
+@media (min-width:900px){.side2:not(.fold) .sh2,.side2:not(.fold)>div:first-child{gap:6px!important}.side2:not(.fold) .fold2{width:30px!important;flex:none}.side2:not(.fold) .bn2{min-width:0;font-size:16px}}
