@@ -454,7 +454,7 @@ function callChart2(ov,mode){
   const raw=(ov.periods||{})[mode]||[]; if(!raw.length) return null;
   const lab=s=>{ const d=new Date(s+'T12:00:00Z'); return mode==='week'?`${d.getUTCDate()} ${MONS[d.getUTCMonth()]}`:mode==='month'?MONS[d.getUTCMonth()]:`Q${Math.floor(d.getUTCMonth()/3)+1}`; };
   const groups=raw.map(x=>[+x.n||0,lab(x.start)]);
-  const goal=(ov.settings?.daily_target||100)*PERIOD_WD[mode], ph=!desk2(), fm=n=>n.toLocaleString('en-AU');
+  const goal=(ov.settings?.daily_target||100)*PERIOD_WD[mode], ph=!desk2()||innerWidth>=1100, fm=n=>n.toLocaleString('en-AU');   // the Stats dashboard puts this chart in a narrow column, so it uses the compact drawing
   const W=ph?360:Math.max(560,Math.round(($("#main")?.clientWidth||944)-64)), H=ph?220:260, L=6, R=6, T=34, B=26, iw=W-L-R, ih=H-T-B, max=Math.max(goal,...groups.map(g=>g[0]))*1.15;
   const y=v=>T+ih-(v/max)*ih, n=groups.length, cw=iw/n, gap=ph?5:10, fs=ph?10:12;
   let g=`<line x1="${L}" x2="${W-R}" y1="${y(goal)}" y2="${y(goal)}" stroke="#5ee08f" stroke-opacity=".55" stroke-dasharray="4 5"/><text x="${W-R}" y="${y(goal)-6}" fill="#5ee08f" font-size="${fs}" text-anchor="end">goal ${fm(goal)}</text>`;
@@ -1928,3 +1928,20 @@ window.board3=(function(orig){ return async function(local){ const r=await orig(
   if(boardFit5()) return board3(true);
   return r; }; })(window.board3);
 addEventListener('resize',()=>{ clearTimeout(window.__bf5); window.__bf5=setTimeout(()=>{ if(document.querySelector('.bd3')&&boardFit5()) board3(true); },200); });
+// Stats on one screen: numbers strip on top, then three columns of panels split by lines
+window.paintInsights=(function(orig){ return function(...a){ const r=orig(...a); try{
+  if(innerWidth<1100) return r;
+  const secs=[...document.querySelectorAll('#main .sec2')]; if(!secs.length||document.querySelector('#main .sg5')) return r;
+  const t=s=>(s.querySelector('.gh2')?.textContent||'').toLowerCase();
+  const cols=[[],[],[]];
+  for(const s of secs){ const x=t(s);
+    if(/per 100 answered|call to listing|referral/.test(x)) cols[0].push(s);
+    else if(/calls a week|time on the phone/.test(x)) cols[1].push(s);
+    else if(/best time|suburbs/.test(x)) cols[2].push(s);
+    else cols.reduce((m,c)=>c.length<m.length?c:m).push(s); }
+  // inside the left column the rate comes first, then the steps, then referrals
+  const ord=x=>/per 100 answered/.test(x)?0:/call to listing/.test(x)?1:2; cols[0].sort((p,q)=>ord(t(p))-ord(t(q)));
+  const g=document.createElement('div'); g.className='sg5';
+  cols.forEach(c=>{ const d=document.createElement('div'); d.className='sc5'; c.forEach(s=>d.appendChild(s)); g.appendChild(d); });
+  const res=document.querySelector('#main .res2'); res?res.after(g):secs[0].parentElement.appendChild(g);
+}catch(e){ console.error(e); } return r; }; })(window.paintInsights);

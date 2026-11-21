@@ -1173,3 +1173,22 @@ header.top2 .dic5~.tsearch{margin-left:0}
 .bq5 input{flex:1;min-width:0;height:44px!important;min-height:0!important;border:0!important;background:none!important;padding:0!important;color:#f2f4f7;font-size:14px!important;outline:none;box-shadow:none!important}
 .bq5:focus-within{background:#171b21;color:#93c0ff}
 @media (min-width:900px){.bd3 .cd3{height:var(--cdh,92px)!important}}
+/* Stats dashboard: one screen, three columns of panels split by lines, tighter type */
+@media (min-width:1100px){
+  .pg2:has(.sg5) .res2 .rs2{padding:10px 18px!important}
+  .pg2:has(.sg5) .res2 .rs2 b,.pg2:has(.sg5) .res2 .rs2 .n,.pg2:has(.sg5) .res2 .rs2 strong{font-size:26px!important;line-height:30px!important}
+  .sg5{display:grid;grid-template-columns:1.45fr 1fr 1fr;align-items:stretch;border-bottom:1px solid #232831}
+  .sc5{display:flex;flex-direction:column;border-right:1px solid #232831;min-width:0}.sc5:last-child{border-right:0}
+  .sc5 .sec2{padding:14px 18px!important;gap:8px!important;border-bottom:1px solid #232831}
+  .sc5 .sec2 .gh2{min-height:0;gap:8px;font-size:13px}
+  .sc5 .sec2 .gh2 button{height:30px!important;min-height:0!important;padding:0 10px!important;font-size:13px!important}
+  .sc5 .big2{font-size:32px!important;line-height:36px!important}
+  .sc5 .fun2{margin:4px 0!important;grid-template-columns:118px minmax(0,1fr) 34px max-content!important;gap:10px!important;font-size:13px}
+  .sc5 .emptyline,.sc5 .hint2{margin:4px 0 0!important;font-size:12px!important;line-height:17px}
+  .sc5 .sec2>svg{width:100%!important;height:auto!important;max-height:220px}
+  .sc5 .hgrid2{gap:2px!important}
+  .sc5 .srow2{font-size:13px}
+  .sc5 .meter2{height:6px!important}
+}
+@media (min-width:1100px){.pg2:has(.sg5) details.sec{margin:0!important;border-radius:0!important;border:0!important;border-bottom:1px solid #232831!important;background:none!important}
+.pg2:has(.sg5) details.sec>summary{padding:12px 18px!important}}
