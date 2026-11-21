@@ -1098,3 +1098,44 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea,
 .prop2 .pcol2{display:flex!important;flex-direction:column!important;align-self:stretch!important}
 .prop2 .pcol2 .photo2{flex:1 1 auto;height:auto!important}
 #main .prop2 .pcol2 .photo2{flex:1 1 0!important;height:auto!important;min-height:270px!important;max-height:none!important}
+/* Pipeline board, flush: columns meet edge to edge split by lines, cards are rows split by lines, no gaps */
+.pg2:has(.bd3){padding:0!important}
+.bd3{gap:0!important;align-items:stretch!important;border-top:1px solid #232831}
+.bc3{gap:0!important;padding:0!important;border-radius:0!important;border:0!important;border-right:1px solid #232831!important;background:#111419!important}
+.bc3:last-child{border-right:0!important}
+.bh3{border-radius:0!important;border:0!important;border-top:3px solid #2563eb!important;border-bottom:1px solid #232831!important;background:#171b21!important;padding:10px 12px!important}
+.bc3.ap .bh3{border-top-color:#15803d!important}.bc3.ls .bh3{border-top-color:#0d9488!important}
+.bd3 .cd3{border-radius:0!important;border:0!important;border-bottom:1px solid #232831!important;background:none!important;padding:10px 12px!important}
+.bd3 .cd3:hover{background:#171b21!important}
+.bd3 .ph3{border-radius:2px!important}
+.bm3{border-radius:0!important;border:0!important;border-bottom:1px solid #232831!important;height:40px!important;justify-content:flex-start!important;padding:0 12px!important}
+.bm3:hover{background:#171b21}
+@media (max-width:899px){.bc3{border-right:0!important;border-bottom:1px solid #232831!important}}
+@media (min-width:900px){.bd3{min-height:calc(100dvh - 85px)}}
+/* ---------- No gaps between components ---------- */
+/* Stats: tiles become one strip split by lines, sections run edge to edge */
+.pg2:has(.res2){padding:0!important}
+.pg2 .res2{gap:0!important;margin:0!important;border-bottom:1px solid #232831}
+.pg2 .res2 .rs2{border-radius:0!important;border:0!important;border-right:1px solid #232831!important;margin:0!important;padding:14px 20px!important}
+.pg2 .res2 .rs2:last-child{border-right:0!important}
+.pg2 .sec2{padding:18px 24px!important;margin:0!important;border-top:0!important;border-bottom:1px solid #232831}
+/* Settings: full width, section names as bands, rows split by lines */
+.setw2{margin:0!important;max-width:none!important;width:auto!important;padding:0!important}
+.setw2 .set2{margin:0!important}
+.setw2 .sth2{margin:0!important;padding:9px 16px!important;background:#1c2129;border-bottom:1px solid #232831;font-size:12px}
+.setw2 .g2{border-radius:0!important;border:0!important;margin:0!important;background:none!important}
+.setw2 .g2 .r2{border-radius:0!important;border-bottom:1px solid #232831!important;padding:11px 16px!important}
+.setw2 .warn2{border-radius:0!important;margin:0!important;border:0!important;border-bottom:1px solid #232831!important}
+/* Lead panel: sections split by lines instead of floating cards */
+#sheet.lsheet{padding:0!important}
+#sheet.lsheet>*{margin:0!important;padding:12px 16px!important;border:0!important;border-bottom:1px solid #232831!important;border-radius:0!important;box-shadow:none!important;background:none!important}
+#sheet.lsheet>.lhead,#sheet.lsheet>.laddr,#sheet.lsheet>.lcta:not(:last-of-type){border-bottom:0!important}
+#sheet.lsheet>.lhead{padding-top:14px!important;padding-bottom:0!important}
+#sheet.lsheet>.laddr{padding-top:4px!important;padding-bottom:10px!important}
+#sheet.lsheet>.lcta{padding-top:0!important}
+#sheet.lsheet .lcta a,#sheet.lsheet .lcta button,#sheet.lsheet .fu4 button,#sheet.lsheet textarea,#sheet.lsheet .ldrows4 *{border-radius:4px!important}
+#sheet.lsheet .ldrows4{border-radius:0!important}
+#main:has(.setw2){padding:0!important}
+#sheet.lsheet .wcard{border-radius:0!important;border:0!important;background:none!important;padding:0!important;margin:0!important;box-shadow:none!important}
+#sheet.lsheet>*:has(>.wcard){padding:12px 16px!important}
+#sheet.lsheet button,#sheet.lsheet .lmenu2{border-radius:4px!important}
