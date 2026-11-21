@@ -376,11 +376,9 @@ function drawList2(){
     const d=dignamLast(r); if(d&&d.when) return two('Dignam','#99f6e4',d.when+(d.by?' · '+d.by:''));
     return '<span class="nc3">Not contacted</span>'; };
   $("#main").innerHTML=failStrip()+`<div class="list2">
-   <nav class="rail2" aria-label="Suburbs"><button class="cbk" onclick="upcomingCB()">Booked call backs<span>${ic2('chev',14)}</span></button>${cbs.length?`<button class="cbk ${S.lsub==='Call backs'?'on':''}" onclick="S.lsub='Call backs';drawList()">Call backs<span>${cbs.filter(r=>!r.today_outcome).length}</span></button>`:''}${subs.filter(([s])=>s!==SOL_GROUP).map(([s,n])=>`<button class="${s===S.lsub?'on':''}" onclick="S.lsub=this.dataset.s;drawList()" data-s="${esc(s)}">${esc(s)}<span>${n}</span></button>`).join('')}</nav>
+   <nav class="rail2" aria-label="Suburbs"><div class="seg2 mini lt5"><button class="${S.type==='seller'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button>${subs.some(x=>x[0]===SOL_GROUP)?`<button class="${S.lsub===SOL_GROUP?'on':''}" onclick="S.lsub=SOL_GROUP;drawList()">Solicitors <span style="opacity:.7">${(subs.find(x=>x[0]===SOL_GROUP)||[])[1]}</span></button>`:''}</div><button class="cbk" onclick="upcomingCB()">Booked call backs<span>${ic2('chev',14)}</span></button>${cbs.length?`<button class="cbk ${S.lsub==='Call backs'?'on':''}" onclick="S.lsub='Call backs';drawList()">Call backs<span>${cbs.filter(r=>!r.today_outcome).length}</span></button>`:''}${subs.filter(([s])=>s!==SOL_GROUP).map(([s,n])=>`<button class="${s===S.lsub?'on':''}" onclick="S.lsub=this.dataset.s;drawList()" data-s="${esc(s)}">${esc(s)}<span>${n}</span></button>`).join('')}</nav>
    <div class="lm2">
-    <div class="lh2"><h1>${esc(S.lsub)}</h1><span style="font-size:14px;color:var(--t2)">${left} to call</span>
-     <div class="seg2 mini" style="margin-left:auto"><button class="${S.type==='seller'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button>${subs.some(x=>x[0]===SOL_GROUP)?`<button class="${S.lsub===SOL_GROUP?'on':''}" onclick="S.lsub=SOL_GROUP;drawList()">Solicitors <span style="opacity:.7">${(subs.find(x=>x[0]===SOL_GROUP)||[])[1]}</span></button>`:''}</div>
-     <button class="b2 pri hide-phone" style="height:40px" onclick="startSub()">${ic2('phone',18)}Start ${esc(S.lsub)}<span class="key2">Enter</span></button></div>
+    <div class="lh2 lh4"><div class="seg2 mini lt4"><button class="${S.type==='seller'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button>${subs.some(x=>x[0]===SOL_GROUP)?`<button class="${S.lsub===SOL_GROUP?'on':''}" onclick="S.lsub=SOL_GROUP;drawList()">Solicitors <span style="opacity:.7">${(subs.find(x=>x[0]===SOL_GROUP)||[])[1]}</span></button>`:''}</div></div>
     <div class="lg3 h"><span></span><span>Name</span><span>Why they're on the list</span><span>Last bought</span><span>Last contact</span><span></span></div>
     <div class="lr2" id="lrows2">${rows.length?rows.map((r,ix)=>{ const div=r.today_outcome&&(ix===0||!rows[ix-1].today_outcome)?'<div class="div3">Called today</div>':''; const y=yrsSince(r.last_sale_date), id=r.property_id, ws=r.callback?[['cal','Call back '+dayMon(r.callback_at),'Note']]:whyRows(r).slice(0,3);
       const ph=(r.signals||[]).includes('probate')&&!(r.solicitor&&r.phone)?null:r.phone, u=aerialUrl(r,PH_SMALL[0],PH_SMALL[1]);
@@ -1723,3 +1721,20 @@ window.demoApi=(function(orig){ return function(action,body){
     pts.sort((x,y)=>x[2]-y[2]); return {lat,lng,addr:'6/12 Waterloo Street, Bulli',pts}; }
   if(action==='area_list') return {ok:true,name:'Around 6/12 Waterloo St',n:(window.__demoArea=Math.round(body.radius/2.1))};
   return orig(action,body); }; })(window.demoApi);
+// Call list side rail: actions as a compact pair, special lists and suburbs in their own sections,
+// long names cut with an ellipsis so the count always shows
+window.drawList2=(function(orig){ return function(){ orig(); try{
+  const rail=document.querySelector('.rail2'); if(!rail||rail.dataset.r5) return; rail.dataset.r5=1;
+  const camp=new Set((S.rows||[]).map(r=>r.campaign).filter(Boolean));
+  rail.querySelectorAll('button:not(.lt5 button)').forEach(b=>{ const t=[...b.childNodes].find(n=>n.nodeType===3&&n.textContent.trim()); if(!t) return;
+    const em=document.createElement('em'); em.className='rn5'; em.textContent=t.textContent; b.replaceChild(em,t); b.title=em.textContent; });
+  const acts=[...rail.querySelectorAll('button.cbk')].filter(b=>!b.dataset.s&&!/Call backs/.test(b.onclick?.toString()||'')&&(b.classList.contains('addp')||/upcomingCB/.test(b.getAttribute('onclick')||'')));
+  if(acts.length){ const w=document.createElement('div'); w.className='rl5'; acts[0].before(w); acts.forEach(a=>w.appendChild(a)); }
+  const items=[...rail.querySelectorAll('button')].filter(b=>!b.closest('.rl5')&&!b.closest('.lt5'));
+  const lists=items.filter(b=>/S\.lsub='Call backs'/.test(b.getAttribute('onclick')||'')||camp.has(b.dataset.s));
+  lists.forEach(b=>{ if(camp.has(b.dataset.s)){ b.classList.add('cmp5'); b.insertAdjacentHTML('afterbegin',ic2('pin',14)); } });
+  const subs=items.filter(b=>!lists.includes(b));
+  const head=t=>{ const h=document.createElement('div'); h.className='rh5'; h.textContent=t; return h; };
+  if(lists.length) lists[0].before(head('Lists'));
+  if(subs.length) subs[0].before(head('Suburbs'));
+}catch(e){} }; })(window.drawList2);

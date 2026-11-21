@@ -942,3 +942,25 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 .ar3pin{display:flex;align-items:center;justify-content:center;background:#2563eb;color:#fff;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.5)}
 #ar3go{width:100%;min-height:48px}
 @media (max-width:899px){.ar3m{height:38vh}.ar3n b{font-size:28px;line-height:32px}.ar3{gap:10px}}
+/* Call list: no repeated title or start button; the Sellers / Landlords / Solicitors switch sits at the top of the suburb rail */
+.lt5{display:flex;width:100%;margin:0 0 10px}.lt5 button{flex:1 1 0;padding:0 6px!important;white-space:nowrap}
+@media (min-width:900px){.lh4{display:none!important}}
+@media (max-width:899px){.lt5{display:none!important}.lh4{padding-top:8px;padding-bottom:8px}.lt4{margin:0!important;width:100%;display:flex}.lt4 button{flex:1 1 0}}
+.lt5{gap:2px;padding:3px!important;box-sizing:border-box}.lt5 button{min-width:0;padding:0 4px!important;font-size:13px!important}
+/* Call list rail: compact rows, counts in one column, sections */
+.rail2 .lt5 button{padding:0 4px!important;font-size:13px!important}
+@media (min-width:900px){
+  .rail2{padding:12px 12px 16px;gap:1px}
+  .rail2>button{height:34px;padding:0 10px!important;font-size:14px!important;gap:8px;justify-content:flex-start}
+  .rail2 .rn5{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:normal;text-align:left}
+  .rail2>button>span{flex:none;min-width:26px;text-align:right;font-variant-numeric:tabular-nums}
+  .rl5{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+  .rl5 button{height:34px;padding:0 8px!important;font-size:13px!important;border:1px solid var(--line2)!important;border-radius:8px!important;justify-content:center!important;gap:6px}
+  .rl5 button .rn5{font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rh5{font-size:12px;font-weight:600;color:#858e9c;padding:12px 10px 4px}
+  .rail2>button.cmp5{color:#93c0ff!important}.rail2>button.cmp5 svg{flex:none}
+  .rail2>button.cmp5.on{color:#f2f4f7!important}
+}
+@media (max-width:899px){.rh5{display:none}.rl5{display:contents}.rail2 .rn5{font-style:normal}}
+@media (min-width:900px){.rl5 button{min-width:0;padding:0 6px!important}.rl5 button>span{display:none}}
+@media (min-width:900px){.rl5{grid-template-columns:1fr;gap:4px}.rl5 button{height:32px;justify-content:flex-start!important;padding:0 10px!important}.rl5 button>span{display:inline-flex;margin-left:auto}}
