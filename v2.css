@@ -1192,3 +1192,5 @@ header.top2 .dic5~.tsearch{margin-left:0}
 }
 @media (min-width:1100px){.pg2:has(.sg5) details.sec{margin:0!important;border-radius:0!important;border:0!important;border-bottom:1px solid #232831!important;background:none!important}
 .pg2:has(.sg5) details.sec>summary{padding:12px 18px!important}}
+.vbk5{height:34px;min-height:0!important;padding:0 12px 0 8px!important;display:flex;align-items:center;gap:6px;border-radius:4px!important;background:#1c2129!important;border:1px solid #363e4b!important;color:#f2f4f7!important;font-size:14px!important;font-weight:600;flex:none}
+.vbk5:hover{background:#272d37!important}

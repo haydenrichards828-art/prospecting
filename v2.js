@@ -161,7 +161,8 @@ const PTITLE2={appraisal:'Appraisals',listed:'Listings',sold:'Sold',withdrawn:'W
 function tabName(){ if(!S.searching&&S.tab==='pipeline') return PTITLE2[S.pst||'appraisal']||'Appraisals'; return S.searching?'Search':(TABS2.find(t=>t[0]===S.tab)||[,S.tab==='messages'?'Texts':'Prospect'])[1]; }
 function hasDot(){ return (S.ov?.ready_texts||0)>0 || (S.leads||[]).some(l=>newMatches(l).length); }
 function tabBtn(id){ return `<span class="tabbtn" id="${id}">${tabName()}</span>`; }
-function vseg2(){ return S.tab==='calls'&&!S.searching?`<div class="vseg">${[['call','Calling'],['list','List']].map(([k,l])=>`<button class="${S.view===k?'on':''}" onclick="setView('${k}')">${l}</button>`).join('')}</div>`:''; }
+// Calls: the list needs no switch (tap anyone to start calling); the calling screen gets one way back to the list
+function vseg2(){ return S.tab==='calls'&&!S.searching&&S.view==='call'?`<button class="vbk5" onclick="setView('list')" aria-label="Back to the list">${ic2('back',16)}<span>List</span></button>`:''; }
 function setView(v){ S.view=v; S.dialer=v!=='list'; try{localStorage.setItem("dp_view",v)}catch{} if(v==='list') S.pick=null; render(); }
 function closePop2(){ $("#pop2")?.classList.remove('show'); $("#popscrim2")?.classList.remove('show'); }
 function v2search(v){ const m=$("#main"); if(m) m.className='v2main old'; if(!desk2()) S.psearch=S.psearch||!!v; hSearch(v); }
