@@ -1425,12 +1425,6 @@ async function qaSave(){ const q=S.qa, name=$('#qa_name').value.trim(), phone=$(
     await loadLeads(); closeOv(); if(S.tab==='leads') drawLeads(); toast2(r.existing?'Already a lead, updated':`Added ${name||addr||'lead'}`,'Open',()=>openLead(r.id)); }
   catch(e){ b.disabled=false; b.textContent='Add lead'; toast(e.message); } }
 
-// One tap notes on the call screen
-const CHIPS2=['Not selling','Maybe in 12 months','Renting it out','Just bought','Wrong number','Call back later','Wants a price guide'];
-function chipNote2(id,t){ const cur=(notes[id]||'').trim(); const v=cur?(cur.replace(/[.\s]+$/,'')+'. '+t):t; setNote(id,v); document.querySelectorAll('textarea[data-note]').forEach(x=>{ x.value=v; x.dispatchEvent(new Event('input')); }); }
-function chipRow2(id){ return `<div class="nch2">${CHIPS2.map(t=>`<button onmousedown="event.preventDefault()" onclick="chipNote2(${id},'${t}')">${t}</button>`).join('')}</div>`; }
-window.drawCall2=(function(orig){ return function(...a){ const r=orig(...a); try{ document.querySelectorAll('#main textarea[data-note]').forEach(t=>{ if(t.parentElement.querySelector('.nch2')) return; const id=+((t.getAttribute('oninput')||'').match(/setNote\((\d+)/)||[])[1]; if(!id) return; t.insertAdjacentHTML('afterend',chipRow2(id)); }); }catch(e){} return r; }; })(window.drawCall2);
-
 // Phone: a bottom bar so every page is one tap away
 const TB2=[['calls','Calls','phone'],['enquiry','Sheets','msg'],['leads','Leads','users'],['pipeline','Pipeline','appr'],['more','More','more']];
 function tbHTML2(){ return `<nav id="tb2" aria-label="Pages">${TB2.map(([k,l,ic])=>`<button class="${S.tab===k||(k==='more'&&['drops','insights','settings','messages'].includes(S.tab))?'on':''}" onclick="${k==='more'?'tbMore2()':`closeOv();closePop2();go('${k}')`}">${ic2(ic,20)}<span>${l}</span></button>`).join('')}</nav>`; }
