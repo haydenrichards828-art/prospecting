@@ -1555,8 +1555,8 @@ function pipeTable3(local){
   const head=`<div class="pt3 h"><span>Owner</span><span>Address</span><span>${P[1]==='Booked'?'Appraisal':P[1]}</span><span>${S.pst==='appraisal'?'Booked':'Came from'}</span><span>Last bought</span><span></span></div>`;
   const body=list.map(x=>{ const u=aerialUrl(x,PH_SMALL[0],PH_SMALL[1]), id=x.property_id;
     return `<div class="pt3" onclick="pipeSheet(${id})"><span class="n3"><span class="th4">${ic2('house',14)}${u?`<img src="${u}" alt="" loading="lazy" onerror="this.remove()">`:''}</span><b>${esc(people(x.owner_name)[0]||'Owner unknown')}</b></span>
-     <span>${esc([x.street_address,x.suburb].filter(Boolean).join(', '))}</span><span>${key(x)}</span><span>${esc(sub(x))}</span>
-     <span>${x.last_sale_date?`<b class="due3">${x.last_sale_price?esc(price2(x.last_sale_price)):'Price n/a'}</b>&nbsp;${String(x.last_sale_date).slice(0,4)}`:'<i>No sale on record</i>'}</span>
+     <span><span class="ad4">${esc([x.street_address,x.suburb].filter(Boolean).join(', '))}</span></span><span>${key(x)}</span><span>${esc(sub(x))}</span>
+     <span class="lb4">${x.last_sale_date?`<b class="due3">${x.last_sale_price?esc(price2(x.last_sale_price)):'Price n/a'}</b><i>${String(x.last_sale_date).slice(0,4)}</i>`:'<i>No sale on record</i>'}</span>
      <span class="ac3">${PNEXT[x.stage].map(([s2,l],i)=>`<button class="${i===0&&!pBad(s2)?'go':''}" onclick="event.stopPropagation();setStage(${id},'${s2}')">${l}</button>`).join('')}${x.phone?`<button class="cl" aria-label="Call" onclick="event.stopPropagation();if(callingAllowed())openUrl('tel:'+${JSON.stringify(String(x.phone))}.replace(/[^0-9+]/g,''))">${ic2('phone',16)}</button>`:''}</span></div>`; }).join('');
   $("#main").className='v2main';
   $("#main").innerHTML=`<div class="pg2 pl3"><div class="ph2"><span class="muted" style="font-size:14px">${list.length} ${list.length===1?'person':'people'}</span><button class="b2 pri" onclick="openAddPipe()" aria-label="Add">${ic2('plus',18)}<span>Add</span></button></div>
@@ -1587,20 +1587,21 @@ window.board3=(function(orig){ return async function(local){ const r=await orig(
 async function mapExtras3(){ if(!S.map||S.tab!=='drops'||S.walk) return;
   if(S.dext){ S.map.removeLayer(S.dext); S.dext=null; }
   const g=L.layerGroup(); const pin=(lat,lng,c,html)=>L.circleMarker([lat,lng],{radius:8,weight:3,color:'#fff',fillColor:c,fillOpacity:1}).bindPopup(html).addTo(g);
-  try{ if(!S.pipe) S.pipe=(await api("pipeline")).rows||[]; }catch{}
-  for(const x of S.pipe||[]){ if(x.lat==null||!['appraisal','listed'].includes(x.stage)) continue;
+  const MX=mx5();
+  try{ if(MX.pipe&&!S.pipe) S.pipe=(await api("pipeline")).rows||[]; }catch{}
+  for(const x of MX.pipe?(S.pipe||[]):[]){ if(x.lat==null||!['appraisal','listed'].includes(x.stage)) continue;
     pin(x.lat,x.lng,x.stage==='listed'?'#0d9488':'#15803d',`<b>${x.stage==='listed'?'Our listing':'Our appraisal'}</b><br>${esc([x.street_address,x.suburb].filter(Boolean).join(', '))}<br><span style="color:#667">Drop the neighbours</span>`); }
-  try{ if(!S.rsales) S.rsales=(await api("recent_sales")).rows||[]; }catch{ S.rsales=[]; }
+  try{ if(MX.sales&&!S.rsales) S.rsales=(await api("recent_sales")).rows||[]; }catch{ S.rsales=[]; }
   const k=v=>v>=1e6?'$'+(v/1e6).toFixed(2).replace(/0$/,'').replace(/\.0$/,'')+'m':'$'+Math.round(v/1e3)+'k';
   // zoomed out: a small dot per sale; close in: the price tag, so they never pile up
   const near=S.map.getZoom()>=16;
   if(!S.map._sz3){ S.map._sz3=true; S.map.on('zoomend',()=>{ const n=S.map.getZoom()>=16; if(n!==S._salesNear){ S._salesNear=n; mapExtras3(); } }); }
   S._salesNear=near;
-  for(const s of S.rsales){ (near?L.marker([s.lat,s.lng],{icon:L.divIcon({className:'sale3',html:`<span>${k(+s.price)}</span>`,iconSize:null})}):L.circleMarker([s.lat,s.lng],{radius:4,weight:1.5,color:'#111419',fillColor:'#f6c026',fillOpacity:1}))
+  for(const s of MX.sales?(S.rsales||[]):[]){ (near?L.marker([s.lat,s.lng],{icon:L.divIcon({className:'sale3',html:`<span>${k(+s.price)}</span>`,iconSize:null})}):L.circleMarker([s.lat,s.lng],{radius:4,weight:1.5,color:'#111419',fillColor:'#f6c026',fillOpacity:1}))
     .bindPopup(`<b>Sold ${k(+s.price)}</b><br>${esc(s.addr)}, ${esc(s.suburb||'')}<br><span style="color:#667">${new Date(s.d).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}</span>`).addTo(g); }
   // streets already dropped: a small date tag where the street sits
   const byId=new Map((S.drops||[]).map(x=>[x.id,x]));
-  for(const st of near?(S.streets||[]):[]){ const ds=(st.ids||[]).map(id=>byId.get(id)).filter(x=>x&&isDropped(x)); if(!ds.length||ds.length<(st.ids||[]).length) continue;
+  for(const st of near&&MX.dropped?(S.streets||[]):[]){ const ds=(st.ids||[]).map(id=>byId.get(id)).filter(x=>x&&isDropped(x)); if(!ds.length||ds.length<(st.ids||[]).length) continue;
     const last=ds.map(x=>x.dropped_at).sort().pop(), p=(st.paths||[])[0]; if(!p||!p.length) continue; const m=p[Math.floor(p.length/2)];
     L.marker([m[1],m[0]],{icon:L.divIcon({className:'dd3',html:`<span>Dropped ${new Date(last).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</span>`,iconSize:null}),interactive:false}).addTo(g); }
   S.dext=g.addTo(S.map); }
@@ -1790,7 +1791,7 @@ function dropsTidy5(){ try{
   if(g&&!top.querySelector('.dgrp5')){ g.classList.add('dgrp5'); top.querySelector('.seg')?.after(g); }
   sideTop?.remove();
   const wk=document.querySelector('.dside .wk4'); if(wk){ top.querySelector('.wk4')?.remove(); const f=top.querySelector('.dfb2'); f?f.before(wk):top.appendChild(wk); }
-  fitDrops5();
+  dfBtn5(); fitDrops5();
 }catch(e){ console.error(e); } }
 function fitDrops5(){ const m=$('#dmap'), s=document.querySelector('.dside'); if(!m||innerWidth<1000) { if(m) m.style.height=''; if(s) s.style.maxHeight=''; return; }
   const h=Math.max(320,innerHeight-m.getBoundingClientRect().top-16+scrollY*0); m.style.height=h+'px'; if(s){ s.style.maxHeight=h+'px'; s.style.overflow='auto'; }
@@ -1811,3 +1812,24 @@ function mapFs5(id){ const el=document.getElementById(id); if(!el) return; const
 addEventListener('keydown',e=>{ if(e.key==='Escape'){ const f=document.querySelector('.mfull5'); if(f){ e.stopPropagation(); mapFs5(f.id); } } },true);
 // The call sheet map gets the same button
 window.areaSheet=(function(orig){ return async function(pid){ const r=await orig(pid); mapFsBtn5('ar3m',()=>S.area3?.map); return r; }; })(window.areaSheet);
+
+// Card drop map filters: a panel with the map style and what else to show (recent sales are off unless asked for)
+const MX5_DEF={sales:false,pipe:true,dropped:true};
+function mx5(){ if(!S.mx){ try{ S.mx={...MX5_DEF,...JSON.parse(localStorage.getItem('dp_mx')||'{}')}; }catch{ S.mx={...MX5_DEF}; } } return S.mx; }
+function mxSave5(){ try{ localStorage.setItem('dp_mx',JSON.stringify(S.mx)); }catch{} }
+function dfActive5(){ const m=mx5(); return (S.dlayer&&S.dlayer!=='pins')||Object.keys(MX5_DEF).some(k=>m[k]!==MX5_DEF[k]); }
+function dfBtn5(){ const b=document.querySelector('.dtb5 .dfb2'); if(!b) return; b.setAttribute('onclick','dfPanel5(event)'); b.classList.toggle('on',!!document.querySelector('.dfp5'));
+  b.innerHTML=`${ic2('menu',16)} Filters${dfActive5()?' <i></i>':''}`; document.querySelectorAll('.dflt2').forEach(x=>x.hidden=true); }
+function dfPanel5(e){ e&&e.stopPropagation(); const open=document.querySelector('.dfp5'); if(open){ open.remove(); dfBtn5(); return; }
+  const top=document.querySelector('.dtb5'); if(!top) return; top.insertAdjacentHTML('beforeend',dfHTML5()); dfBtn5();
+  setTimeout(()=>document.addEventListener('click',dfOut5,true),0); }
+function dfOut5(e){ const p=document.querySelector('.dfp5'); if(!p){ document.removeEventListener('click',dfOut5,true); return; } if(p.contains(e.target)||e.target.closest('.dfb2')) return; p.remove(); dfBtn5(); document.removeEventListener('click',dfOut5,true); }
+function dfHTML5(){ const m=mx5(), L5=S.dlayer||'pins';
+  const opt=(k,l,sub)=>`<label class="dfc5"><input type="checkbox" ${m[k]?'checked':''} onchange="mx5().${k}=this.checked;mxSave5();mapExtras3();dfBtn5()"><span><b>${l}</b>${sub?`<em>${sub}</em>`:''}</span></label>`;
+  return `<div class="dfp5" role="dialog" aria-label="Map filters"><div class="dfh5">Map style</div>
+   <div class="dft5">${[['pins','Pins'],['heat','Heat'],['streets','Streets']].map(([v,l])=>`<button class="${L5===v?'on':''}" onclick="S.dlayer='${v}';try{localStorage.setItem('dp_dlayer','${v}')}catch{};drawDropLayer();dfRefresh5()">${l}</button>`).join('')}</div>
+   <div class="dfh5">Show on map</div>
+   ${opt('pipe','Our appraisals and listings')}${opt('sales','Recent sales','Last 90 days')}${opt('dropped','Dropped dates','When you zoom in on a street')}
+   <div class="dff5"><button class="b2" onclick="S.mx={...MX5_DEF};mxSave5();S.dlayer='pins';drawDropLayer();dfRefresh5()">Reset</button><button class="b2 pri" onclick="document.querySelector('.dfp5')?.remove();dfBtn5()">Done</button></div></div>`; }
+function dfRefresh5(){ const p=document.querySelector('.dfp5'); if(p){ p.outerHTML=dfHTML5(); } dfBtn5(); }
+window.drawDropLayer=(function(orig){ return function(...a){ const r=orig(...a); dfBtn5(); return r; }; })(window.drawDropLayer);
