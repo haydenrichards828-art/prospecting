@@ -1791,14 +1791,14 @@ function dropsTidy5(){ try{
   const sideTop=document.querySelector('.dside > .top'); const g=sideTop?.querySelector('.seg');
   if(g&&!top.querySelector('.dgrp5')){ g.classList.add('dgrp5'); top.querySelector('.seg')?.after(g); }
   sideTop?.remove();
-  const wk=document.querySelector('.dside .wk4'); if(wk){ top.querySelector('.wk4')?.remove(); const f=top.querySelector('.dfb2'); f?f.before(wk):top.appendChild(wk); }
+  top.querySelector('.dfb2')?.remove();
   dfBtn5(); fitDrops5();
 }catch(e){ console.error(e); } }
 function fitDrops5(){ const m=$('#dmap'), s=document.querySelector('.dside'); if(!m||innerWidth<1000) { if(m) m.style.height=''; if(s) s.style.maxHeight=''; return; }
-  const h=Math.max(320,innerHeight-m.getBoundingClientRect().top-16+scrollY*0); m.style.height=h+'px'; if(s){ s.style.maxHeight=h+'px'; s.style.overflow='auto'; }
+  const h=Math.max(320,innerHeight-m.getBoundingClientRect().top); m.style.height=h+'px'; if(s){ s.style.maxHeight=h+'px'; s.style.overflow='auto'; }
   try{ S.map&&S.map.invalidateSize(); }catch{} }
 addEventListener('resize',()=>{ if(S.tab==='drops') fitDrops5(); });
-window.drawDrops=(function(orig){ return function(...a){ const r=orig(...a); dropsTidy5(); mapFsBtn5('dmap',()=>S.map); return r; }; })(window.drawDrops);
+window.drawDrops=(function(orig){ return function(...a){ const r=orig(...a); dropsTidy5(); mapFsBtn5('dmap',()=>S.map); mapCtl5(); return r; }; })(window.drawDrops);
 window.drawBest=(function(orig){ return function(...a){ const r=orig(...a); dropsTidy5(); return r; }; })(window.drawBest);
 // Full screen for any map: the button sits on the map; Esc or the same button comes back
 function mapFsBtn5(id,getMap){ let n=0; const t=setInterval(()=>{ const el=document.getElementById(id); if(!el||++n>40){ clearInterval(t); return; }
@@ -1814,25 +1814,40 @@ addEventListener('keydown',e=>{ if(e.key==='Escape'){ const f=document.querySele
 // The call sheet map gets the same button
 window.areaSheet=(function(orig){ return async function(pid){ const r=await orig(pid); mapFsBtn5('ar3m',()=>S.area3?.map); return r; }; })(window.areaSheet);
 
-// Card drop map filters: a panel with the map style and what else to show (recent sales are off unless asked for)
+// Card drop map controls float on the map, like Google Maps: Plan a walk and Filters top left, full screen top right
 const MX5_DEF={sales:false,pipe:true,dropped:true};
 function mx5(){ if(!S.mx){ try{ S.mx={...MX5_DEF,...JSON.parse(localStorage.getItem('dp_mx')||'{}')}; }catch{ S.mx={...MX5_DEF}; } } return S.mx; }
 function mxSave5(){ try{ localStorage.setItem('dp_mx',JSON.stringify(S.mx)); }catch{} }
 function dfActive5(){ const m=mx5(); return (S.dlayer&&S.dlayer!=='pins')||Object.keys(MX5_DEF).some(k=>m[k]!==MX5_DEF[k]); }
-function dfBtn5(){ const b=document.querySelector('.dtb5 .dfb2'); if(!b) return; b.setAttribute('onclick','dfPanel5(event)'); b.classList.toggle('on',!!document.querySelector('.dfp5'));
-  b.innerHTML=`${ic2('menu',16)} Filters${dfActive5()?' <i></i>':''}`; document.querySelectorAll('.dflt2').forEach(x=>x.hidden=true); }
-function dfPanel5(e){ e&&e.stopPropagation(); const open=document.querySelector('.dfp5'); if(open){ open.remove(); dfBtn5(); return; }
-  const top=document.querySelector('.dtb5'); if(!top) return; top.insertAdjacentHTML('beforeend',dfHTML5()); dfBtn5();
-  setTimeout(()=>document.addEventListener('click',dfOut5,true),0); }
-function dfOut5(e){ const p=document.querySelector('.dfp5'); if(!p){ document.removeEventListener('click',dfOut5,true); return; } if(p.contains(e.target)||e.target.closest('.dfb2')) return; p.remove(); dfBtn5(); document.removeEventListener('click',dfOut5,true); }
-function dfHTML5(){ const m=mx5(), L5=S.dlayer||'pins';
-  const opt=(k,l,sub)=>`<label class="dfc5"><input type="checkbox" ${m[k]?'checked':''} onchange="mx5().${k}=this.checked;mxSave5();mapExtras3();dfBtn5()"><span><b>${l}</b>${sub?`<em>${sub}</em>`:''}</span></label>`;
-  return `<div class="dfp5" role="dialog" aria-label="Map filters"><div class="dfh5">Map style</div>
-   <div class="dft5">${[['pins','Pins'],['heat','Heat'],['streets','Streets']].map(([v,l])=>`<button class="${L5===v?'on':''}" onclick="S.dlayer='${v}';try{localStorage.setItem('dp_dlayer','${v}')}catch{};drawDropLayer();dfRefresh5()">${l}</button>`).join('')}</div>
-   <div class="dfh5">Show on map</div>
-   ${opt('pipe','Our appraisals and listings')}${opt('sales','Recent sales','Last 90 days')}${opt('dropped','Dropped dates','When you zoom in on a street')}
-   <div class="dff5"><button class="b2" onclick="S.mx={...MX5_DEF};mxSave5();S.dlayer='pins';drawDropLayer();dfRefresh5()">Reset</button><button class="b2 pri" onclick="document.querySelector('.dfp5')?.remove();dfBtn5()">Done</button></div></div>`; }
-function dfRefresh5(){ const p=document.querySelector('.dfp5'); if(p){ p.outerHTML=dfHTML5(); } dfBtn5(); }
+function mapCtl5(){ let n=0; const t=setInterval(()=>{ const el=document.getElementById('dmap'); if(!el||++n>40){ clearInterval(t); return; }
+  if(!el.classList.contains('leaflet-container')) return; clearInterval(t); if(el.querySelector('.mctl5')) return dfBtn5();
+  el.insertAdjacentHTML('beforeend',`<div class="mctl5"><button class="wkb5" onclick="event.stopPropagation();walkPick5()">${ic2('pin',16)}<span>Plan a walk</span></button><button class="dfb5" onclick="event.stopPropagation();dfPanel5()"></button></div>`);
+  const c=el.querySelector('.mctl5'); L.DomEvent.disableClickPropagation(c); L.DomEvent.disableScrollPropagation(c); dfBtn5(); },75); }
+function dfBtn5(){ const b=document.querySelector('#dmap .dfb5'); if(!b) return; b.classList.toggle('on',!!document.querySelector('.dfp5'));
+  b.innerHTML=`${ic2('menu',16)}<span>Filters</span>${dfActive5()?'<i></i>':''}`; const w=document.querySelector('#dmap .wkb5'); if(w) w.classList.toggle('on',!!document.querySelector('.wkp5')||!!S.walk); }
+function pop5(cls,html){ const m=document.getElementById('dmap'); if(!m) return; document.querySelectorAll('.dfp5,.wkp5').forEach(x=>x.remove());
+  m.insertAdjacentHTML('beforeend',html); const p=m.querySelector('.'+cls); L.DomEvent.disableClickPropagation(p); L.DomEvent.disableScrollPropagation(p); dfBtn5();
+  setTimeout(()=>document.addEventListener('click',popOut5,true),0); }
+function popClose5(){ document.querySelectorAll('.dfp5,.wkp5').forEach(x=>x.remove()); dfBtn5(); document.removeEventListener('click',popOut5,true); }
+function popOut5(e){ const p=document.querySelector('.dfp5,.wkp5'); if(!p){ document.removeEventListener('click',popOut5,true); return; } if(p.contains(e.target)||e.target.closest('.mctl5')) return; popClose5(); }
+function dfPanel5(){ if(document.querySelector('.dfp5')) return popClose5(); pop5('dfp5',dfHTML5()); }
+function dfHTML5(){ const m=mx5(), cur=S.dlayer||'pins';
+  const nPipe=(S.pipe||[]).filter(x=>x.lat!=null&&['appraisal','listed'].includes(x.stage)).length, nSales=S.rsales?S.rsales.length:null;
+  const nDrop=(S.streets||[]).filter(st=>{ const ids=st.ids||[]; return ids.length&&ids.every(id=>{ const x=(S.drops||[]).find(d=>d.id===id); return x&&isDropped(x); }); }).length;
+  const row=(k,l,n)=>`<label class="dfr5"><input type="checkbox" ${m[k]?'checked':''} onchange="mx5().${k}=this.checked;mxSave5();mapExtras3();dfRefresh5()"><span>${l}${n!=null?` <em>(${n})</em>`:''}</span></label>`;
+  return `<div class="dfp5" role="dialog" aria-label="Map filters">
+   <div class="dfh5"><b>Filter</b><button class="dfx5" onclick="S.mx={...MX5_DEF};mxSave5();S.dlayer='pins';drawDropLayer();dfRefresh5()">Clear all</button></div>
+   <div class="dfs5">Map style</div>
+   <div class="dft5">${[['pins','Pins'],['heat','Heat'],['streets','Streets']].map(([v,l])=>`<button class="${cur===v?'on':''}" onclick="S.dlayer='${v}';drawDropLayer();dfRefresh5()">${l}</button>`).join('')}</div>
+   <div class="dfs5">Show on map</div>
+   <div class="dfb5x">${row('pipe','Our appraisals and listings',nPipe)}${row('sales','Recent sales',nSales)}${row('dropped','Dropped dates',nDrop)}</div>
+   <div class="dff5"><button class="pri" onclick="popClose5()">Done</button><button class="pri" onclick="S.mx={...MX5_DEF};mxSave5();S.dlayer='pins';drawDropLayer();dfRefresh5()">Reset</button></div></div>`; }
+function dfRefresh5(){ const p=document.querySelector('.dfp5'); if(p){ const m=document.getElementById('dmap'); p.remove(); m.insertAdjacentHTML('beforeend',dfHTML5()); const q=m.querySelector('.dfp5'); L.DomEvent.disableClickPropagation(q); L.DomEvent.disableScrollPropagation(q); } dfBtn5(); }
+// Plan a walk: pick the suburb only when you ask for a walk
+function walkPick5(){ if(document.querySelector('.wkp5')) return popClose5(); const subs=walkSubs3().slice(0,12);
+  pop5('wkp5',`<div class="wkp5 dfp5x" role="dialog" aria-label="Plan a walk"><div class="dfh5"><b>Plan a walk</b>${S.walk?'<button class="dfx5" onclick="popClose5();walkClear3()">Clear walk</button>':''}</div>
+   <div class="dfs5">Which suburb?</div><div class="dfb5x">${subs.map(o=>`<button class="wkr5${o.sub===S.walkSub?' on':''}" onclick="walkGo5(this.dataset.s)" data-s="${esc(o.sub)}"><span>${esc(o.sub)}</span><em>${Math.min(8,o.n)} streets</em></button>`).join('')||'<p class="emptyline" style="padding:12px">No streets to walk yet</p>'}</div></div>`); }
+function walkGo5(sub){ popClose5(); S.walkSub=sub; const sel=document.getElementById('wksub'); if(sel){ if(![...sel.options].some(o=>o.value===sub)) sel.insertAdjacentHTML('beforeend',`<option>${esc(sub)}</option>`); sel.value=sub; } walk3(); }
 window.drawDropLayer=(function(orig){ return function(...a){ const r=orig(...a); dfBtn5(); return r; }; })(window.drawDropLayer);
 // Outside legal calling hours: one warning when you tap any call link, instead of banners on every screen
 document.addEventListener('click',e=>{ const a=e.target.closest('a[href^="tel:"]'); if(!a) return; if(/hoursOk/.test(a.getAttribute('onclick')||'')) return; hoursOk(e); },true);

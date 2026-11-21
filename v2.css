@@ -1037,3 +1037,53 @@ header.top2 .hc5+.lift5,header.top2 .tabbtn+.lift5:not(.hc5){margin-left:8px}
 header.top2 .hadd5{height:36px;min-height:0!important;padding:0 14px!important;flex:none}
 header.top2 .tsearch{margin-left:auto}
 header.top2 .hc5~.tsearch{margin-left:0}
+/* Card drop map: controls on the map, walk suburb only when asked */
+.dside .wk4{display:none!important}
+.mctl5{position:absolute;top:10px;left:10px;z-index:1000;display:flex;gap:6px}
+.mctl5 button{height:40px;min-height:0!important;padding:0 14px!important;display:flex;align-items:center;gap:7px;border-radius:10px!important;background:#171b21!important;color:#f2f4f7!important;border:1px solid #363e4b!important;font-size:14px!important;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer}
+.mctl5 button:hover{background:#272d37!important}.mctl5 button.on{background:#162544!important;border-color:#2563eb!important;color:#93c0ff!important}
+.mctl5 .dfb5 i{width:7px;height:7px;border-radius:50%;background:#5b9bff}
+/* Filter panel, after the reference: title and Clear all, tiles, a bordered list of ticks with counts, two buttons */
+.dfp5,.wkp5{position:absolute!important;top:58px!important;left:10px!important;right:auto!important;z-index:1001;width:300px;max-height:calc(100% - 70px);overflow:auto;background:#171b21;border:1px solid #363e4b;border-radius:12px;padding:16px;box-shadow:0 12px 32px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:10px;cursor:default}
+.dfh5{display:flex;align-items:center;justify-content:space-between}.dfh5 b{font-size:17px;font-weight:500;color:#f2f4f7}
+.dfx5{background:none!important;border:0!important;padding:0!important;min-height:0!important;color:#5b9bff!important;font-size:14px!important;font-weight:600;cursor:pointer}
+.dfs5{font-size:14px;font-weight:600;color:#f2f4f7;margin-top:4px}
+.dft5{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.dft5 button{height:40px;min-height:0!important;padding:0!important;border-radius:8px!important;background:#272d37!important;border:1px solid #363e4b!important;color:#f2f4f7!important;font-size:14px!important;font-weight:500}
+.dft5 button.on{background:#2563eb!important;border-color:#2563eb!important;color:#fff!important}
+.dfb5x{border:1px solid #363e4b;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.dfr5,.wkr5{display:flex!important;align-items:center!important;gap:10px!important;min-height:0!important;height:auto!important;margin:0!important;padding:11px 12px!important;border:0!important;border-top:1px solid #363e4b!important;background:none!important;font-size:14px!important;line-height:18px!important;color:#f2f4f7!important;cursor:pointer;text-align:left;border-radius:0!important;width:100%}
+.dfr5:first-child,.wkr5:first-child{border-top:0!important}
+.dfr5 input{width:18px;height:18px;min-height:0!important;margin:0!important;padding:0!important;accent-color:#2563eb;flex:none}
+.dfr5 em,.wkr5 em{font-style:normal;color:#858e9c}
+.wkr5{justify-content:space-between!important}.wkr5:hover{background:#1c2129!important}.wkr5.on span{color:#93c0ff}
+.dfp5 .dff5{display:flex;gap:10px;margin-top:4px}.dfp5 .dff5 button{flex:1;height:40px;min-height:0!important;border-radius:8px!important;background:#2563eb!important;color:#fff!important;border:0!important;font-size:14px!important;font-weight:600}
+.dfp5 .dff5 button+button{background:none!important;border:1px solid #2563eb!important;color:#93c0ff!important}
+@media (max-width:899px){.mctl5 button span{display:none}.mctl5 button{width:40px;padding:0!important;justify-content:center}.dfp5,.wkp5{left:10px!important;right:10px!important;width:auto}}
+/* Card drops, sharp and flush: map and list run to the edges, rows split by lines, square corners */
+#main.drops2{padding:0!important}
+#main.drops2>.dtb5{margin:0;padding:10px 16px;border-bottom:1px solid #232831}
+#main.drops2>.dflt2{margin:0;padding:8px 16px;border-bottom:1px solid #232831}
+#main.drops2 .dsplit{gap:0!important;margin:0}
+#main.drops2 #dmap{border-radius:0!important;border:0!important;border-right:1px solid #232831!important;margin:0!important}
+#main.drops2 .dside{padding:0!important;margin:0!important}
+#best .brow{margin:0!important;border-radius:0!important;border:0!important;border-bottom:1px solid #232831!important;background:none!important;padding:10px 16px!important;box-shadow:none!important}
+#best .brow:hover{background:#171b21!important}
+#best .brow button{height:32px;min-height:0!important;padding:0 10px!important;border-radius:4px!important;font-size:13px!important}
+#best .brow .bar2{border-radius:0!important;height:3px!important;margin:5px 0 3px!important}
+#best .brow .bar2>div{border-radius:0!important}
+@media (max-width:999px){#main.drops2 #dmap{border-right:0!important;border-bottom:1px solid #232831!important}}
+.mfs5,.mctl5 button,.dfp5,.wkp5{border-radius:4px!important}
+.dft5 button,.dfb5x,.dfp5 .dff5 button{border-radius:4px!important}
+#main.drops2 #best{margin:0!important;padding:0!important}
+#main.drops2 .dside>*:first-child{margin-top:0!important}
+/* Sharper design across the app: small square-ish corners instead of soft rounded ones */
+.b2,.seg2,.seg2 button,.seg,.seg button,.vseg,.vseg button,.tsearch,.cl3,.ib2,.ib3,.pill2,.chip2,.stag,.key2,.k,.kb2,
+.rail2>button,.rail2>button>span,.rl5 button,.ncs5,.lt5,.lt5 button,
+input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea,
+.g2,.card,.r2 .tile,.tile,.th3,.th4,.ph3,.photo2,.ends2 button,.bar2 button,.num2,.cc2,.hb2,.sugg2,.wc2,.rs2,
+.side2 .sl,.side2 a,.side2 button,.kids2,.fqb2,.dfb2,.toast,.empty2 button,
+.pt3 .ac3 button,.ltab3 .b3,.bd3 .cd3,.bd3 .bh3,.bd3 button,.er2 .b2,.oh2h .b2{border-radius:4px!important}
+#sheet,#sheet.v2s,.sheet2{border-radius:8px 8px 0 0!important}
+@media (min-width:900px){#sheet.v2s{border-radius:8px!important}}
+.side2{border-radius:0!important}
