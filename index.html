@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=134">
+<link rel="stylesheet" href="v2.css?v=135">
 </head>
 <body>
 <div id="app"></div>
@@ -727,7 +727,7 @@ function callDayOk(i){ return i.dow!==7 && !(S.holidays||new Set()).has(i.key); 
 function callingAllowed(d=new Date()){ const i=sydInfo(d); if(!callDayOk(i)) return false; return i.mins>=540 && i.mins < (i.dow===6?1020:1200); }
 function nextCallDay(offsetDays){ for(let k=offsetDays;k<offsetDays+10;k++){ const i=sydInfo(new Date(Date.now()+k*864e5)); if(!(S.holidays||new Set()).has(i.key)) return {k,...i}; } return {k:offsetDays,...sydInfo(new Date(Date.now()+offsetDays*864e5))}; }
 function nextWindowText(){ for(let k=0;k<10;k++){ const i=sydInfo(new Date(Date.now()+k*864e5)); if(!callDayOk(i)) continue; if(k===0 && i.mins >= (i.dow===6?1020:1200)) continue; return k===0 ? "today at 9am" : k===1 ? "tomorrow at 9am" : `${i.wd} at 9am`; } return "on the next business day"; }
-function hoursBanner(){ if(callingAllowed()) return ""; return `<div class="banner warn" style="margin:0 0 10px"><i class="ti ti-clock-pause"></i><div><b>Outside legal calling hours.</b> Telemarketing calls are allowed weekdays 9am to 8pm and Saturdays 9am to 5pm, never Sundays or public holidays. Next window: ${nextWindowText()}. Only call now if the person asked you to call at this time.</div></div>`; }
+function hoursBanner(){ return ""; if(callingAllowed()) return ""; return `<div class="banner warn" style="margin:0 0 10px"><i class="ti ti-clock-pause"></i><div><b>Outside legal calling hours.</b> Telemarketing calls are allowed weekdays 9am to 8pm and Saturdays 9am to 5pm, never Sundays or public holidays. Next window: ${nextWindowText()}. Only call now if the person asked you to call at this time.</div></div>`; }
 // Every dial goes through here: outside the legal hours it asks first (a person who asked for a call at this time is fine)
 function hoursOk(e){ if(callingAllowed()) return true; const ok=confirm("It's outside legal calling hours. Only call now if this person asked you to call at this time. Call anyway?"); if(!ok&&e){ e.preventDefault(); e.stopPropagation(); } return ok; }
 function callbackPicks(){
@@ -1618,7 +1618,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=136"></script>
+<script src="v2.js?v=139"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

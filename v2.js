@@ -203,7 +203,8 @@ function drawProg(){
 }
 function curCall(){ const all=queue(); if(S.pick){ const p=all.find(r=>r.property_id===S.pick); if(p) return p; S.pick=null; } return all.find(r=>!r.today_outcome&&!S.skipped.has(r.property_id)); }
 function drawList(){ if(S.tab!=='calls'||S.searching||!$("#main")) return; $("#main").className='v2main'; if(S.view==='list') return drawList2(); drawCall2(); }
-function hoursStrip(){ if(callingAllowed()) return ''; return `<div class="hline2">${ic2('clock',16)}Outside legal calling hours. Next window ${nextWindowText()}. Only call if they asked you to call at this time.</div>`; }
+function hoursStrip(){ return ''; // outside hours is now a warning when you tap call, not a banner
+  if(callingAllowed()) return ''; return `<div class="hline2">${ic2('clock',16)}Outside legal calling hours. Next window ${nextWindowText()}. Only call if they asked you to call at this time.</div>`; }
 function failStrip(){ return ''; }   // the overnight job warning is not shown
 function barHTML2(id,small){ return `<div class="bar2x">${OUT2.map(o=>`<button style="--c:${o.bg}" onclick="act2(${id},'${o.o}')" ${small?`onmousedown="event.preventDefault()" aria-label="${o.lab}"`:''}>${ic2(o.icon,small?18:20)}${small?`<span class="sl3">${o.lab}</span>`:`<span>${o.lab}</span><span class="k">${o.key}</span>`}</button>`).join('')}</div>`; }
 function setNote(id,v){ if(v.trim()) notes[id]=v; else delete notes[id]; document.querySelectorAll('.nsaved').forEach(x=>x.textContent=v.trim()?'· saved':''); document.querySelectorAll('textarea[data-note]').forEach(t=>{ if(t!==document.activeElement) t.value=v; }); }
@@ -388,7 +389,7 @@ function drawList2(){
       <div class="nm3"><b>${esc(people(r.owner_name)[0]||'Owner unknown')}</b><span>${esc(r.street_address||'')}${S.lsub===SOL_GROUP&&r.suburb?', '+esc(r.suburb):''}</span></div>
       <div class="why3"><b class="wy4">${esc(short4(ws))}</b><span class="wb4">${r.last_sale_date?'Bought '+String(r.last_sale_date).slice(0,4)+(r.last_sale_price?' for '+esc(price2(r.last_sale_price)):''):'No sale on record'}</span></div>
       <div class="lc3">${lastC(r)}</div>
-      <div class="ac3">${ph&&!r.today_outcome?`<button class="cl3" aria-label="Call ${esc(people(r.owner_name)[0]||'')}" onclick="event.stopPropagation();open2(${id});if(callingAllowed())openUrl('tel:'+${JSON.stringify(String(ph).replace(/\s/g,''))}.replace(/[^0-9+]/g,''))">${ic2('phone',18,'#fff')}</button>`:''}<span class="ch3">${chev2()}</span></div></div>`; }).join(''):'<p class="emptyline" style="padding:28px">Nobody left here today.</p>'}</div>
+      <div class="ac3">${ph&&!r.today_outcome?`<button class="cl3" aria-label="Call ${esc(people(r.owner_name)[0]||'')}" onclick="event.stopPropagation();open2(${id});if(hoursOk())openUrl('tel:${esc(String(ph).replace(/[^0-9+]/g,''))}')">${ic2('phone',18,'#fff')}</button>`:''}<span class="ch3">${chev2()}</span></div></div>`; }).join(''):'<p class="emptyline" style="padding:28px">Nobody left here today.</p>'}</div>
    </div></div>`;
 }
 async function copyAddr(id){ const r=queue().find(x=>x.property_id===id); if(!r) return; const t=[r.street_address,r.suburb].filter(Boolean).join(', ');
@@ -618,7 +619,7 @@ window.viewPipeline=async function(local){
       <div class="nm3"><b>${esc(people(x.owner_name)[0]||'Owner unknown')}</b><span>${esc(x.street_address||'')}${x.suburb?', '+esc(x.suburb):''}</span>${x.notes?`<em class="pn4">${esc(x.notes)}</em>`:''}</div>
       <div class="bt3"><b>${esc(when(x))}</b><span>${x.stage==='listed_other'?'Another agency listed':'From '+esc((SOURCES[x.source||'calls']||'calls').toLowerCase())}</span></div>
       <div class="bt3 pb4">${x.last_sale_date?`<b>${x.last_sale_price?esc(price2(x.last_sale_price)):'Price n/a'}</b><span>${String(x.last_sale_date).slice(0,4)}</span>`:'<span>No sale on record</span>'}</div>
-      <div class="ac4">${PNEXT[x.stage].map(([s2,l],i)=>`<button class="b2 ${i===0&&!pBad(s2)?'go4':''}" onclick="event.stopPropagation();setStage(${id},'${s2}')">${l}</button>`).join('')}${x.phone?`<button class="cl3" aria-label="Call" onclick="event.stopPropagation();if(callingAllowed())openUrl('tel:'+${JSON.stringify(String(x.phone))}.replace(/[^0-9+]/g,''))">${ic2('phone',18,'#fff')}</button>`:''}</div></div>`; }).join('')
+      <div class="ac4">${PNEXT[x.stage].map(([s2,l],i)=>`<button class="b2 ${i===0&&!pBad(s2)?'go4':''}" onclick="event.stopPropagation();setStage(${id},'${s2}')">${l}</button>`).join('')}${x.phone?`<button class="cl3" aria-label="Call" onclick="event.stopPropagation();if(hoursOk())openUrl('tel:${esc(String(x.phone).replace(/[^0-9+]/g,''))}')">${ic2('phone',18,'#fff')}</button>`:''}</div></div>`; }).join('')
    :`<div class="empty2"><b>No ${PST[S.pst][0].toLowerCase()} yet</b>${S.pst==='appraisal'?'Book one from the call list and it shows up here.':''}</div>`}
   </div>`;
 };
@@ -627,7 +628,7 @@ function pipeSheet(id){ const x=(S.pipe||[]).find(r=>r.property_id===id); if(!x)
    <div class="g2">${PNEXT[x.stage].map(([s2,l])=>row2(({listed:'var(--lst)',sold:'var(--sld)',withdrawn:'#64748b',appraisal:'var(--ap)'})[s2]||'var(--ns)',pBad(s2)?'x':'check',l,{listed_other:'They listed with someone else. Not counted as ours',withdrawn:'Our listing came off the market',sold:'Our listing sold',listed:'They signed with Dignam'}[s2]||'',chev2(),`closeOv();setStage(${id},'${s2}')`)).join('')}
     ${row2('#4b5565','msg',x.notes?'Edit note':'Add a note',x.notes?esc(x.notes):'',chev2(),`closeOv();stageNote(${id})`)}
     ${row2('#4b5565','tag','Came from',esc(SOURCES[x.source||'calls']),chev2(),`pickSource(${id},'${x.source||'calls'}')`)}
-    ${[[x.owner_name,x.phone],[x.owner2_name,x.phone2]].filter(p=>p[1]).map(([n,p])=>row2('var(--ap)','phone',`Call ${esc(firstName(n||''))!=='them'?esc(firstName(n))+' ':''}${esc(fmtPh2(p))}`,'',chev2(),`if(callingAllowed())openUrl('tel:${esc(String(p).replace(/[^0-9+]/g,''))}')`)).join('')}</div>
+    ${[[x.owner_name,x.phone],[x.owner2_name,x.phone2]].filter(p=>p[1]).map(([n,p])=>row2('var(--ap)','phone',`Call ${esc(firstName(n||''))!=='them'?esc(firstName(n))+' ':''}${esc(fmtPh2(p))}`,'',chev2(),`if(hoursOk())openUrl('tel:${esc(String(p).replace(/[^0-9+]/g,''))}')`)).join('')}</div>
    <div class="g2">${row2('#4b5565','users','Names and phones',esc([x.owner_name,x.owner2_name].filter(Boolean).join(' & ')||'Add the owners'),chev2(),`S.ecFrom='pipe';editContact2(${id})`)}
     ${row2('#6366f1','lead',x.lead_id?'Open their lead':'Make a lead','Notes, follow ups and buyer details',chev2(),x.lead_id?`closeOv();pipeLead(${x.lead_id})`:`closeOv();pipeMakeLead(${id})`)}</div>`); }
 async function pipeLead(lid){ if(!S.leads) await loadLeads().catch(()=>{}); openLead(lid); }
@@ -1517,7 +1518,7 @@ window.closeOv=(function(orig){ return function(...a){ const r=orig(...a); docum
 function when3(x,k){ const d=x[k]||x.updated_at; return d?new Date(d).toLocaleDateString('en-AU',{timeZone:'Australia/Sydney',weekday:'short',day:'numeric',month:'short'}):''; }
 function card3(o){ const ph=o.buyer?`<span class="ph3 b">${ic2('search',18)}</span>`:`<span class="ph3">${ic2('house',20)}${o.photo?`<img src="${o.photo}" alt="" loading="lazy" onerror="this.remove()">`:''}</span>`;
   return `<div class="cd3">${ph}<div class="cx3"><button class="cn3" onclick="${o.open}">${esc(o.name)}</button><span class="ck3"><b class="${o.cls||''}">${esc(o.key)}</b>${o.sub?`&nbsp;&nbsp;${esc(o.sub)}`:''}</span><span class="ca3">${esc(o.addr)}</span></div><div class="cb3">${o.acts}</div></div>`; }
-function telBtn3(p){ return p?`<button aria-label="Call" class="call" onclick="if(callingAllowed())openUrl('tel:${esc(String(p).replace(/[^0-9+]/g,''))}')">${ic2('phone',16)}</button>`:''; }
+function telBtn3(p){ return p?`<button aria-label="Call" class="call" onclick="if(hoursOk())openUrl('tel:${esc(String(p).replace(/[^0-9+]/g,''))}')">${ic2('phone',16)}</button>`:''; }
 async function board3(local){
   const rows=local===true&&S.pipe?S.pipe:((await api("pipeline")).rows||[]); S.pipe=rows;
   if(!S.leads) await loadLeads().catch(()=>{});
@@ -1557,7 +1558,7 @@ function pipeTable3(local){
     return `<div class="pt3" onclick="pipeSheet(${id})"><span class="n3"><span class="th4">${ic2('house',14)}${u?`<img src="${u}" alt="" loading="lazy" onerror="this.remove()">`:''}</span><b>${esc(people(x.owner_name)[0]||'Owner unknown')}</b></span>
      <span><span class="ad4">${esc([x.street_address,x.suburb].filter(Boolean).join(', '))}</span></span><span>${key(x)}</span><span>${esc(sub(x))}</span>
      <span class="lb4">${x.last_sale_date?`<b class="due3">${x.last_sale_price?esc(price2(x.last_sale_price)):'Price n/a'}</b><i>${String(x.last_sale_date).slice(0,4)}</i>`:'<i>No sale on record</i>'}</span>
-     <span class="ac3">${PNEXT[x.stage].map(([s2,l],i)=>`<button class="${i===0&&!pBad(s2)?'go':''}" onclick="event.stopPropagation();setStage(${id},'${s2}')">${l}</button>`).join('')}${x.phone?`<button class="cl" aria-label="Call" onclick="event.stopPropagation();if(callingAllowed())openUrl('tel:'+${JSON.stringify(String(x.phone))}.replace(/[^0-9+]/g,''))">${ic2('phone',16)}</button>`:''}</span></div>`; }).join('');
+     <span class="ac3">${PNEXT[x.stage].map(([s2,l],i)=>`<button class="${i===0&&!pBad(s2)?'go':''}" onclick="event.stopPropagation();setStage(${id},'${s2}')">${l}</button>`).join('')}${x.phone?`<button class="cl" aria-label="Call" onclick="event.stopPropagation();if(hoursOk())openUrl('tel:${esc(String(x.phone).replace(/[^0-9+]/g,''))}')">${ic2('phone',16)}</button>`:''}</span></div>`; }).join('');
   $("#main").className='v2main';
   $("#main").innerHTML=`<div class="pg2 pl3"><div class="ph2"><span class="muted" style="font-size:14px">${list.length} ${list.length===1?'person':'people'}</span><button class="b2 pri" onclick="openAddPipe()" aria-label="Add">${ic2('plus',18)}<span>Add</span></button></div>
    ${list.length?`<div class="ltab3">${head}${body}</div>`:`<div class="empty2"><b>No ${P[0].toLowerCase()} yet</b>${S.pst==='appraisal'?'Book one from the call list and it shows up here.':''}</div>`}</div>`;
@@ -1833,3 +1834,24 @@ function dfHTML5(){ const m=mx5(), L5=S.dlayer||'pins';
    <div class="dff5"><button class="b2" onclick="S.mx={...MX5_DEF};mxSave5();S.dlayer='pins';drawDropLayer();dfRefresh5()">Reset</button><button class="b2 pri" onclick="document.querySelector('.dfp5')?.remove();dfBtn5()">Done</button></div></div>`; }
 function dfRefresh5(){ const p=document.querySelector('.dfp5'); if(p){ p.outerHTML=dfHTML5(); } dfBtn5(); }
 window.drawDropLayer=(function(orig){ return function(...a){ const r=orig(...a); dfBtn5(); return r; }; })(window.drawDropLayer);
+// Outside legal calling hours: one warning when you tap any call link, instead of banners on every screen
+document.addEventListener('click',e=>{ const a=e.target.closest('a[href^="tel:"]'); if(!a) return; if(/hoursOk/.test(a.getAttribute('onclick')||'')) return; hoursOk(e); },true);
+// Desktop: a page's own strip (count, switches, Add) moves up into the top bar, so the work area starts at the top
+function lift5(){ try{
+  const main=document.getElementById('main'), head=document.querySelector('header.top2'); if(!main||!head) return;
+  const ph=main.querySelector('.ph2');
+  if(!ph){ if(!main.querySelector('.l5mark')) head.querySelectorAll('.lift5').forEach(x=>x.remove()); return; }
+  if(innerWidth<900||ph.closest('#sheet')) return;
+  head.querySelectorAll('.lift5').forEach(x=>x.remove());
+  const title=head.querySelector('.tabbtn'), search=head.querySelector('.tsearch');
+  [...ph.children].forEach(c=>{
+    if(c.tagName==='H1') return;
+    c.classList.add('lift5');
+    if(c.matches('span.muted')){ c.classList.add('hc5'); title?title.after(c):head.prepend(c); return; }
+    if(c.matches('button.b2.pri')){ c.classList.add('hadd5'); head.appendChild(c); return; }
+    search?search.before(c):head.appendChild(c);
+  });
+  ph.replaceWith(Object.assign(document.createElement('i'),{className:'l5mark',hidden:true}));
+}catch(e){ console.error(e); } }
+new MutationObserver(()=>{ clearTimeout(window.__l5t); window.__l5t=setTimeout(lift5,0); }).observe(document.getElementById('app')||document.body,{childList:true,subtree:true});
+addEventListener('resize',()=>{ clearTimeout(window.__l5r); window.__l5r=setTimeout(()=>{ if(innerWidth<900&&document.querySelector('.lift5')) render(); },200); });

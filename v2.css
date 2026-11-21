@@ -1029,3 +1029,11 @@ body.mfs5on #tb2{display:none}
 .ltab3 .pt3:not(.h)>*:not(.ac3):not(.lb4)>b,.ltab3 .pt3 .ad4{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal}
 .ltab3 .pt3 .lb4{flex-direction:column;align-items:flex-start!important;justify-content:center;gap:0!important}.ltab3 .pt3 .lb4 i{font-size:13px}
 .ltab3 .pt3 .ac3{white-space:nowrap}
+/* Page controls lifted into the top bar */
+header.top2{gap:12px}
+header.top2 .hc5{font-size:14px!important;color:#858e9c;font-variant-numeric:tabular-nums;margin-right:auto}
+header.top2 .lift5.seg2,header.top2 .lift5.fqb2{flex:none}
+header.top2 .hc5+.lift5,header.top2 .tabbtn+.lift5:not(.hc5){margin-left:8px}
+header.top2 .hadd5{height:36px;min-height:0!important;padding:0 14px!important;flex:none}
+header.top2 .tsearch{margin-left:auto}
+header.top2 .hc5~.tsearch{margin-left:0}
