@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="stylesheet" href="v2.css?v=112">
+<link rel="stylesheet" href="v2.css?v=113">
 </head>
 <body>
 <div id="app"></div>
@@ -774,15 +774,6 @@ async function record(id, o, cb){
   } finally { S.saving.delete(id); }
 }
 
-async function viewCallbacks(){
-  await loadCallbacks();
-  $("#main").innerHTML = `<h2>Callbacks due</h2><p class="muted">Everyone you scheduled a callback with for today or earlier.</p>
-   ${S.callbacks.length? S.callbacks.map(c=>`<div class="card"><div class="row"><div><div class="name">${esc(c.owner_name||"Owner unknown")}</div><div class="addr">${esc(c.street_address)}, ${esc(c.suburb)}</div></div><div class="score">Due<b style="font-size:14px">${fmt(c.callback_at)}</b></div></div>
-    ${c.phone?`<a class="phone" onclick="return hoursOk(event)" href="tel:${esc(c.phone)}"><i class="ti ti-phone"></i>${esc(fmtPh2(c.phone))}</a>`:""}${c.notes?`<p class="muted" style="margin:4px 0">${esc(c.notes)}</p>`:""}
-    <div class="acts">${Object.keys(LABEL).map(o=>`<button class="${o==="appraisal"?"appr":o==="do_not_call"?"dnc":""}" onclick="outcome(${c.property_id},'${o}')"><i class="ti ${ICON[o]}"></i>${LABEL[o]}</button>`).join("")}</div>
-    <div class="inline" id="cb${c.property_id}"><input type="datetime-local" id="cbt${c.property_id}"><button class="primary" onclick="saveCallback(${c.property_id})">Save</button></div></div>`).join("")
-   : `<div class="empty"><i class="ti ti-calendar-check"></i>No callbacks due. Nice work.</div>`}`;
-}
 
 async function openMessage(id, ctx){
   if (!S.templates.length) S.templates = (await api("templates")).rows || [];
@@ -868,15 +859,6 @@ function bestTimeBanner(times){
   if (slot.c<15) return today.length?`<div class="banner info"><i class="ti ti-clock"></i><div>Best answer times on this day: ${today.join(" and ")}.</div></div>`:"";
   const r=slot.a/slot.c, good=r>=avg;
   return `<div class="banner ${good?"info":"warn"}"><i class="ti ti-clock"></i><div>${good?"Good time to call":"Quiet time for answers"}: ${Math.round(r*100)}% pick up at this hour vs ${Math.round(avg*100)}% on average.${!good&&today.length?` Best today: ${today.join(" and ")}.`:""}</div></div>`;
-}
-async function openLetterbox(){
-  try { const r = await api("letterbox",{limit:300}); const rows=r.rows||[];
-    if (!rows.length) return toast("No properties without a phone on today's list");
-    $("#sheet").innerHTML = `<div class="noprint" style="display:flex;gap:8px;margin-bottom:12px"><button class="primary" onclick="window.print()"><i class="ti ti-printer"></i>Print</button><button onclick="downloadLetterbox()"><i class="ti ti-download"></i>Download CSV</button><button class="ghost" onclick="closeOv()">Close</button></div>
-      <h3>Letterbox drop list</h3><p class="muted">${rows.length} highest scoring properties with no phone number, sorted by suburb and street for walking. Deceased estates are left off.</p>
-      <table><tr><th>Address</th><th>Suburb</th><th>Score</th></tr>${rows.map(x=>`<tr><td>${esc([x.unit&&x.unit+"/",x.house_number].filter(Boolean).join(""))} ${esc(x.street)}</td><td>${esc(x.suburb)}</td><td>${Math.round(x.score)}</td></tr>`).join("")}</table>`;
-    S.letterbox=rows; $("#ov").classList.add("show");
-  } catch(e){ toast(e.message); }
 }
 function downloadLetterbox(){
   const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
@@ -1290,25 +1272,11 @@ function readBuy(){
   return b;
 }
 function readDetails(){ const o={}; for(const k of ["name","phone","address","suburb","lead_type","source","timeframe","rp_link","motivation"]) o[k]=$("#d_"+k).value.trim()||null; return o; }
-async function saveBuy(id){
-  const buy=readBuy();
-  if(!id) return saveLeadDetails(null, buy);
-  const cur=(S.leads||[]).find(x=>x.id===id)||{};
-  try{ await api("save_lead",{id,lead:{buy,...(hasCriteria(buy)&&(!cur.lead_type||cur.lead_type==="Potential Vendor")?{lead_type:"Buyer/Vendor"}:{})}}); await loadLeads(); toast("Saved"); openLead(id); }catch(e){ toast(e.message); }
-}
 async function saveLeadDetails(id, buy){
   const d=readDetails();
   if(!id){ const b=buy||readBuy(); if(hasCriteria(b)) d.buy=b; d.follow_up=addDaysKey(3); d.temperature="Warm"; }
   try{ const r=await api("save_lead",{id,lead:d}); await loadLeads(); openLead(r.id||id,{saved:true}); if(S.tab==="leads") drawLeads(); }
   catch(e){ const b=$("#lead_save"); if(b){ b.textContent=e.message; b.classList.add("err"); } }
-}
-async function saveLeadNote(id){
-  const cur=(S.leads||[]).find(x=>x.id===id)||{};
-  const body=$("#ln_body").value.trim(), st=$("#ln_status").value, nx=$("#ln_next").value||null;
-  const p={id,body,status:st,next_action:nx}; if(S.ol.follow_up) p.follow_up=S.ol.follow_up; if(S.ol.temperature) p.temperature=S.ol.temperature;
-  if(!body && !S.ol.follow_up && st===(cur.status||"Active") && (p.temperature||null)===(cur.temperature||null) && nx===(cur.next_action||null)){ toast("Add a note or pick a follow up"); return; }
-  $("#ln_go").disabled=true;
-  try{ await api("lead_note",p); await loadLeads(); closeOv(); toast(S.ol.follow_up?`Saved. Follow up ${dueLabel(S.ol.follow_up).toLowerCase()}`:"Saved"); if(S.tab==="leads") drawLeads(); }catch(e){ $("#ln_go").disabled=false; toast(e.message); }
 }
 
 // Listings: Dignam homes for sale. Each shows how many leads it suits.
@@ -1439,16 +1407,6 @@ function sourcesCard(ov){
     ${rows.map(r=>`<tr><td>${esc(SOURCES[r.source]||r.source)}</td><td>${r.appraisals}</td><td>${r.listings}</td><td>${r.sold}</td></tr>`).join("")}</table>
     <p class="muted" style="margin:8px 0 0;font-size:12px">Booked from the call list counts as Calls. Tag anything else in Pipeline.</p>`
     :`<p class="muted" style="margin:0">Each appraisal and listing is tagged with where it came from. Calls are tagged for you; add card drops, referrals and the rest in Pipeline.</p>`}</div>`;
-}
-function weekCard(w){
-  if(!w) return ""; const t=w.this||{}, l=w.last||{}, rate=x=>x.connected?(100*x.appraisals/x.connected):0;
-  const d=(a,b,suf="")=>{ const diff=a-b; return diff===0?"":`<span style="color:${diff>0?"var(--good)":"var(--bad)"};font-size:12px"> ${diff>0?"up":"down"} ${Math.abs(Math.round(diff*10)/10)}${suf}</span>`; };
-  return `<h2>This week</h2><div class="stats">
-   <div class="stat"><b>${t.calls||0}</b><span>Calls${d(t.calls||0,l.calls||0)}</span></div>
-   <div class="stat"><b>${t.connected||0}</b><span>Answered${d(t.connected||0,l.connected||0)}</span></div>
-   <div class="stat"><b>${t.appraisals||0}</b><span>Appraisals${d(t.appraisals||0,l.appraisals||0)}</span></div>
-   <div class="stat"><b>${rate(t).toFixed(1)}</b><span>Per 100${d(rate(t),rate(l))}</span></div></div>
-   <p class="muted" style="margin-top:-4px">Compared with the 7 days before. Pipeline: ${w.pipeline?.appraisal||0} open appraisal${(w.pipeline?.appraisal||0)===1?"":"s"}, ${w.pipeline?.listed||0} listed, ${w.pipeline?.sold||0} sold${w.new_listings_week?`, ${w.new_listings_week} new listing${w.new_listings_week>1?"s":""} this week`:""}.</p>`;
 }
 function heatMap(times){
   times=times||[]; const tot=times.reduce((a,t)=>a+t.calls,0);
@@ -1660,7 +1618,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=122"></script>
+<script src="v2.js?v=123"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

@@ -89,7 +89,6 @@ function whyRows(r){
   if(r.callback&&!out.length) out.push(['cal','You booked a call back','Strong']);
   return out;
 }
-function strength2(r){ return ({Strong:3,Medium:2,Light:1})[reasonOf(r).lvl]||1; }
 function histRows(r){
   const ev=[]; const sales=r.sales||[];
   // Each sale shows how much it rose from the one before and how long that owner held it; the latest shows who sold it when we know
@@ -117,8 +116,6 @@ function dignamLast(r){ const ns=r.crm_notes||[]; if(!ns.length) return null;
 function dignamLine(r){ return ''; const x=dignamLast(r); if(!x) return '';
   const t=x.when?`Last Dignam contact ${x.when}${x.by?', '+x.by:''}`:'In the Dignam CRM, no contact date';
   return `<div class="dl2" style="color:${x.recent?'var(--cbT)':'var(--t2)'}">${ic2('users',15)}<span>${esc(t)}${x.owner&&x.owner!==x.by?`<span class="pa"> · Primary agent ${esc(x.owner)}</span>`:''}</span></div>`; }
-function officeNotes(r){ const ns=(r.crm_notes||[]).filter(n=>n.comments||n.last); if(!ns.length) return '';
-  return ns.map(n=>`<div class="cc2"><i style="background:#6366f1"></i><div><div class="h"><b style="color:#c7d2fe">Office notes</b><span class="lab2">${esc(n.owner||n.name||'AgentBox')}${n.on?' · last contact '+esc(monYear(n.on)):''}</span></div>${n.comments?`<p>${esc(n.comments)}</p>`:''}${n.last?`<p style="color:var(--t2)">${esc(n.last)}</p>`:''}</div></div>`).join(''); }
 // One timeline: your calls and everything Dignam has logged with them, newest first
 const MON3={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
 function officeEntries(r){ const out=[];
@@ -166,14 +163,6 @@ function hasDot(){ return (S.ov?.ready_texts||0)>0 || (S.leads||[]).some(l=>newM
 function tabBtn(id){ return `<span class="tabbtn" id="${id}">${tabName()}</span>`; }
 function vseg2(){ return S.tab==='calls'&&!S.searching?`<div class="vseg">${[['call','Calling'],['list','List']].map(([k,l])=>`<button class="${S.view===k?'on':''}" onclick="setView('${k}')">${l}</button>`).join('')}</div>`:''; }
 function setView(v){ S.view=v; S.dialer=v!=='list'; try{localStorage.setItem("dp_view",v)}catch{} if(v==='list') S.pick=null; render(); }
-function navPop(btn){
-  const ico=NAVI;
-  const ready=S.ov?.ready_texts||0, nl=(S.leads||[]).filter(l=>newMatches(l).length).length;
-  const body=`<div class="g2">${TABS2.map(([k,l])=>row2(ico[k][0],ico[k][1],l,k==='leads'&&nl?`${nl} with new matching homes`:'',k===S.tab?ic2('check',18,'var(--accT)'):'',`closePop2();closeOv();go('${k}')`)).join('')}</div>
-   ${ready?`<div class="g2" style="margin-top:10px">${row2('var(--acc)','send','Texts',`${ready} ready to send`,chev2(),"closePop2();closeOv();go('messages')")}</div>`:''}`;
-  if(!desk2()) return openSheet2('Go to',body);
-  const r=btn.getBoundingClientRect(), pop=$("#pop2"); pop.innerHTML=body; pop.style.left=r.left+'px'; pop.style.top=(r.bottom+8)+'px'; pop.classList.add('show'); $("#popscrim2").classList.add('show');
-}
 function closePop2(){ $("#pop2")?.classList.remove('show'); $("#popscrim2")?.classList.remove('show'); }
 function v2search(v){ const m=$("#main"); if(m) m.className='v2main old'; if(!desk2()) S.psearch=S.psearch||!!v; hSearch(v); }
 function togglePS(){ S.psearch=!S.psearch; if(!S.psearch&&S.sq){ S.sq=''; hSearch(''); return; } render(); if(S.psearch) setTimeout(()=>$("#hq2")?.focus(),30); }
@@ -408,7 +397,6 @@ function drawList2(){
       <div class="ac3">${ph&&!r.today_outcome?`<button class="cl3" aria-label="Call ${esc(people(r.owner_name)[0]||'')}" onclick="event.stopPropagation();open2(${id});if(callingAllowed())openUrl('tel:'+${JSON.stringify(String(ph).replace(/\s/g,''))}.replace(/[^0-9+]/g,''))">${ic2('phone',18,'#fff')}</button>`:''}<span class="ch3">${chev2()}</span></div></div>`; }).join(''):'<p class="emptyline" style="padding:28px">Nobody left here today.</p>'}</div>
    </div></div>`;
 }
-function rpu0(r){ return r.street_address||r.suburb?rpUrl(r.street_address,r.suburb,r.rp_link,r.postcode):null; }
 async function copyAddr(id){ const r=queue().find(x=>x.property_id===id); if(!r) return; const t=[r.street_address,r.suburb].filter(Boolean).join(', ');
   try{ await navigator.clipboard.writeText(t); }catch{ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy')}catch{} ta.remove(); }
   toast('Copied: '+t); }
@@ -416,7 +404,6 @@ function bigPhoto(id){ const r=queue().find(x=>x.property_id===id); if(!r) retur
   openSheet2(esc(r.street_address||'House'),`<div class="photo2" style="aspect-ratio:4/3;width:100%">${u?`<img src="${u}" alt="" onerror="this.remove()"><span class="pinm"></span><span class="credit">Imagery © NSW Spatial Services</span>`:''}</div>
    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><a class="b2 pri" href="${svUrl(r)}" target="_blank" rel="noopener">${ic2('eye',18)}Street View</a><button class="b2" onclick="copyAddr(${id})">Copy address</button></div>`);
   $("#sheet").classList.add('wide2'); }
-function filterRows2(q){ q=q.toLowerCase(); document.querySelectorAll('#lrows2 .lg2').forEach(r=>r.style.display=r.dataset.q.includes(q)?'':'none'); }
 function open2(id){ S.pick=id; S.view='call'; S.dialer=true; try{localStorage.setItem("dp_view","call")}catch{} render(); }
 function startSub(){ S.focusSub=S.lsub==='Call backs'?null:S.lsub; S.pick=null; S.skipped.clear(); setView('call'); }
 
@@ -1044,10 +1031,6 @@ window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); 
   const nx=queue().find(x=>x.property_id!==r.property_id&&!x.today_outcome&&!S.skipped.has(x.property_id)); if(nx) svGet(nx.property_id,big&&big.offsetParent?'big':'small'); }; })(window.drawCall2);
 
 // Small street photos on list and pipeline rows, loaded only as they scroll into view
-function svThumbs(sel,re){ if(S.svOff||DEMO||!('IntersectionObserver' in window)) return;
-  const io=new IntersectionObserver(es=>es.forEach(e=>{ if(!e.isIntersecting) return; io.unobserve(e.target); const t=e.target, pid=+t.dataset.svp;
-    svGet(pid,'small').then(p=>{ if(!p||!t.isConnected) return; let im=t.querySelector('img'); if(!im){ im=document.createElement('img'); im.alt=''; t.prepend(im); } im.onerror=null; im.src=p.url; }); }),{rootMargin:'200px'});
-  document.querySelectorAll(sel).forEach(row=>{ const m=(row.getAttribute('onclick')||'').match(re), th=row.querySelector('.th3'); if(m&&th){ th.dataset.svp=m[1]; io.observe(th); } }); }
 // Rows keep the free aerial; a paid street photo loads only for the person you open
 
 // Note boxes grow with what you type (up to half the screen, then they scroll), so a long note never runs off the edge
