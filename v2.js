@@ -1525,7 +1525,7 @@ async function board3(local){
   const ls=(S.leads||[]).slice().sort((a,b)=>(a.follow_up||'9999').localeCompare(b.follow_up||'9999'));
   const ap=rows.filter(x=>x.stage==='appraisal'), li=rows.filter(x=>x.stage==='listed');
   const n=d=>dueIn(d);
-  const lc=ls.slice(0,5).map(l=>{ const d=n(l.follow_up); return card3({buyer:hasCriteria(l.buy),photo:aerialUrl(l,PH_SMALL[0],PH_SMALL[1]),name:leadTitle(l),
+  const lsf=lsFilter5(ls); const lc=lsf.slice(0,S.bfit5||5).map(l=>{ const d=n(l.follow_up); return card3({buyer:hasCriteria(l.buy),photo:aerialUrl(l,PH_SMALL[0],PH_SMALL[1]),name:leadTitle(l),
     key:d===null?'No date':d<0?`${-d} day${d===-1?'':'s'} overdue`:d===0?'Today':dayK3(l.follow_up),cls:d!==null&&d<0?'od':d===0?'td':'',sub:[ltype3(l),l.next_action].filter(Boolean).join(', '),
     addr:[l.address,l.suburb].filter(Boolean).join(', '),open:`openLead(${l.id})`,
     acts:l.phone?`<a class="call" href="tel:${esc(telOf(l.phone))}" aria-label="Call">${ic2('phone',16)}</a><a href="${smsLink(l.phone,'')}" aria-label="Text">${ic2('msg',16)}</a>`:''}); });
@@ -1909,3 +1909,22 @@ window.drawDropLayer=(function(orig){ return function(){
 function widen5(group){ try{ const extra=[]; group.eachLayer(l=>{ if(!(l instanceof L.Polyline)) return;
   const t=L.polyline(l.getLatLngs(),{weight:24,opacity:0.001,lineCap:'round',interactive:true});
   t.on('click',e=>{ l.openPopup(e.latlng); }); extra.push(t); }); extra.forEach(t=>group.addLayer(t)); }catch(e){ console.error(e); } }
+
+// Board Leads column: find any lead to drag, and show exactly as many cards as fit the screen
+function lsFilter5(ls){ const q=String(S.bq5||'').trim().toLowerCase(); if(!q) return ls; const d=q.replace(/\D/g,'');
+  return ls.filter(l=>[leadTitle(l),l.name,l.address,l.suburb].some(v=>String(v||'').toLowerCase().includes(q))||(d.length>=3&&String(l.phone||'').replace(/\D/g,'').includes(d))); }
+let bq5t;
+function bq5(v){ S.bq5=v; clearTimeout(bq5t); bq5t=setTimeout(()=>{ const pos=document.getElementById('bq5i')?.selectionStart; board3(true).then(()=>{ const i=document.getElementById('bq5i'); if(i){ i.focus(); try{ i.setSelectionRange(pos,pos); }catch{} } }); },120); }
+function boardFit5(){ try{ const col=document.querySelector('.bd3 .bc3.ld'); if(!col||innerWidth<900) return false;
+  const first=col.querySelector('.cd3'), more=col.querySelector('.bm3'); if(!first||!more) return false;
+  const avail=innerHeight-first.getBoundingClientRect().top-more.offsetHeight; const n=Math.max(3,Math.floor(avail/84));
+  document.querySelector('.bd3').style.setProperty('--cdh',Math.floor(avail/n)+'px');
+  if(n!==S.bfit5){ S.bfit5=n; return true; } return false; }catch{ return false; } }
+window.board3=(function(orig){ return async function(local){ const r=await orig(local);
+  const h=document.querySelector('.bd3 .bc3.ld .bh3');
+  if(h&&!document.getElementById('bq5i')) h.insertAdjacentHTML('afterend',`<label class="bq5">${ic2('search',15)}<input id="bq5i" type="search" placeholder="Find a lead to move" value="${esc(S.bq5||'')}" oninput="bq5(this.value)" autocomplete="off" aria-label="Find a lead"></label>`);
+  const col=document.querySelector('.bd3 .bc3.ld');
+  if(col&&S.bq5&&!col.querySelector('.cd3')) col.querySelector('.be3')?.replaceWith(Object.assign(document.createElement('p'),{className:'be3',textContent:'No lead matches that'}));
+  if(boardFit5()) return board3(true);
+  return r; }; })(window.board3);
+addEventListener('resize',()=>{ clearTimeout(window.__bf5); window.__bf5=setTimeout(()=>{ if(document.querySelector('.bd3')&&boardFit5()) board3(true); },200); });

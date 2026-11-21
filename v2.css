@@ -1168,3 +1168,8 @@ header.top2 .dic5~.tsearch{margin-left:0}
 #main.drops2:not(:has(.dsplit)){padding:0 0 40px!important}
 #main.drops2:not(:has(.dsplit))>h3{margin:0!important;padding:9px 16px;background:#1c2129;border-bottom:1px solid #232831;font-size:13px;color:#a3acb9}
 #main.drops2:not(:has(.dsplit))>.card{margin:0!important;border-radius:0!important;border:0!important;border-bottom:1px solid #232831!important;background:none!important;box-shadow:none!important}
+/* Board: find a lead, cards share the screen height exactly */
+.bq5{display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;border-bottom:1px solid #232831;color:#858e9c;background:#111419}
+.bq5 input{flex:1;min-width:0;height:44px!important;min-height:0!important;border:0!important;background:none!important;padding:0!important;color:#f2f4f7;font-size:14px!important;outline:none;box-shadow:none!important}
+.bq5:focus-within{background:#171b21;color:#93c0ff}
+@media (min-width:900px){.bd3 .cd3{height:var(--cdh,92px)!important}}
