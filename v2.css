@@ -1145,3 +1145,26 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea,
 .dtr5 button.on{color:#f2f4f7!important;border-color:#5b9bff!important;background:#162544!important}
 .dtr5 button i{width:12px;height:4px;border-radius:2px;display:inline-block}
 .leaflet-container .dleg{display:none!important}
+/* Card drops: Map/List in the top bar, Streets/Suburbs heads the list, only the list scrolls */
+#main.drops2>.dtb5.dtb5e{display:none!important}
+.dsh5{position:sticky;top:0;z-index:2;background:#111419;border-bottom:1px solid #232831;padding:8px 12px}
+.dsh5 .dgrp5{margin:0!important;display:flex;width:100%}.dsh5 .dgrp5 button{flex:1}
+header.top2 .dvw5{margin-left:8px}
+@media (min-width:1000px){body:has(#main.drops2 .dsplit){overflow:hidden}#main.drops2:has(.dsplit){overflow:hidden;padding-bottom:0!important;height:calc(100dvh - 85px)}}
+#main.drops2>.dflt2{display:none!important}
+#main.drops2:not(:has(.dsplit)){padding:8px 20px 40px!important}
+header.top2 .dic5{width:36px;height:36px;min-height:0!important;padding:0!important;display:grid;place-items:center;border-radius:4px!important;background:#1c2129!important;border:1px solid #363e4b!important;color:#a3acb9!important}
+header.top2 .dic5:first-of-type{margin-left:auto}
+header.top2 .dic5~.tsearch{margin-left:0}
+/* Board cards: one standard size everywhere so columns line up */
+.bd3 .cd3{height:92px!important;box-sizing:border-box;align-items:center!important;gap:12px!important;padding:0 12px!important}
+.bd3 .ph3{flex:0 0 64px!important;width:64px!important;height:64px!important;align-self:center!important;margin:0!important}
+.bd3 .ph3 img{width:100%;height:100%;object-fit:cover}
+.bd3 .cx3{min-width:0;flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px;align-self:center}
+.bd3 .cn3,.bd3 .ck3,.bd3 .ca3{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:20px;max-width:100%;text-align:left}
+.bd3 .ca3:empty::before{content:'No address';color:#636d7e}
+.bd3 .cb3{align-self:center!important}
+/* Card drops list view, flush: suburb bands, streets split by lines */
+#main.drops2:not(:has(.dsplit)){padding:0 0 40px!important}
+#main.drops2:not(:has(.dsplit))>h3{margin:0!important;padding:9px 16px;background:#1c2129;border-bottom:1px solid #232831;font-size:13px;color:#a3acb9}
+#main.drops2:not(:has(.dsplit))>.card{margin:0!important;border-radius:0!important;border:0!important;border-bottom:1px solid #232831!important;background:none!important;box-shadow:none!important}

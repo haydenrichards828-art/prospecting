@@ -1786,16 +1786,29 @@ function areaFind5(q){ clearTimeout(ap5t); ap5t=setTimeout(async()=>{ const box=
 
 // ---------- Card drops: one toolbar, map and list fill the screen, maps can go full screen ----------
 function dropsTidy5(){ try{
-  const top=document.querySelector('#main > .top'); if(!top||!document.querySelector('.dsplit')||!top.querySelector('.dfb2')) return;
+  const top=document.querySelector('#main > .top'); if(!top||!top.querySelector('.dfb2')&&!top.classList.contains('dtb5')) return;
+  // Map / List lives in the top bar beside the page name
+  const head=document.querySelector('header.top2'), vs=[...top.querySelectorAll('.seg')].find(g=>/^Map/.test(g.textContent.trim()));
+  if(head&&vs&&innerWidth>=900){ head.querySelectorAll('.dvw5').forEach(x=>x.remove()); vs.classList.add('lift5','dvw5'); head.querySelector('.tabbtn')?.after(vs);
+    if(!document.querySelector('#main .l5mark')) document.getElementById('main').insertAdjacentHTML('afterbegin','<i class="l5mark" hidden></i>'); }
+  if(!document.querySelector('.dsplit')){ // list view: print and download go in the top bar, nothing else is needed here
+    top.querySelector('h1.pt2')?.remove(); top.querySelector('.dfb2')?.remove(); document.querySelectorAll('#main > .dflt2').forEach(x=>x.remove());
+    if(head&&innerWidth>=900){ const srch=head.querySelector('.tsearch'); top.querySelectorAll('.iconbtn').forEach(b=>{ b.classList.add('lift5','dic5'); srch?srch.before(b):head.appendChild(b); }); }
+    if(!top.querySelector('button,.seg')) top.remove();
+    return; }
+  if(!top.querySelector('.dfb2')) return; top.classList.add('dtb5');
   top.classList.add('dtb5'); top.querySelector('h1.pt2')?.remove();
   const sideTop=document.querySelector('.dside > .top'); const g=sideTop?.querySelector('.seg');
-  if(g&&!top.querySelector('.dgrp5')){ g.classList.add('dgrp5'); top.querySelector('.seg')?.after(g); }
+  // Streets / Suburbs only changes the list, so it heads the list
+  const side=document.querySelector('.dside');
+  if(g&&side&&!side.querySelector('.dgrp5')){ g.classList.add('dgrp5'); const h=document.createElement('div'); h.className='dsh5'; h.appendChild(g); side.prepend(h); }
   sideTop?.remove();
+  if(!top.querySelector('.seg:not(.dgrp5), .iconbtn, button:not(.dfb2)')) top.classList.add('dtb5e');
   top.querySelector('.dfb2')?.remove();
   dfBtn5(); fitDrops5();
 }catch(e){ console.error(e); } }
 function fitDrops5(){ const m=$('#dmap'), s=document.querySelector('.dside'); if(!m||innerWidth<1000) { if(m) m.style.height=''; if(s) s.style.maxHeight=''; return; }
-  const h=Math.max(320,innerHeight-m.getBoundingClientRect().top); m.style.height=h+'px'; if(s){ s.style.maxHeight=h+'px'; s.style.overflow='auto'; }
+  const h=Math.max(320,innerHeight-m.getBoundingClientRect().top); m.style.height=h+'px'; if(s){ s.style.height=h+'px'; s.style.maxHeight=h+'px'; s.style.overflow='auto'; }
   try{ S.map&&S.map.invalidateSize(); }catch{} }
 addEventListener('resize',()=>{ if(S.tab==='drops') fitDrops5(); });
 window.drawDrops=(function(orig){ return function(...a){ const r=orig(...a); dropsTidy5(); mapFsBtn5('dmap',()=>S.map); mapCtl5(); return r; }; })(window.drawDrops);
