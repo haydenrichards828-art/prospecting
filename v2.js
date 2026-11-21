@@ -1195,7 +1195,7 @@ const COL={no_answer:'#7C3AED',not_selling:'#d6455a',call_back:'#d97706',lead:'#
 
 // ---------- Side bar on computers: every page one click away (the menu took 7 to 30 seconds to use) ----------
 // Pipeline opens Leads, Appraisals and Listings when you point at it. The button at the top folds the bar down to just the icons.
-const SIDE=[['calls','Calls','phone'],['enquiry','Call sheets','msg'],['pipe','Pipeline','appr',[['leads','Leads','users'],['appraisal','Appraisals','appr'],['listed','Listings','star']]],['drops','Card drops','mail'],['insights','Stats','chart']];
+const SIDE=[['calls','Calls','phone'],['pipe','Pipeline','appr',[['leads','Leads','users'],['appraisal','Appraisals','appr'],['listed','Listings','star']]],['drops','Card drops','mail'],['insights','Stats','chart']];
 const LOGO2=`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2.2" width="20" height="15.6" rx="4.2" fill="#3b82f6"/><path d="M5.2 16.8 4.4 22.4 10.6 17.4z" fill="#3b82f6" stroke="#3b82f6" stroke-width="1" stroke-linejoin="round"/><rect x="15.3" y="5.3" width="1.7" height="3.4" rx=".4" fill="#fff"/><path d="M5.8 9.9 12 5l6.2 4.9" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.9 9.4 12 5.4l5.1 4v6.3H6.9z" fill="#fff"/><path d="M10.5 15.7v-4a.4.4 0 0 1 .4-.4h2.2a.4.4 0 0 1 .4.4v4z" fill="#3b82f6"/></svg>`;
 function sideFolded(){ try{ return localStorage.getItem('dp_side')==='1'; }catch{ return false; } }
 function sideFold(){ try{ localStorage.setItem('dp_side',sideFolded()?'0':'1'); }catch{} sideApply(); }
@@ -1420,7 +1420,7 @@ async function qaSave(){ const q=S.qa, name=$('#qa_name').value.trim(), phone=$(
   catch(e){ b.disabled=false; b.textContent='Add lead'; toast(e.message); } }
 
 // Phone: a bottom bar so every page is one tap away
-const TB2=[['calls','Calls','phone'],['enquiry','Sheets','msg'],['leads','Leads','users'],['pipeline','Pipeline','appr'],['more','More','more']];
+const TB2=[['calls','Calls','phone'],['leads','Leads','users'],['pipeline','Pipeline','appr'],['more','More','more']];
 function tbHTML2(){ return `<nav id="tb2" aria-label="Pages">${TB2.map(([k,l,ic])=>`<button class="${S.tab===k||(k==='more'&&['drops','insights','settings','messages'].includes(S.tab))?'on':''}" onclick="${k==='more'?'tbMore2()':`closeOv();closePop2();go('${k}')`}">${ic2(ic,20)}<span>${l}</span></button>`).join('')}</nav>`; }
 function tbMore2(){ openSheet2('More',`<div class="g2">${[['drops','Card drops','mail'],['insights','Stats','chart'],['settings','Settings','gear']].map(([k,l,ic])=>row2(NAVI[k]?NAVI[k][0]:'#4b5565',ic,l,'',chev2(),`closeOv();go('${k}')`)).join('')}</div>`); }
 function tbPaint2(){ if(desk2()){ document.getElementById('tb2')?.remove(); document.body.classList.remove('hastb2'); return; } document.getElementById('tb2')?.remove(); if(!S.token&&!DEMO) return; document.body.insertAdjacentHTML('beforeend',tbHTML2()); document.body.classList.add('hastb2'); }
@@ -1743,3 +1743,71 @@ function short4(ws){ const all=(ws||[]).map(w=>w[1]).filter(Boolean), d=all.filt
   if(/^Similar unit/.test(t)) return 'Similar unit'+(m?', '+m:'');
   if(/^(?:House )?\d+ m from /.test(t)) return m+' away';
   return t.replace(/,.*$/,''); }
+
+// ---------- Call sheets live inside Calls: one New call sheet button, open home lists under Lists ----------
+window.go=(function(orig){ return function(t,...a){ if(t==='enquiry'){ S.ohSel=S.elid||S.ohSel||null; S.view='list'; t='calls'; } return orig(t,...a); }; })(window.go);
+const paintEnquiry0=window.paintEnquiry;
+window.paintEnquiry=function(){ if(S.tab==='calls') return drawList(); return paintEnquiry0(); };
+window.viewEnquiry=(function(orig){ return async function(){ if(S.tab==='enquiry'||S.tab==='calls'){ S.tab='calls'; S.view='list'; S.ohSel=S.elid||null; }
+  await orig(); if(S.tab==='calls'){ const L=(S.el||[]).find(x=>x.id===S.elid); S.ohSel=L&&!L.archived?L.id:null; drawList(); } }; })(window.viewEnquiry);
+async function loadEl5(){ try{ const r=await api('elists'); const sig=JSON.stringify(r.rows||[]); if(sig===S.elSig) return; S.elSig=sig; S.el=r.rows||[]; if(S.tab==='calls'&&S.view==='list') drawList(); }catch{} }
+window.refreshCalls=(function(orig){ return async function(...a){ const r=await orig(...a); loadEl5(); return r; }; })(window.refreshCalls);
+window.startSub=(function(orig){ return function(){ if(S.ohSel) return; return orig(); }; })(window.startSub);
+window.drawList2=(function(orig){ return function(){ orig(); try{
+  const rail=document.querySelector('.rail2'); if(!rail) return;
+  // New call sheet: the one obvious way to make any list
+  const acts=rail.querySelector('.rl5'); if(acts&&!acts.querySelector('.ncs5')) acts.insertAdjacentHTML('afterbegin',`<button class="ncs5" onclick="newSheet5()">${ic2('plus',16)}<em class="rn5">New call sheet</em></button>`);
+  const live=(S.el||[]).filter(x=>!x.archived), fin=(S.el||[]).filter(x=>x.archived);
+  if(live.length||fin.length){
+    let anchor=rail.querySelector('.rh5:nth-of-type(2)')||[...rail.querySelectorAll('.rh5')].find(h=>h.textContent==='Suburbs');
+    if(![...rail.querySelectorAll('.rh5')].some(h=>h.textContent==='Lists')){ const h=document.createElement('div'); h.className='rh5'; h.textContent='Lists'; anchor?anchor.before(h):rail.appendChild(h); }
+    const btn=x=>`<button class="oh5${S.ohSel===x.id?' on':''}" data-oh="${x.id}" onclick="S.ohSel=${x.id};openEList(${x.id})" title="Open home: ${esc(x.address||x.title)}">${ic2('house',14)}<em class="rn5">${esc(shortAddr(x.address||x.title))}</em><span>${x.archived?x.coming:x.total-x.done}</span></button>`;
+    const html=live.map(btn).join('')+(fin.length?`<button class="ohf5" data-oh="f" onclick="S.ohFin=!S.ohFin;drawList()">${ic2(S.ohFin?'down':'chev',14)}<em class="rn5">Finished open homes</em><span>${fin.length}</span></button>`+(S.ohFin?fin.map(btn).join(''):''):'');
+    anchor?anchor.insertAdjacentHTML('beforebegin',html):rail.insertAdjacentHTML('beforeend',html);
+  }
+  rail.addEventListener('click',e=>{ const b=e.target.closest('button'); if(b&&!b.dataset.oh&&!b.classList.contains('ncs5')&&S.ohSel){ S.ohSel=null; } },true);
+  if(S.ohSel){
+    rail.querySelectorAll('button.on:not([data-oh])').forEach(b=>b.classList.remove('on'));
+    S.elid=S.ohSel; const keep=rail; paintEnquiry0();
+    const r2=document.querySelector('#main .rail2'); if(r2) r2.replaceWith(keep);
+    if(!S.erows||S.erowsFor!==S.ohSel){ const id=S.ohSel; S.erowsFor=id; api('elist',{id}).then(x=>{ if(S.ohSel!==id) return; S.erows=x.rows||[]; drawList(); }).catch(e=>toast(e.message)); }
+  }
+}catch(e){ console.error(e); } }; })(window.drawList2);
+window.openEList=(function(orig){ return async function(id){ S.erowsFor=id; return orig(id); }; })(window.openEList);
+function newSheet5(){ openSheet2('New call sheet',`<div class="g2">${row2('#2563eb','pin','Around an address','Everyone with a number nearby',chev2(),'areaPick5()')}${row2('#0d9488','house','Open home enquiries','Import the CRM export for a listing',chev2(),'ohImport5()')}</div>`); }
+async function ohImport5(){ if(!S.listings){ try{ await loadLeads(); }catch{} } importSheet(); }
+function areaPick5(){ openSheet2('Around an address',`<label class="tsearch ap5">${ic2('search',16)}<input id="ap5q" type="search" placeholder="Type an address" autocomplete="off" oninput="areaFind5(this.value)"></label><div id="ap5r" class="g2" hidden></div>`,'newSheet5()'); setTimeout(()=>$('#ap5q')?.focus(),50); }
+let ap5t;
+function areaFind5(q){ clearTimeout(ap5t); ap5t=setTimeout(async()=>{ const box=$('#ap5r'); if(!box) return; if(q.trim().length<3){ box.hidden=true; return; }
+  try{ const r=await api('search',{q}); if($('#ap5q')?.value!==q) return; const ps=(r.props||[]).filter(p=>p.id).slice(0,8);
+    box.hidden=false; box.innerHTML=ps.length?ps.map(p=>row2('#4b5565','pin',esc(p.street_address||''),esc(p.suburb||''),chev2(),`areaSheet(${p.id})`)).join(''):'<p class="emptyline" style="padding:14px">No address found</p>'; }catch(e){ toast(e.message); } },250); }
+
+// ---------- Card drops: one toolbar, map and list fill the screen, maps can go full screen ----------
+function dropsTidy5(){ try{
+  const top=document.querySelector('#main > .top'); if(!top||!document.querySelector('.dsplit')||!top.querySelector('.dfb2')) return;
+  top.classList.add('dtb5'); top.querySelector('h1.pt2')?.remove();
+  const sideTop=document.querySelector('.dside > .top'); const g=sideTop?.querySelector('.seg');
+  if(g&&!top.querySelector('.dgrp5')){ g.classList.add('dgrp5'); top.querySelector('.seg')?.after(g); }
+  sideTop?.remove();
+  const wk=document.querySelector('.dside .wk4'); if(wk){ top.querySelector('.wk4')?.remove(); const f=top.querySelector('.dfb2'); f?f.before(wk):top.appendChild(wk); }
+  fitDrops5();
+}catch(e){ console.error(e); } }
+function fitDrops5(){ const m=$('#dmap'), s=document.querySelector('.dside'); if(!m||innerWidth<1000) { if(m) m.style.height=''; if(s) s.style.maxHeight=''; return; }
+  const h=Math.max(320,innerHeight-m.getBoundingClientRect().top-16+scrollY*0); m.style.height=h+'px'; if(s){ s.style.maxHeight=h+'px'; s.style.overflow='auto'; }
+  try{ S.map&&S.map.invalidateSize(); }catch{} }
+addEventListener('resize',()=>{ if(S.tab==='drops') fitDrops5(); });
+window.drawDrops=(function(orig){ return function(...a){ const r=orig(...a); dropsTidy5(); mapFsBtn5('dmap',()=>S.map); return r; }; })(window.drawDrops);
+window.drawBest=(function(orig){ return function(...a){ const r=orig(...a); dropsTidy5(); return r; }; })(window.drawBest);
+// Full screen for any map: the button sits on the map; Esc or the same button comes back
+function mapFsBtn5(id,getMap){ let n=0; const t=setInterval(()=>{ const el=document.getElementById(id); if(!el||++n>40){ clearInterval(t); return; }
+  if(!el.classList.contains('leaflet-container')) return; clearInterval(t); if(el.querySelector('.mfs5')) return;
+  el.insertAdjacentHTML('beforeend',`<button class="mfs5" aria-label="Full screen map" title="Full screen" onclick="event.stopPropagation();mapFs5('${id}')">${FS5_IN}</button>`);
+  L.DomEvent.disableClickPropagation(el.querySelector('.mfs5')); el._fsMap=getMap; },75); }
+const FS5_IN='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+const FS5_OUT='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+function mapFs5(id){ const el=document.getElementById(id); if(!el) return; const on=!el.classList.contains('mfull5');
+  el.classList.toggle('mfull5',on); document.body.classList.toggle('mfs5on',on); const b=el.querySelector('.mfs5'); if(b){ b.innerHTML=on?FS5_OUT:FS5_IN; b.setAttribute('aria-label',on?'Leave full screen':'Full screen map'); }
+  [0,120,350].forEach(t=>setTimeout(()=>{ try{ el._fsMap&&el._fsMap()?.invalidateSize(); }catch{} },t)); }
+addEventListener('keydown',e=>{ if(e.key==='Escape'){ const f=document.querySelector('.mfull5'); if(f){ e.stopPropagation(); mapFs5(f.id); } } },true);
+// The call sheet map gets the same button
+window.areaSheet=(function(orig){ return async function(pid){ const r=await orig(pid); mapFsBtn5('ar3m',()=>S.area3?.map); return r; }; })(window.areaSheet);

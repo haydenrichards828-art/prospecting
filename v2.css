@@ -970,6 +970,38 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 @media (min-width:900px){.lg3{grid-template-columns:64px minmax(0,1.2fr) minmax(0,1.3fr) 190px 76px!important}}
 /* Sellers / Landlords / Solicitors switch: three equal parts that never overlap */
 .rail2 .lt5{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:899px){.rail2 .lt5{display:none!important}}
 .rail2 .lt5 button{overflow:hidden;text-overflow:ellipsis}.rail2 .lt5 button span{display:none}
 /* Sidebar header: the name always fits next to the logo and the fold button */
 @media (min-width:900px){.side2:not(.fold) .sh2,.side2:not(.fold)>div:first-child{gap:6px!important}.side2:not(.fold) .fold2{width:30px!important;flex:none}.side2:not(.fold) .bn2{min-width:0;font-size:16px}}
+/* New call sheet button and open home lists in the Calls rail */
+.rail2 .ncs5{background:#2563eb!important;color:#fff!important;border:0!important;justify-content:center!important;font-weight:700;gap:6px}
+.rail2 .ncs5 .rn5{flex:none!important}.rail2 .ncs5:hover{filter:brightness(1.1)}
+.rail2>button.oh5{color:#5eead4}.rail2>button.oh5 svg,.rail2>button.ohf5 svg{flex:none}.rail2>button.oh5.on{color:#f2f4f7!important}
+.rail2>button.ohf5{color:#858e9c!important;font-size:13px!important}
+.ap5{width:100%;margin:0 0 4px}
+@media (max-width:899px){.rail2 .ncs5{order:-1}}
+/* Rail counts as small badges tied to their row */
+@media (min-width:900px){
+  .rail2>button>span{min-width:0!important;height:20px;padding:0 7px;border-radius:10px;background:#1c2129;color:#a3acb9!important;font-size:12px!important;font-weight:600;line-height:20px;text-align:center}
+  .rail2>button.on>span{background:#162544;color:#93c0ff!important}
+  .rail2>button.cbk>span{background:#2a2112;color:#ffc864!important}
+  .rail2 .rl5 button>span{background:none!important;padding:0;height:auto}
+}
+.rail2>button.oh5:not(.on){color:#5eead4!important}
+/* Card drops toolbar: everything on one row */
+.dtb5{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.dtb5 .dgrp5{margin-left:4px}.dtb5 .wk4{margin:0 0 0 auto!important;display:flex;align-items:center;gap:8px}
+.dtb5 .wk4 select{height:40px;min-width:170px}.dtb5 .wk4 button{height:40px}.dtb5 .wk4 label{font-size:13px;color:#a3acb9}
+.dtb5 .dfb2{margin-left:0!important}
+.dtb5 .wk4+.dfb2{margin-left:0!important}
+/* Full screen maps */
+.mfs5{position:absolute;top:10px;right:10px;z-index:1000;width:40px;height:40px;min-height:0!important;padding:0!important;display:grid;place-items:center;border-radius:10px!important;background:#171b21!important;color:#f2f4f7!important;border:1px solid #363e4b!important;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer}
+.mfs5:hover{background:#272d37!important}
+.mfull5{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-height:none!important;z-index:90!important;border-radius:0!important;margin:0!important;border:0!important}
+body.mfs5on #tb2{display:none}
+/* Street legend on the card drop map: compact, one tidy block */
+.dleg{padding:6px 8px!important;gap:4px!important;max-width:250px!important;border-radius:8px!important;font-size:11px!important}
+.dleg b{font-size:11px!important;font-weight:600;color:#a3acb9}
+.dleg button{min-height:0!important;height:24px!important;padding:0 7px!important;font-size:12px!important;gap:4px!important;border-radius:6px!important}
+.dleg button i{width:10px!important;height:3px!important}
