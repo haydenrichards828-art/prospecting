@@ -258,7 +258,7 @@ function drawCall2(){
   $("#main").innerHTML=failStrip()+hoursStrip()+`
   <div class="call2">
    <section class="cl2">
-    <div><h1 class="nm2">${esc(nm)}</h1>${ppl.length>1?`<div class="also2">Also on file: ${ppl.slice(1).map(esc).join(', ')}</div>`:''}<button class="ad2 cp2" onclick="copyAddr(${id})" title="Copy address for RP Data">${ic2('pin',21)}<span>${addr}</span><span class="cpl">Copy</span></button>${dignamLine(r)}</div>
+    <div><h1 class="nm2">${esc(nm)}</h1>${ppl.length>1?`<div class="also2">Also on file: ${ppl.slice(1).map(esc).join(', ')}</div>`:''}<button class="ad2 cp2" onclick="copyAddr(${id})" title="Copy address for RP Data">${ic2('pin',21)}<span>${addr}</span><span class="cpl" title="Copy address" aria-label="Copy address">${COPYIC5}</span></button>${dignamLine(r)}</div>
     ${tag}${warnBox(r)}
     ${numBtn(r,'num2')}
     ${why.length?`<div class="whyl2"><div class="wl2" style="grid-template-columns:repeat(${Math.min(why.length,4)},minmax(0,1fr))">${why.slice(0,4).map(([i,t,l])=>`<div class="wc2" style="--c:${RC2[i]||LVL2[l][0]};--t:${LVL2[l][1]}"><span class="ti2">${ic2(i,18,'#fff')}</span><span><b>${esc(t)}</b><em>${l}</em></span></div>`).join('')}</div></div>`:''}
@@ -277,7 +277,7 @@ function drawCall2(){
   <div class="pcall2">
    <div class="pb2">
     <div class="ptyp2" style="align-items:center;gap:12px;flex:none;padding-bottom:4px">${photo2(r,'width:44px;height:44px;border-radius:11px',false,!desk2())}<div style="min-width:0"><b style="font-size:18px;display:block">${esc(nm)}</b><span style="font-size:14px;color:var(--t2)">${addr}</span></div></div>
-    <div class="pid2"><div class="pidr2">${photo2(r,'',false,!desk2()).replace('class="photo2"',`class="photo2" onclick="bigPhoto(${id})"`)}<div style="min-width:0"><h1>${esc(nm)}</h1><button class="a cp2" onclick="copyAddr(${id})">${addr}<span class="cpl">Copy</span></button>${dignamLine(r)}</div></div>
+    <div class="pid2"><div class="pidr2">${photo2(r,'',false,!desk2()).replace('class="photo2"',`class="photo2" onclick="bigPhoto(${id})"`)}<div style="min-width:0"><h1>${esc(nm)}</h1><button class="a cp2" onclick="copyAddr(${id})">${addr}<span class="cpl" title="Copy address" aria-label="Copy address">${COPYIC5}</span></button>${dignamLine(r)}</div></div>
      ${icons.length?`<div class="icons2">${icons.map(([i,v])=>`<span>${ic2(i,18,'var(--t2)')}${esc(v)}</span>`).join('')}</div>`:''}</div>
     ${warnBox(r,true)}
     ${numBtn(r,'pnum2')}
@@ -1870,3 +1870,6 @@ function lift5(){ try{
 }catch(e){ console.error(e); } }
 new MutationObserver(()=>{ clearTimeout(window.__l5t); window.__l5t=setTimeout(lift5,0); }).observe(document.getElementById('app')||document.body,{childList:true,subtree:true});
 addEventListener('resize',()=>{ clearTimeout(window.__l5r); window.__l5r=setTimeout(()=>{ if(innerWidth<900&&document.querySelector('.lift5')) render(); },200); });
+
+// Copy address: an icon instead of the word
+const COPYIC5='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>';
