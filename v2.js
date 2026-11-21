@@ -1673,3 +1673,59 @@ async function walk3(){ const sub=document.getElementById('wksub')?.value||S.wal
 function walkClear3(){ if(S.walk) S.map.removeLayer(S.walk); S.walk=null; document.getElementById('wkp3')?.remove(); if(S.dext) S.dext.addTo(S.map); if(S.dlay) S.dlay.addTo(S.map); }
 window.drawBest=(function(orig){ return function(...a){ const r=orig(...a); const b=document.getElementById('best'); const subs=b?walkSubs3():[]; if(b&&subs.length){ const cur=subs.some(o=>o.sub===S.walkSub)?S.walkSub:subs[0].sub;
     b.insertAdjacentHTML('afterbegin',`<div class="wk4"><label for="wksub">Walk in</label><select id="wksub" onchange="S.walkSub=this.value">${subs.map(o=>`<option${o.sub===cur?' selected':''}>${esc(o.sub)}</option>`).join('')}</select><button class="wkb3" onclick="walk3()">${ic2('pin',16)} Plan a walk</button></div>`); } return r; }; })(window.drawBest);
+
+// ---------- Call sheet around a home: pick a distance on a map, then call everyone inside it ----------
+const AREA_DEF=800;
+const blocks3=m=>Math.max(1,Math.round(m/80));
+window.openSearchProp=(function(orig){ return function(pid,inList){ orig(pid,inList);
+  const sh=$('#sheet'); if(!sh) return;
+  sh.insertAdjacentHTML('beforeend',`<button class="ghost ar3b" onclick="areaSheet(${pid})">${ic2('pin',18)}Call sheet around here</button>`); }; })(window.openSearchProp);
+async function areaSheet(pid){
+  openSheet2('Call sheet around here',`<div class="ar3"><div class="ar3h" id="ar3a">Finding everyone nearby</div><div id="ar3m" class="ar3m"></div>
+    <div class="ar3c"><div class="ar3n"><b id="ar3n">0</b><span>people to call</span></div><div class="ar3d" id="ar3d"></div></div>
+    <input type="range" id="ar3r" min="100" max="1000" step="50" value="${AREA_DEF}" aria-label="How far around" oninput="areaDraw3()" onchange="areaFit3()">
+    <div class="ar3k"><span>100 m</span><span>1 km</span></div>
+    <button class="b2 pri" id="ar3go" onclick="areaMake3(${pid})" disabled>Make call sheet</button></div>`);
+  $('#sheet').classList.add('wide2');
+  let d; try{ d=await api('area_preview',{id:pid}); }catch(e){ $('#ar3a').textContent=e.message; return; }
+  if(d.error){ $('#ar3a').textContent=d.error; return; }
+  S.area3={pid,d}; $('#ar3a').textContent=d.addr;
+  try{ await loadLeaflet(); }catch(e){}
+  if(!window.L&&$('#ar3m')) $('#ar3m').innerHTML=`<div class="empty" style="padding:40px 0">The map couldn't load. The count below still works.</div>`;
+  if(window.L&&$('#ar3m')){ $('#ar3m').innerHTML='';
+    const m=L.map('ar3m',{zoomControl:false,attributionControl:true,preferCanvas:true}).setView([d.lat,d.lng],15);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(m);
+    S.area3.map=m;
+    S.area3.dots=d.pts.map(p=>L.circleMarker([p[0],p[1]],{radius:4,weight:0,fillOpacity:.9}).addTo(m));
+    S.area3.circle=L.circle([d.lat,d.lng],{radius:AREA_DEF,color:'#5b9bff',weight:2,fillColor:'#2563eb',fillOpacity:.1}).addTo(m);
+    L.marker([d.lat,d.lng],{icon:L.divIcon({className:'ar3pin',html:ic2('house',16),iconSize:[30,30],iconAnchor:[15,15]})}).addTo(m);
+    [60,300].forEach(t=>setTimeout(()=>{ try{ m.invalidateSize(); areaFit3(); }catch{} },t));
+  }
+  $('#ar3go').disabled=false; areaDraw3();
+}
+function areaDraw3(){
+  const A=S.area3; if(!A) return; const r=+$('#ar3r').value;
+  const n=A.d.pts.filter(p=>p[2]<=r).length;
+  $('#ar3n').textContent=n.toLocaleString(); $('#ar3d').innerHTML=`<b>${r>=1000?'1 km':r+' m'}</b><span>about ${blocks3(r)} block${blocks3(r)>1?'s':''} each way</span>`;
+  $('#ar3go').textContent=n?`Make call sheet of ${n.toLocaleString()}`:'Nobody to call in that area'; $('#ar3go').disabled=!n;
+  if(A.circle){ A.circle.setRadius(r); A.dots.forEach((m,i)=>{ const inn=A.d.pts[i][2]<=r; m.setStyle({fillColor:inn?'#ffc864':'#636d7e',fillOpacity:inn?.95:.5,radius:inn?4.5:3}); }); }
+}
+function areaFit3(){ const A=S.area3; if(A&&A.map&&A.circle) A.map.fitBounds(A.circle.getBounds(),{padding:[16,16]}); }
+async function areaMake3(pid){
+  const r=+$('#ar3r').value, b=$('#ar3go'); b.disabled=true; b.textContent='Making it';
+  try{
+    const x=await api('area_list',{id:pid,radius:r});
+    if(x.error) throw new Error(x.error);
+    try{ S.area3?.map?.remove(); }catch{} S.area3=null; closeOv();
+    toast(`${x.n} people added to ${x.name}`);
+    S.type='seller'; go('calls'); await refreshCalls(true); S.lsub=x.name; paintCalls();
+  }catch(e){ b.disabled=false; areaDraw3(); toast(e.message); }
+}
+window.closeOv=(function(orig){ return function(){ if(S.area3){ try{ S.area3.map?.remove(); }catch{} S.area3=null; } return orig.apply(this,arguments); }; })(window.closeOv);
+// Demo mode: a made up neighbourhood so the screen can be tried without real data
+window.demoApi=(function(orig){ return function(action,body){
+  if(action==='area_preview'){ const lat=-34.3375,lng=150.9196,pts=[]; let s=7; const rnd=()=>((s=s*16807%2147483647)/2147483647);
+    for(let i=0;i<620;i++){ const a=rnd()*6.283,d=Math.sqrt(rnd())*1000; pts.push([lat+d*Math.cos(a)/111320,lng+d*Math.sin(a)/(111320*Math.cos(lat*Math.PI/180)),Math.round(d)]); }
+    pts.sort((x,y)=>x[2]-y[2]); return {lat,lng,addr:'6/12 Waterloo Street, Bulli',pts}; }
+  if(action==='area_list') return {ok:true,name:'Around 6/12 Waterloo St',n:(window.__demoArea=Math.round(body.radius/2.1))};
+  return orig(action,body); }; })(window.demoApi);
