@@ -1818,7 +1818,7 @@ window.areaSheet=(function(orig){ return async function(pid){ const r=await orig
 const MX5_DEF={sales:false,pipe:true,dropped:true};
 function mx5(){ if(!S.mx){ try{ S.mx={...MX5_DEF,...JSON.parse(localStorage.getItem('dp_mx')||'{}')}; }catch{ S.mx={...MX5_DEF}; } } return S.mx; }
 function mxSave5(){ try{ localStorage.setItem('dp_mx',JSON.stringify(S.mx)); }catch{} }
-function dfActive5(){ const m=mx5(); return (S.dlayer&&S.dlayer!=='pins')||Object.keys(MX5_DEF).some(k=>m[k]!==MX5_DEF[k]); }
+function dfActive5(){ const m=mx5(), L5=lays5(); return !(L5.size===1&&L5.has('pins'))||streetShown().size<STREET_KEYS.length||Object.keys(MX5_DEF).some(k=>m[k]!==MX5_DEF[k]); }
 function mapCtl5(){ let n=0; const t=setInterval(()=>{ const el=document.getElementById('dmap'); if(!el||++n>40){ clearInterval(t); return; }
   if(!el.classList.contains('leaflet-container')) return; clearInterval(t); if(el.querySelector('.mctl5')) return dfBtn5();
   el.insertAdjacentHTML('beforeend',`<div class="mctl5"><button class="wkb5" onclick="event.stopPropagation();walkPick5()">${ic2('pin',16)}<span>Plan a walk</span></button><button class="dfb5" onclick="event.stopPropagation();dfPanel5()"></button></div>`);
@@ -1831,17 +1831,18 @@ function pop5(cls,html){ const m=document.getElementById('dmap'); if(!m) return;
 function popClose5(){ document.querySelectorAll('.dfp5,.wkp5').forEach(x=>x.remove()); dfBtn5(); document.removeEventListener('click',popOut5,true); }
 function popOut5(e){ const p=document.querySelector('.dfp5,.wkp5'); if(!p){ document.removeEventListener('click',popOut5,true); return; } if(p.contains(e.target)||e.target.closest('.mctl5')) return; popClose5(); }
 function dfPanel5(){ if(document.querySelector('.dfp5')) return popClose5(); pop5('dfp5',dfHTML5()); }
-function dfHTML5(){ const m=mx5(), cur=S.dlayer||'pins';
+function dfHTML5(){ const m=mx5();
   const nPipe=(S.pipe||[]).filter(x=>x.lat!=null&&['appraisal','listed'].includes(x.stage)).length, nSales=S.rsales?S.rsales.length:null;
   const nDrop=(S.streets||[]).filter(st=>{ const ids=st.ids||[]; return ids.length&&ids.every(id=>{ const x=(S.drops||[]).find(d=>d.id===id); return x&&isDropped(x); }); }).length;
   const row=(k,l,n)=>`<label class="dfr5"><input type="checkbox" ${m[k]?'checked':''} onchange="mx5().${k}=this.checked;mxSave5();mapExtras3();dfRefresh5()"><span>${l}${n!=null?` <em>(${n})</em>`:''}</span></label>`;
   return `<div class="dfp5" role="dialog" aria-label="Map filters">
-   <div class="dfh5"><b>Filter</b><button class="dfx5" onclick="S.mx={...MX5_DEF};mxSave5();S.dlayer='pins';drawDropLayer();dfRefresh5()">Clear all</button></div>
+   <div class="dfh5"><b>Filter</b><button class="dfx5" onclick="S.mx={...MX5_DEF};mxSave5();layReset5()">Clear all</button></div>
    <div class="dfs5">Map style</div>
-   <div class="dft5">${[['pins','Pins'],['heat','Heat'],['streets','Streets']].map(([v,l])=>`<button class="${cur===v?'on':''}" onclick="S.dlayer='${v}';drawDropLayer();dfRefresh5()">${l}</button>`).join('')}</div>
+   <div class="dft5">${[['pins','Pins'],['heat','Heat'],['streets','Streets']].map(([v,l])=>`<button class="${lays5().has(v)?'on':''}" aria-pressed="${lays5().has(v)}" onclick="layToggle5('${v}')">${l}</button>`).join('')}</div>
+   ${lays5().has('streets')?`<div class="dfs5">Streets most likely to sell</div><div class="dtr5">${STREET_KEYS.map(k=>`<button class="${streetShown().has(k)?'on':''}" onclick="toggleTier('${k}');dfRefresh5()"><i style="background:${{most:STREET_TIERS[0][2],likely:STREET_TIERS[1][2],some:STREET_TIERS[2][2],done:'#9aa3ad',rest:'#c9ced4'}[k]}"></i>${STREET_LABELS[k]}</button>`).join('')}</div>`:''}
    <div class="dfs5">Show on map</div>
    <div class="dfb5x">${row('pipe','Our appraisals and listings',nPipe)}${row('sales','Recent sales',nSales)}${row('dropped','Dropped dates',nDrop)}</div>
-   <div class="dff5"><button class="pri" onclick="popClose5()">Done</button><button class="pri" onclick="S.mx={...MX5_DEF};mxSave5();S.dlayer='pins';drawDropLayer();dfRefresh5()">Reset</button></div></div>`; }
+   <div class="dff5"><button class="pri" onclick="popClose5()">Done</button><button class="pri" onclick="S.mx={...MX5_DEF};mxSave5();layReset5()">Reset</button></div></div>`; }
 function dfRefresh5(){ const p=document.querySelector('.dfp5'); if(p){ const m=document.getElementById('dmap'); p.remove(); m.insertAdjacentHTML('beforeend',dfHTML5()); const q=m.querySelector('.dfp5'); L.DomEvent.disableClickPropagation(q); L.DomEvent.disableScrollPropagation(q); } dfBtn5(); }
 // Plan a walk: pick the suburb only when you ask for a walk
 function walkPick5(){ if(document.querySelector('.wkp5')) return popClose5(); const subs=walkSubs3().slice(0,12);
@@ -1873,3 +1874,25 @@ addEventListener('resize',()=>{ clearTimeout(window.__l5r); window.__l5r=setTime
 
 // Copy address: an icon instead of the word
 const COPYIC5='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>';
+
+// Map styles can be mixed: any of Pins, Heat and Streets at once. Heat sits at the bottom, pins on top.
+function lays5(){ if(!S.dlays){ try{ const v=JSON.parse(localStorage.getItem('dp_dlays')||'null'); S.dlays=new Set(Array.isArray(v)?v:['pins']); }catch{ S.dlays=new Set(['pins']); } } return S.dlays; }
+function laySave5(){ try{ localStorage.setItem('dp_dlays',JSON.stringify([...lays5()])); }catch{} }
+function layToggle5(v){ const L5=lays5(); L5.has(v)?L5.delete(v):L5.add(v); laySave5(); drawDropLayer(); dfRefresh5(); }
+function layReset5(){ S.dlays=new Set(['pins']); laySave5(); S.stiers=new Set(STREET_KEYS); try{localStorage.removeItem('dp_stiers')}catch{} drawDropLayer(); dfRefresh5(); }
+window.drawDropLayer=(function(orig){ return function(){
+  if(!S.map) return orig();
+  if(S.dlay){ try{ S.map.removeLayer(S.dlay); }catch{} S.dlay=null; }
+  const keep=[];
+  for(const v of ['heat','streets','pins']){ if(!lays5().has(v)) continue; S.dlayer=v; orig(); if(S.dlay){ keep.push(S.dlay); if(v==='streets') widen5(S.dlay); S.dlay=null; } }
+  if(S.dleg){ S.dleg.remove(); S.dleg=null; }   // the street key lives in the Filters panel now
+  if(!keep.length){ orig.__none=1; } 
+  keep.forEach(l=>{ try{ S.map.removeLayer(l); }catch{} });
+  S.dlay=L.layerGroup(keep).addTo(S.map); S.dlayer=[...lays5()][0]||'pins';
+  if(S.walk&&S.dlay) S.map.removeLayer(S.dlay);
+  dfBtn5();
+}; })(window.drawDropLayer);
+// Streets are easy to tap: an invisible wide line sits over each one and opens the same details
+function widen5(group){ try{ const extra=[]; group.eachLayer(l=>{ if(!(l instanceof L.Polyline)) return;
+  const t=L.polyline(l.getLatLngs(),{weight:24,opacity:0.001,lineCap:'round',interactive:true});
+  t.on('click',e=>{ l.openPopup(e.latlng); }); extra.push(t); }); extra.forEach(t=>group.addLayer(t)); }catch(e){ console.error(e); } }
