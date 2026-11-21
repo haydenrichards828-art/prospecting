@@ -839,8 +839,8 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 .lt3 i{color:#858e9c;font-style:normal}
 .nwm3{font-style:normal;font-size:13px;font-weight:500;color:#7ee2a8;display:inline-flex;align-items:center;gap:5px;flex:none}.nwm3::before{content:"";width:6px;height:6px;border-radius:9px;background:#7ee2a8}
 .due3{font-weight:600;color:#f2f4f7;font-variant-numeric:tabular-nums}.due3.od{color:#ff9aa6}.due3.td{color:#93c0ff}.due3.q{color:#858e9c;font-weight:400}
-.lg3{display:flex;align-items:center;gap:8px;height:34px;padding:0 16px;background:#1c2129;border-bottom:1px solid #363e4b;font-size:13px}
-.lg3 b{color:#f2f4f7;font-weight:600}.lg3 span{color:#858e9c}.lg3 i{display:none;width:8px;height:8px;border-radius:9px}.lg3.od i{display:block;background:#c0354a}.lg3.td i{display:block;background:#2563eb}
+.lgb3{display:flex;align-items:center;gap:8px;height:34px;padding:0 16px;background:#1c2129;border-bottom:1px solid #363e4b;font-size:13px}
+.lgb3 b{color:#f2f4f7;font-weight:600}.lgb3 span{color:#858e9c}.lgb3 i{display:none;width:8px;height:8px;border-radius:9px}.lgb3.od i{display:block;background:#c0354a}.lgb3.td i{display:block;background:#2563eb}
 .lt3 .b3{justify-content:center;gap:4px;padding:0 8px}
 .b3 a{display:grid;place-items:center;width:30px;height:30px;border-radius:6px;color:#a3acb9}.b3 a.call{color:#93c0ff}.b3 a:hover{background:#272d37}
 .lt3.sel{background:#162544;box-shadow:inset 2px 0 0 #2563eb}
@@ -885,7 +885,7 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
  .pg2:has(.ltab3){padding:0 0 24px!important}
  .pg2:has(.ltab3) .ph2{margin:0;padding:10px 20px;min-height:60px;box-sizing:border-box;border-bottom:1px solid #363e4b}
  .pg2:has(.ltab3) .ltab3{border:0;border-radius:0}
- .pg2:has(.ltab3) .lt3>*:first-child,.pg2:has(.ltab3) .lg3{padding-left:20px}
+ .pg2:has(.ltab3) .lt3>*:first-child,.pg2:has(.ltab3) .lgb3{padding-left:20px}
  .pg2:has(.ltab3) .fqb2,.pg2:has(.ltab3) .seg2,.pg2:has(.ltab3) .b2.pri{height:36px!important;min-height:0!important}
 }
 /* Folded sidebar: an invisible bridge over the gap so the menu stays open while the pointer moves across to it */
@@ -905,9 +905,9 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 .pt3:not(.h):hover{background:#1c2129}
 .pt3 .n3 b{font-weight:600;color:#f2f4f7;overflow:hidden;text-overflow:ellipsis}.pt3 i{font-style:normal;color:#858e9c}
 .th4{position:relative;flex:0 0 32px;height:32px;border-radius:6px;background:#272d37;display:grid;place-items:center;color:#858e9c;overflow:hidden}.th4 img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.ac3{justify-content:flex-end;gap:6px!important;padding:0 10px!important}
-.ac3 button{height:32px;min-height:0!important;padding:0 10px;border-radius:6px;border:1px solid #363e4b;background:none;color:#f2f4f7;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
-.ac3 button.go{border-color:#15803d;color:#7ee2a8}.ac3 .cl{width:32px;padding:0;display:grid;place-items:center;color:#93c0ff}
+.pt3 .ac3{justify-content:flex-end;gap:6px!important;padding:0 10px!important}
+.pt3 .ac3 button{height:32px;min-height:0!important;padding:0 10px;border-radius:6px;border:1px solid #363e4b;background:none;color:#f2f4f7;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.pt3 .ac3 button.go{border-color:#15803d;color:#7ee2a8}.pt3 .ac3 .cl{width:32px;padding:0;display:grid;place-items:center;color:#93c0ff}
 @media(min-width:900px){ .pg2.pl3{padding:0 0 24px!important;max-width:none!important} .pg2.pl3 .ph2{margin:0;padding:10px 20px;min-height:60px;box-sizing:border-box;border-bottom:1px solid #363e4b;justify-content:space-between} .pg2.pl3 .ltab3{border:0;border-radius:0} .pg2.pl3 .b2.pri{height:36px!important} }
 .cd3{padding:8px 6px 8px 8px}.ph3{flex-basis:52px;height:52px}.cb3{flex-direction:row;align-items:flex-start}
 .ck3,.ca3{font-size:13px}
