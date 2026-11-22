@@ -62,3 +62,16 @@ Speed 84 to 92. Usability 74 to 86.
 
 Walkthrough now 29 of 30. The one left: after moving a lead to Appraisals they show in both columns. That is on purpose (follow ups keep working until they list), but a first timer may read it as a double.
 Server timing is from the first minutes after the change (cold runs 1.5 to 2.1s before, pings 0.2 to 0.4s after). Rerun `select ux_report(7);` in a week to confirm with real use, and the real use part of the usability score (still 18 of 30) needs that week of data too.
+
+## Instant loading, 22 Nov evening
+
+Measured with `PW=... node tools/load_time.js 2000 400`: the real app against a pretend server that answers after 2s (cold) or 0.4s (warm). Times are until real content shows.
+
+| | Open (Calls) | Pipeline | Leads | Stats | Appraisals |
+|---|---|---|---|---|---|
+| Before, warm server | 0.52s first, 0.11s after | 0.43s | 0.02s | 0.43s | 0.42s |
+| Before, cold server | 2.1s first | 2.0s | 0.02s | 2.0s | 2.0s |
+| After, warm or cold | same as before | 0.02s | 0.02s | 0.02s | 0.02s |
+
+How: every screen's last answer is kept on the phone and shown at once, then swapped for the fresh one (a change made elsewhere shows about half a second later). After any edit the next read waits for the fresh answer, so old data never shows after a change. While Calls is open the Pipeline and Stats answers are fetched in the background. Grey rows show instead of the word Loading.
+The first open of a day still waits for the server, because yesterday's call list is not today's. With the server kept warm that is about half a second.

@@ -178,7 +178,7 @@ async function render(){
     <label class="tsearch" style="${S.tab==='calls'?'':'margin-left:auto'}">${ic2('search',16)}<input id="hq" type="search" placeholder="Search everything" value="${esc(S.sq||'')}" oninput="v2search(this.value)" autocomplete="off" aria-label="Search names, numbers and addresses"></label></header>
    <header class="ptop2">${tabBtn('ptabbtn')}${vseg2()}<div class="ps" id="pstats"></div><button class="ib3" onclick="togglePS()" aria-label="Search">${ic2(S.psearch?'x':'search',20)}</button></header>
    ${S.psearch?`<div class="psrch"><label class="tsearch">${ic2('search',16)}<input id="hq2" type="search" placeholder="Search everything" value="${esc(S.sq||'')}" oninput="v2search(this.value)" autocomplete="off" aria-label="Search"></label></div>`:''}
-   <main id="main" class="v2main${v2tab?'':' old'}"><div class="empty2"><b>Loading</b></div></main></div></div>`;
+   <main id="main" class="v2main${v2tab?'':' old'}"><div class="sk6" role="status" aria-label="Loading"><i></i><i></i><i></i><i></i><i></i><i></i></div></main></div></div>`;
   ensureExtras(); document.body.classList.remove('typing');
   if (!S.leadsAt || Date.now()-S.leadsAt>10*60e3) { S.leadsAt=Date.now(); loadLeads().then(()=>{ document.querySelectorAll('.tabbtn').forEach(b=>{ if(hasDot()&&!b.querySelector('.dot')) b.insertAdjacentHTML('beforeend','<span class="dot"></span>'); }); }).catch(()=>{ S.leadsAt=0; }); }
   if (S.searching && (S.sq||'').trim().length>=2) { runSearch(S.sq); return; }
@@ -2157,3 +2157,39 @@ function hint6(){ try{ if(localStorage.getItem('dp_hint6')) return; }catch{ retu
   num.parentElement.insertBefore(d,num); }
 window.drawList=(function(orig){ return function(...a){ const r=orig.apply(this,a); hint6(); return r; }; })(window.drawList);
 window.act2=(function(orig){ return function(...a){ hint6done(); return orig.apply(this,a); }; })(window.act2);
+
+// ---------- Instant screens (22 Nov) ----------
+// Each screen's last answer is kept on the phone and shown straight away; the fresh answer replaces it a moment later.
+// After any change (an outcome, a move, a save) the next read waits for the fresh answer, so nothing old shows after an edit.
+// While Calls is open the other screens' answers are fetched in the background, so switching is instant the first time too.
+(function(){
+  const SWR=new Set(['leads','pipeline','overview','work_stats','upcoming_callbacks','templates','elists']);
+  const READ6=new Set('list callbacks overview today work_stats leads search list_health upcoming_callbacks removed_list elists elist pipeline recent_sales area_preview area_list drops templates preview_message messages settings referrals ping'.split(' '));
+  const mem={}, fetchedAt={}; let wroteAt=0;   // a saved answer older than the last change is not shown
+  const tok=()=>String(S.token||'').slice(-8), key=(a,b)=>a+':'+JSON.stringify(b||{});
+  const load=k=>{ if(mem[k]) return mem[k]; try{ const c=JSON.parse(localStorage.getItem('dp_c6_'+k)||'null'); if(c&&c.tok===tok()&&Date.now()-c.at<48*3600e3) return mem[k]=c; }catch{} return null; };
+  const save=(k,v)=>{ const c={at:Date.now(),tok:tok(),v}; mem[k]=c; try{ localStorage.setItem('dp_c6_'+k,JSON.stringify(c)); }catch{ try{ localStorage.removeItem('dp_c6_'+k); }catch{} } };
+  const copy=v=>JSON.parse(JSON.stringify(v));
+  // redraw the screen being looked at, unless a panel is open or something is being typed
+  const busy=()=>document.getElementById('ov')?.classList.contains('show')||/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||'')||S.searching||document.body.classList.contains('dragging3');
+  function redraw(action){ if(busy()) return;
+    if(action==='leads'){ loadLeads().then(()=>{ if(busy()) return; if(S.tab==='leads') viewLeads(); else if(S.tab==='pipeline') viewPipeline(); }).catch(()=>{}); return; }
+    if(action==='pipeline'&&S.tab==='pipeline') return viewPipeline();
+    if(action==='overview'&&S.tab==='insights'){ S.ovFull=null; return viewInsights(); } }
+  const orig=window.api;
+  window.api=async function(action,body={},...rest){
+    if(DEMO||!S.token) return orig.call(this,action,body,...rest);
+    if(!READ6.has(action)){ wroteAt=Date.now(); try{ return await orig.call(this,action,body,...rest); } finally{ wroteAt=Date.now(); } }
+    if(!SWR.has(action)) return orig.call(this,action,body,...rest);
+    const k=key(action,body), c0=load(k), c=c0&&c0.at>wroteAt?c0:null;
+    if(c&&Date.now()-(fetchedAt[k]||0)<1500) return copy(c.v);           // just fetched (the redraw reading it back): no second trip
+    const net=orig.call(this,action,body,...rest).then(v=>{ const changed=!c||JSON.stringify(c.v)!==JSON.stringify(v); save(k,v); fetchedAt[k]=Date.now(); return {v,changed}; });
+    if(c){ net.then(({changed})=>{ if(changed) redraw(action); }).catch(()=>{}); return copy(c.v); }
+    const {v}=await net; return copy(v); };
+  // fetch the other screens' answers once Calls has shown, then every 10 minutes while the app is open
+  const warm=()=>{ if(DEMO||!S.token||document.visibilityState!=='visible') return; ['pipeline','overview'].forEach(a=>api(a).catch(()=>{})); };
+  const idle=f=>('requestIdleCallback' in window)?requestIdleCallback(f,{timeout:3000}):setTimeout(f,1500);
+  setTimeout(()=>idle(warm),1200); setInterval(warm,10*60e3);
+  // sign out clears the saved answers
+  window.logout=(function(o){ return function(...a){ try{ Object.keys(localStorage).filter(x=>x.startsWith('dp_c6_')).forEach(x=>localStorage.removeItem(x)); }catch{} return o.apply(this,a); }; })(window.logout);
+})();

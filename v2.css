@@ -1328,3 +1328,8 @@ body:not(.kb6) .bar2x button:hover .k,body:not(.kb6) .ends2 button:hover .k{disp
 :focus-visible{outline:2px solid #93c0ff!important;outline-offset:2px!important}
 input:focus-visible,textarea:focus-visible,select:focus-visible{outline-offset:-2px!important}
 .bar2x button:focus-visible,.cd3 button:focus-visible{outline-offset:-3px!important}
+/* while a screen loads: grey rows where the content will be, instead of the word Loading */
+.sk6{display:flex;flex-direction:column}
+.sk6 i{display:block;height:64px;border-bottom:1px solid #232831;background:linear-gradient(90deg,#171b21 0 72px,transparent 72px),linear-gradient(#1e232b,#1e232b) 88px 18px/40% 12px no-repeat,linear-gradient(#1a1e25,#1a1e25) 88px 38px/25% 10px no-repeat;background-color:#111418}
+@media (prefers-reduced-motion:no-preference){.sk6 i{animation:sk6 1.6s ease-in-out infinite}.sk6 i:nth-child(2n){animation-delay:.2s}}
+@keyframes sk6{50%{opacity:.6}}
