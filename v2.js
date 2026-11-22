@@ -2007,3 +2007,68 @@ window.paintInsights=(function(orig){ return function(...a){ const r=orig(...a);
   cols.forEach(c=>{ const d=document.createElement('div'); d.className='sc5'; c.forEach(s=>d.appendChild(s)); g.appendChild(d); });
   const res=document.querySelector('#main .res2'); res?res.after(g):secs[0].parentElement.appendChild(g);
 }catch(e){ console.error(e); } return r; }; })(window.paintInsights);
+
+// ---------- Stats, rebuilt (22 Nov): six equal panels, title left and one number right, no explanation text ----------
+window.paintInsights=function(ov){ S.period=S.period||'week'; const k=S.period, fm=n=>Math.round(+n||0).toLocaleString('en-AU');
+  const lab={week:'last week',month:'last month',quarter:'last quarter'}[k], R=ov.results||{}, a=R[k]||{}, b=R[k+'_prev']||{};
+  const tile=(l,c,v,pv,f)=>{ const d=(+v||0)-(+pv||0); return `<div class="rs2" style="--c:${c}"><span>${l}</span><div class="rv6"><b>${f?f(v):fm(v)}</b>${d?`<em class="dl6 ${d>0?'up':'dn'}" title="vs ${lab}">${d>0?'+':'−'}${f?f(Math.abs(d)):fm(Math.abs(d))}</em>`:''}</div></div>`; };
+  const money=n=>'$'+fm(n);
+  const res=`<section class="res2" aria-label="Results this ${k}">${tile('Appraisals',COL.appraisal,a.appraisals,b.appraisals)}${tile('Listings',COL.listed,a.listed,b.listed)}${tile('Sold',COL.sold,a.sold,b.sold)}${tile('Referrals',COL.referral,a.referrals,b.referrals)}${tile('Referral fees',COL.referral,a.fees,b.fees,money)}${tile('Info sent',COL.sent,a.sent,b.sent)}</section>`;
+  const pan=(id,title,val,body,extra='')=>`<section class="p6" id="${id}"><div class="p6h"><span>${title}</span>${extra}<b>${val}</b></div><div class="p6b">${body}</div></section>`;
+  const none=t=>`<p class="no6">${t}</p>`;
+  // calls: progress to this period's goal, then the history as bars scaled to the calls themselves
+  const raw=(ov.periods||{})[k]||[], MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const pl=s=>{ const d=new Date(s+'T12:00:00Z'); return k==='week'?`${d.getUTCDate()} ${MON[d.getUTCMonth()]}`:k==='month'?MON[d.getUTCMonth()]:`Q${Math.floor(d.getUTCMonth()/3)+1}`; };
+  const now=raw.length?+raw[raw.length-1].n||0:0, goal=(ov.settings?.daily_target||100)*PERIOD_WD[k], mx=Math.max(1,...raw.map(x=>+x.n||0));
+  const calls=raw.length?`<div class="m6"><i style="width:${Math.min(100,now/goal*100)}%"></i></div><div class="m6l"><span>${Math.round(now/goal*100)}% of goal</span><span>goal ${fm(goal)}</span></div>
+    <div class="cb6">${raw.map((x,i)=>{ const v=+x.n||0, p=v/mx*84, last=i===raw.length-1; return `<div class="${last?'on':''}"><div class="t6"><b style="bottom:calc(${p}% + 4px)">${fm(v)}</b><i style="height:${Math.max(p,v?2:0)}%"></i></div><span>${raw.length>8&&(raw.length-1-i)%2?'':pl(x.start)}</span></div>`; }).join('')}</div>`:none('No calls yet');
+  // call to listing: one row per step, rate against goal
+  const ck={week:'7',month:'30',quarter:'90'}[k], c=(ov.cohort||{})[ck]||{}, h=+c.homes||0, per=v=>h?Math.round(1000*v/h)/10:0, f1=v=>String(v).replace(/\.0$/,'');
+  const steps=[['Answered',+c.reached||0,75],['Appraisals',+c.appraisals||0,5],['Listed',+c.listed||0,3]];
+  const fun=h?`<div class="ft6"><span></span><em>Homes</em><em>Per 100</em><em>Goal</em>
+    <span>Called</span><b>${fm(h)}</b><b></b><em></em>${steps.map(([l,v,g])=>{ const p=per(v); return `<span>${l}</span><b>${fm(v)}</b><b class="${p>=g?'ok':''}">${f1(p)}</b><em>${g}</em>`; }).join('')}</div>${h<300?`<p class="ft6n">Early numbers, ${h} of 300 homes</p>`:''}`:none('No calls yet');
+  // best time: the grid without its chips and key, the best window becomes the panel number
+  const tot=(ov.times||[]).reduce((s,t)=>s+(+t.calls||0),0); let heat='', best='';
+  if(tot>=100){ const d=document.createElement('div'); d.innerHTML=heatGrid2(ov.times); const bt=d.querySelector('.tags2 .on'); best=bt?bt.textContent.replace(/^Best: weekdays /,''):''; d.querySelector('.tags2')?.remove(); d.querySelector('.leg2')?.remove(); heat=d.innerHTML; }
+  else heat=`<div class="m6"><i style="width:${tot}%"></i></div><div class="m6l"><span>Shows at 100 calls</span><span>${tot} so far</span></div>`;
+  const subs=ov.suburbs||[], smax=Math.max(1,...subs.map(s=>s.n));
+  const sub=subs.length?`<div class="sr6">${subs.slice(0,8).map((s,j)=>`<span>${esc(s.suburb)}</span><div><i style="width:${s.n/smax*100}%;${j?'':'background:var(--acc)'}"></i></div><b>${s.n}</b>`).join('')}</div>`:none('None booked in 90 days');
+  const live=(ov.versions||[]).find(v=>v.approved);
+  const l30=ov.last30||{}, grp=g=>{ const xs=(ov.groups||[]).filter(x=>x.grp===g), cn=xs.reduce((s,x)=>s+(+x.connected||0),0), ap=xs.reduce((s,x)=>s+(+x.appraisals||0),0); return cn?(100*ap/cn).toFixed(1):'0.0'; };
+  $("#main").className='v2main';
+  $("#main").innerHTML=`<div class="pg2 st6pg"><div>
+   <div class="ph2"><h1>Stats</h1><div class="seg2" style="min-width:270px">${[['week','Week'],['month','Month'],['quarter','Quarter']].map(([q,l])=>`<button class="${k===q?'on':''}" onclick="S.period='${q}';paintInsights(S.ovFull)">${l}</button>`).join('')}</div></div>
+   ${res}
+   <div class="st6">
+    ${pan('p6calls',`Calls this ${k}`,fm(now),calls)}
+    ${pan('p6fun','Call to listing',h?`${f1(per(+c.listed||0))} <small>per 100</small>`:'',fun)}
+    ${pan('tphone','Time on the phone','',none('Loading'))}
+    ${pan('p6best','Best time to call',best,heat)}
+    ${pan('p6sub','Appraisals by suburb',subs.length?`${subs.reduce((s,x)=>s+x.n,0)} <small>in 90 days</small>`:'',sub)}
+    ${pan('refs2','Referrals','',none('Loading'),`<button class="ib6" onclick="S.rw=null;partnerSheet()" aria-label="Add who you refer to" title="Add who you refer to">${ic2('plus',16)}</button>`)}
+   </div>
+   <details class="sec"><summary>How the algorithm is doing</summary><div>
+    <div class="ft6 al6"><span></span><em>Answered</em><em>Appraisals</em><em>Per 100</em>${(ov.groups||[]).map(g=>`<span>${g.grp==='Control'?'Random picks':'From the list'} v${g.version??'?'}</span><b>${fm(g.connected)}</b><b>${fm(g.appraisals)}</b><b>${g.rate??0}</b>`).join('')||'<span>No calls yet</span>'}</div>
+    <p class="muted">Last 30 days: ${grp('Algorithm')} per 100 from the list, ${grp('Control')} from random picks, goal ${+(ov.settings?.target_rate??3)}. Random picks show what the list adds. Weights: ${Object.entries(live?.weights||{}).map(([q,w])=>`${esc(q)} ${w}`).join(', ')||'none yet'}.</p></div></details>
+  </div></div>`;
+  st6Fit(); requestAnimationFrame(st6Fit); setTimeout(st6Fit,120); phone6(); refs6();   // fit again once the title has moved into the top bar
+};
+function st6Fit(){ const g=document.querySelector('#main .st6'); if(!g) return; g.style.height='';
+  if(innerWidth<1100) return; const det=document.querySelector('#main .st6pg details'), top=g.getBoundingClientRect().top+(document.querySelector('#main')?.scrollTop||0);
+  g.style.height=Math.max(440,innerHeight-top-(det?det.offsetHeight:0))+'px'; }
+async function phone6(){ const days=PERIOD_DAYS[S.period||'week'], el=()=>document.getElementById('tphone'); let w;
+  try{ w=await api("work_stats",{days}); }catch{ if(el()) el().querySelector('.p6b').innerHTML='<p class="no6">Could not load</p>'; return; }
+  const x=el(); if(!x) return; const t=w.totals||{}, body=x.querySelector('.p6b'), head=x.querySelector('.p6h b');
+  if(!t.calls){ body.innerHTML='<p class="no6">No calls yet</p>'; return; }
+  const noans=t.calls-t.answered, talk=(t.talk_s||0)*t.answered, ring=(t.ring_s||0)*noans+(t.talk_s?0:(t.ring_s||0)*t.answered), betw=((t.prep_s||0)+(t.wrap_s||0))*t.calls, est=talk+ring+betw;
+  const act=t.active_s||est, sc=est?act/est:0; head.textContent=hm2(act);   // the parts are typical times, so scale them to the real working time
+  if(!est){ body.innerHTML=`<div class="tq6"><div><b>${t.calls}</b><span>Calls</span></div></div>`; return; }
+  const parts=[['Talking',talk*sc,'var(--acc)'],['Ringing',ring*sc,'#5b6576'],['Between calls',betw*sc,'#c98a1c']];
+  body.innerHTML=`<div class="sp6">${parts.map(([,v,c])=>`<i style="flex:${v||0.001};background:${c}"></i>`).join('')}</div>
+   <div class="tq6">${parts.map(([l,v,c])=>`<div><b>${hm2(v)}</b><span><i style="background:${c}"></i>${l}</span></div>`).join('')}<div><b>${fm2(t.calls)}</b><span>Calls</span></div></div>`; }
+const fm2=n=>Math.round(+n||0).toLocaleString('en-AU');
+async function refs6(){ const x=document.getElementById('refs2'); if(!x) return; let d; try{ d=await api2('referrals'); }catch(e){ x.querySelector('.p6b').innerHTML='<p class="no6">Could not load</p>'; return; } S.ref=d;
+  const y=document.getElementById('refs2'); if(!y) return; const rs=d.referrals||[], ps=d.partners||[]; y.querySelector('.p6h b').textContent=rs.length||'';
+  y.querySelector('.p6b').innerHTML=(rs.length?`<div class="rf6">${rs.slice(0,6).map(r=>`<button onclick="refEdit(${r.id})"><span>${esc(r.person_name||'Someone')} to ${esc(r.partner||'?')}</span><em style="--c:${r.status==='won'?COL.sold:r.status==='lost'?COL.lost:COL.referral}">${esc((RST.find(s=>s[0]===r.status)||[])[1]||r.status)}${r.status==='won'&&r.fee?' $'+fm2(r.fee):''}</em></button>`).join('')}</div>`:'<p class="no6">None yet</p>')
+   +(ps.length?`<p class="rp6"><small>Partners</small>${ps.map(p=>`<button onclick="S.rw=null;partnerSheet(S.ref.partners.find(x=>x.id===${p.id}))">${esc(p.name)}</button>`).join('')}</p>`:''); }
+addEventListener('resize',()=>{ clearTimeout(window.__st6); window.__st6=setTimeout(st6Fit,150); });
