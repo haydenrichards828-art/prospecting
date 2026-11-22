@@ -1368,8 +1368,25 @@ header.top2 .hc5{display:inline-grid;place-items:center;min-width:24px;height:24
 
 /* two numbers on one lead: keep each number on one line */
 #sheet .lcta a.call{white-space:nowrap}
-@media (max-width:599px){#sheet .lcta.two6{flex-wrap:wrap}#sheet .lcta.two6>a.call{flex:1 1 calc(50% - 4px);min-width:0;justify-content:center}#sheet .lcta.two6>.txt{flex:1 1 100%}}
+#sheet .lcta.two6{flex-wrap:wrap}#sheet .lcta.two6>a.call{flex:1 1 calc(50% - 4px);min-width:0;justify-content:center}#sheet .lcta.two6>.txt{flex:1 1 100%}
 .upd6{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 84px);z-index:60;background:var(--ap,#2563eb);color:#fff;border:0;padding:12px 18px;font:600 15px/1.2 inherit;white-space:nowrap}
 .dir6{margin-top:8px;width:100%}
 @media (pointer:coarse){.dir6{display:none}}
 #ln_next{display:none}
+/* notes: entries then the box, together */
+#sheet .nb7{display:flex;flex-direction:column;gap:0}
+#sheet .nh7{font-size:13px;font-weight:600;color:var(--t2,#9aa4b2);margin:0 0 6px;display:flex;gap:8px;align-items:center}
+#sheet .nh7 span{font-weight:500;color:var(--t3,#6b7686)}
+#sheet .nl7{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+#sheet .nl7:not([hidden])+.nl7{margin-top:14px}
+#sheet .nl7:last-of-type{margin-bottom:12px}
+#sheet .nt7 time{display:block;font-size:12px;color:var(--t3,#6b7686);margin-bottom:3px}
+#sheet .nt7 p{margin:0;font-size:15px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
+#sheet .nmore7{align-self:flex-start;background:none;border:0;padding:0 0 10px;color:var(--accent);font:inherit;font-size:14px;cursor:pointer}
+#sheet .nl7[hidden]{display:none}
+.ini7{display:inline-grid;place-items:center;min-width:1.55em;height:1.55em;padding:0 .3em;margin-right:.5em;background:rgba(255,255,255,.22);color:inherit;font-weight:700;font-size:.82em;line-height:1;vertical-align:middle;font-style:normal}
+.num2 .ini7,.ph2nd .ini7{font-size:.58em}
+#sheet .bud7{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#sheet .bud7 label{display:flex;flex-direction:column;gap:4px;min-width:0}
+#sheet .bud7 label>span{font-size:12px;color:var(--t2,#9aa4b2)}
+#sheet .bud7 input{width:100%;margin:0}

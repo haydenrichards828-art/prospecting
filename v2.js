@@ -446,7 +446,7 @@ function drawLeads(){
   const nw=l=>{ const n=newMatches(l).length; return n?`<em class="nw4">${n} new match${n>1?'es':''}</em>`:''; };
   const table=`<div class="ltab2"><div class="lt2 h"><span>Lead</span><span>Status</span><span>Due</span><span class="c4">Notes</span><span class="c5">Last spoke</span><span></span></div>${ls.map(l=>`<div class="lt2" onclick="openLead(${l.id})" data-lq="${esc([l.name,l.address,l.suburb,l.phone].join(' ').toLowerCase())}">
      <div class="ltn">${tile(l)}<div><b>${esc(leadTitle(l))}${nw(l)}</b><span>${esc(sub(l))}</span></div></div>
-     <span class="ltnote" style="color:var(--t1)">${l.status&&l.status!=='Active'?`<b style="color:${/Listing Won/.test(l.status)?'#5ee08f':/Appraisal/.test(l.status)?'#93c0ff':'var(--t2)'};margin-right:6px">${esc(l.status==='Listing Won'?'Listed':l.status)}</b>`:''}</span>
+     <span class="ltnote" style="color:var(--t1)">${l.status&&l.status!=='Lead'?`<b style="color:${/^(Listed|Sold)$/.test(l.status)?'#5ee08f':/Appraisal/.test(l.status)?'#93c0ff':'var(--t2)'};margin-right:6px">${esc(l.status)}</b>`:''}</span>
      <b style="color:${dueCol(l.follow_up)};font-size:14px">${esc(dueLabel(l.follow_up))}</b><span class="ltnote c4">${esc(latest(l))}</span><span class="c5" style="font-size:14px;color:var(--t2)">${l.last_contact?esc(dayMon(l.last_contact)):''}</span>
      <div class="lbtns">${l.phone?`<a class="ib2" href="${smsLink(l.phone,'')}" onclick="event.stopPropagation()" aria-label="Text">${ic2('msg',17,'#fff')}</a><a class="ib2 call" href="tel:${esc(telOf(l.phone))}" onclick="event.stopPropagation()" aria-label="Call">${ic2('phone',17,'#fff')}</a>`:''}</div></div>`).join('')}</div>`;
   const list=`<div class="g2">${ls.map(l=>`<button class="r2" onclick="openLead(${l.id})">${tile(l)}<span class="rt2"><b>${esc(leadTitle(l))}</b><span>${esc(sub(l))}</span></span><span style="display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:${dueCol(l.follow_up)};white-space:nowrap">${esc(dueLabel(l.follow_up).replace('Follow up today','Today').replace('No follow up set','No date'))}${chev2()}</span></button>`).join('')}</div>`;
@@ -635,7 +635,7 @@ function pipeSheet(id){ const x=(S.pipe||[]).find(r=>r.property_id===id); if(!x)
    <div class="g2">${PNEXT[x.stage].map(([s2,l])=>row2(({listed:'var(--lst)',sold:'var(--sld)',withdrawn:'#64748b',appraisal:'var(--ap)'})[s2]||'var(--ns)',pBad(s2)?'x':'check',l,{listed_other:'They listed with someone else. Not counted as ours',withdrawn:'Our listing came off the market',sold:'Our listing sold',listed:'They signed with Dignam'}[s2]||'',chev2(),`closeOv();setStage(${id},'${s2}')`)).join('')}
     ${row2('#4b5565','msg',x.notes?'Edit note':'Add a note',x.notes?esc(x.notes):'',chev2(),`closeOv();stageNote(${id})`)}
     ${row2('#4b5565','tag','Came from',esc(SOURCES[x.source||'calls']),chev2(),`pickSource(${id},'${x.source||'calls'}')`)}
-    ${[[x.owner_name,x.phone],[x.owner2_name,x.phone2]].filter(p=>p[1]).map(([n,p])=>row2('var(--ap)','phone',`Call ${esc(firstName(n||''))!=='them'?esc(firstName(n))+' ':''}${esc(fmtPh2(p))}`,'',chev2(),`if(hoursOk())openUrl('tel:${esc(String(p).replace(/[^0-9+]/g,''))}')`)).join('')}</div>
+    ${((ph,ii)=>ph.map(([n,p],k)=>row2('var(--ap)','phone',ph.length>1&&ii[k]?`${ini7(ii[k])}${esc(fmtPh2(p))}`:`Call ${esc(firstName(n||''))!=='them'?esc(firstName(n))+' ':''}${esc(fmtPh2(p))}`,'',chev2(),`if(hoursOk())openUrl('tel:${esc(String(p).replace(/[^0-9+]/g,''))}')`)).join(''))([[x.owner_name,x.phone],[x.owner2_name,x.phone2]].filter(p=>p[1]),inis7(names7(people(x.owner_name)[0]||x.owner_name,x.owner2_name),2))}</div>
    <div class="g2">${row2('#4b5565','users','Names and phones',esc([x.owner_name,x.owner2_name].filter(Boolean).join(' & ')||'Add the owners'),chev2(),`S.ecFrom='pipe';editContact2(${id})`)}
     ${row2('#6366f1','lead',x.lead_id?'Open their lead':'Make a lead','Notes, follow ups and buyer details',chev2(),x.lead_id?`closeOv();pipeLead(${x.lead_id})`:`closeOv();pipeMakeLead(${id})`)}</div>`); }
 async function pipeLead(lid){ if(!S.leads) await loadLeads().catch(()=>{}); openLead(lid); }
@@ -1049,11 +1049,17 @@ function growTA(t){ if(!t||!t.matches('textarea[data-grow]')) return; t.style.he
 document.addEventListener('input',e=>growTA(e.target),true);
 new MutationObserver(ms=>{ for(const m of ms) m.addedNodes.forEach(n=>{ if(n.nodeType!==1) return; (n.matches?.('textarea[data-grow]')?[n]:[...n.querySelectorAll('textarea[data-grow]')]).forEach(t=>requestAnimationFrame(()=>growTA(t))); }); }).observe(document.body,{childList:true,subtree:true});
 
+// Two people, two numbers (23 Nov): a capital letter for each person sits inside their number's button, so C 0412 345 678 is Charlie's
+function names7(a,b){ const split=n=>String(n||'').replace(/^Solicitor:.*$/,'').split(/\s*(?:&|\band\b|\/|;|,)\s*/i).map(x=>x.replace(/^(mr|mrs|ms|miss|dr)\.?\s+/i,'').trim()).filter(x=>/[a-z]/i.test(x));
+  const xs=split(a); if(b) xs.splice(1,0,...split(b)); return xs; }
+function inis7(list,n){ const fs=list.slice(0,n).map(x=>x.split(/\s+/)[0]); let r=fs.map(f=>(f[0]||'').toUpperCase());
+  if(n>1&&r[0]&&r[0]===r[1]) r=fs.map(f=>f.slice(0,2).replace(/^./,c=>c.toUpperCase())); if(n>1&&r[0]&&r[0]===r[1]) r=fs; return r; }
+const ini7=t=>t?`<b class="ini7">${esc(t)}</b>`:'';
 // ---------- two owners: both names and both numbers on the call screen ----------
 window.numBtn=(function(orig){ return function(r,cls){ const a=orig(r,cls); if(!r.phone2||(r.signals||[]).includes('probate')) return a;
-  const n1=firstName(people(r.owner_name)[0]||''), n2=firstName(r.owner2_name||'');
-  const one=n1&&n1!=='them'?a.replace(/(<span style="[^"]*">)/,`$1<em class="who2">${esc(n1)}</em>`):a;
-  return `<div class="nums2">${one}<a class="${cls} ph2nd" href="tel:${esc(telOf(r.phone2))}" onclick="if(!hoursOk(event))return false;markDial(${r.property_id})">${ic2('phone',cls==='num2'?24:20,'#fff')}<span${cls==='num2'?' style="flex:1"':''}>${n2&&n2!=='them'?`<em class="who2">${esc(n2)}</em>`:''}${esc(fmtPh2(r.phone2))}</span></a></div>`; }; })(window.numBtn);
+  const [i1,i2]=inis7(names7(people(r.owner_name)[0]||'',r.owner2_name),2);
+  const one=i1?a.replace(/(<span style="[^"]*">)/,`$1${ini7(i1)}`):a;
+  return `<div class="nums2">${one}<a class="${cls} ph2nd" href="tel:${esc(telOf(r.phone2))}" onclick="if(!hoursOk(event))return false;markDial(${r.property_id})">${ic2('phone',cls==='num2'?24:20,'#fff')}<span${cls==='num2'?' style="flex:1"':''}>${ini7(i2)}${esc(fmtPh2(r.phone2))}</span></a></div>`; }; })(window.numBtn);
 // Call screen: shows the second owner's name when it differs
 window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); if(!r||!r.owner2_name) return;
   const known=people(r.owner_name).map(s=>s.toLowerCase()); if(known.includes(r.owner2_name.toLowerCase())) return;
@@ -1256,20 +1262,20 @@ document.addEventListener('visibilitychange',()=>{ if(document.hidden||!S.tm||!S
   if(desk2()){ const n=document.getElementById('note2'); if(n&&!n.value) n.focus(); } });
 
 // Lead panel bottom: one clean list. Each row shows its current value; tap to change it right there. Status and next step save straight away.
-const LST2=[['Active','Active'],['Not Ready','Not ready'],['Appraisal Booked','Appraisal booked'],['Appraisal Done','Appraisal done'],['Listing Won','Listed with us'],['Listing Lost','Listed elsewhere'],['Do Not Contact','Do not contact'],['Closed','Closed']];
+const LST2=[['Lead','Lead'],['Appraisal Booked','Appraisal booked'],['Appraisal','Appraisal'],['Listed','Listed'],['Sold','Sold'],['Listed Elsewhere','Listed elsewhere'],['Not Ready','Not ready'],['Do Not Contact','Do not contact']];
 function lrowHTML(k,ic,label,val,on){ return `<button class="ldr4" data-k="${k}" onclick="${on}"><span class="lri2">${ic2(ic,17)}</span><span class="lrt2"><span>${label}</span><b class="${val?'':'none'}">${val||'Not set'}</b></span>${chev2()}</button><div class="lrx2" id="lrx_${k}" hidden></div>`; }
 function lrToggle(k,html){ const x=document.getElementById('lrx_'+k); if(!x) return; const open=x.hidden; document.querySelectorAll('.lrx2').forEach(e=>{ e.hidden=true; e.innerHTML=''; }); document.querySelectorAll('.ldr4').forEach(e=>e.classList.remove('open')); if(!open) return; x.innerHTML=html; x.hidden=false; x.previousElementSibling.classList.add('open'); }
 function lrPick(id,field,val){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;
   const sel=document.getElementById(field==='status'?'ln_status':'ln_next'); if(sel) sel.value=val;
   const prev=l[field]; l[field]=val||null; if(field==='status') S.ol.status=val;
-  const p={id,body:'',status:field==='status'?val:(document.getElementById('ln_status')?.value||l.status||'Active'),next_action:field==='next_action'?(val||null):(document.getElementById('ln_next')?.value||null)};
+  const p={id,body:'',status:field==='status'?val:(document.getElementById('ln_status')?.value||l.status||'Lead'),next_action:field==='next_action'?(val||null):(document.getElementById('ln_next')?.value||null)};
   const r=document.querySelector(`.ldr4[data-k="${field}"] b`); if(r){ r.textContent=field==='status'?(LST2.find(s=>s[0]===val)||[0,val])[1]:(val||'Not set'); r.classList.toggle('none',!val); }
   lrToggle(field);
   api('lead_note',p).then(()=>{ if(field==='status'&&MOVE6[val]) return statusMoved6(id,val); toast(field==='status'?'Status saved':'Next step saved'); if(S.tab==='leads') drawLeads(); })
    .catch(e=>{ l[field]=prev; toast("Couldn't save that. "+e.message); }); }
 // 22 Nov: a status that moves someone (the database moves them along the pipeline) now shows the move:
 // the list reloads without them and says where they went. With no address to make a house from, the add form opens filled in.
-const MOVE6={'Appraisal Booked':['appraisal','Moved to Appraisals'],'Appraisal Done':['appraisal','Moved to Appraisals'],'Listing Won':['listed','Moved to Listings'],'Listing Lost':[null,'Marked as listed elsewhere'],'Closed':[null,'Closed'],'Do Not Contact':[null,'Marked do not contact']};
+const MOVE6={'Appraisal':['appraisal','Moved to Appraisals'],'Listed':['listed','Moved to Listings'],'Sold':['sold','Moved to Sold'],'Listed Elsewhere':['listed_other','Marked as listed elsewhere'],'Do Not Contact':[null,'Marked do not contact. Taken off the call list too']};
 async function statusMoved6(id,val){ const [stage,msg]=MOVE6[val]; S.leads=null; await loadLeads().catch(()=>{}); const still=(S.leads||[]).find(x=>x.id===id);
   if(still&&stage){ if(!still.property_id) toast('Status saved. Add the address to move them'); return leadMove6(id,stage); }   // the database could not move them: do it here
   closeOv(); toast(msg); render(); }
@@ -1279,10 +1285,10 @@ window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const 
   sh.querySelector('.lstat')?.remove();
   const lm=sh.querySelector('details.lmore'); if(lm){ lm.hidden=true; }
   const wv=document.getElementById('wview_box'); const hasB=hasCriteria(l.buy); if(wv&&!hasB) wv.hidden=true;
-  const st=(LST2.find(s=>s[0]===(l.status||'Active'))||[0,l.status])[1];
+  const st=(LST2.find(s=>s[0]===(l.status||'Lead'))||[0,l.status])[1];
   const who=[fmtPh2(l.phone||''),[l.address,l.suburb].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
   const chips=(field,list,cur)=>`<div class="lrc2">${list.map(([v,t])=>`<button class="${v===cur?'on':''}" onclick="lrPick(${id},'${field}','${v.replace(/'/g,'')}')">${esc(t)}</button>`).join('')}</div>`;
-  const stHTML=chips('status',LST2,l.status||'Active').replace(/"/g,'&quot;');
+  const stHTML=chips('status',LST2,l.status||'Lead').replace(/"/g,'&quot;');
   const nxHTML=chips('next_action',[['','None'],...LO.next_action.map(v=>[v,v])],l.next_action||'').replace(/"/g,'&quot;');
   const rows=`<div class="ldrows4">
     ${lrowHTML('status','flag','Status',st,`lrToggle('status',this.dataset.h)`).replace('data-k="status"',`data-k="status" data-h="${stHTML}"`)}
@@ -1315,7 +1321,7 @@ window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const 
   const rows=sh.querySelector('.ldrows4'); if(rows){ rows.hidden=true;
     ['deditor','weditor'].forEach(i=>{ const e=document.getElementById(i); if(e) rows.after(e); }); }
   sh.querySelector('.snd2')?.setAttribute('hidden','');
-  const st=(LST2.find(s=>s[0]===(l.status||'Active'))||[0,l.status])[1];
+  const st=(LST2.find(s=>s[0]===(l.status||'Lead'))||[0,l.status])[1];
   const it=(k,ic,t,v='')=>`<button onclick="lmenuGo('${k}')">${ic2(ic,17)}<span>${t}</span>${v?`<em>${esc(v)}</em>`:''}</button>`;
   const x=sh.querySelector('.lhead .lact');
   if(x) x.insertAdjacentHTML('beforebegin',`<div class="ldw2"><button class="ldots2" onclick="lmenuOpen(this)" aria-label="More options" aria-haspopup="menu">${ic2('more',20)}</button>
@@ -1499,7 +1505,7 @@ window.hSearch=function(v){ S.sq=v; clearTimeout(searchT); const q=v.trim();
   if(!pre){ let k=key; while(k.length>1&&!SC2.has(k)) k=k.slice(0,-1); const b=SC2.get(k); pre=sLocal2(q,b&&key.startsWith(k)?b:null); }
   runSearch(q,pre);
   if(SC2.has(key)) return;
-  searchT=setTimeout(async()=>{ try{ const r=await api('search',{q}); SC2.set(key,r); if(SC2.size>200) SC2.delete(SC2.keys().next().value); if(S.searching&&S.sq.trim()===q) runSearch(q,r); }catch(e){} },70); };
+  searchT=setTimeout(async()=>{ try{ const A7=addrQ7(q), r=await api('search',{q:A7&&A7.unit?A7.no+' '+A7.words.join(' '):q}); SC2.set(key,r); if(SC2.size>200) SC2.delete(SC2.keys().next().value); if(S.searching&&S.sq.trim()===q) runSearch(q,r); }catch(e){} },70); };
 
 // ---------- More tracking: errors and slowness, undos and backtracks, search success, calls with no result ----------
 // Same rules as the rest: labels, counts and timings only, never anything typed or read off the screen.
@@ -2124,21 +2130,22 @@ function addrParts6(l){ let a=String(l.address||'').trim(), sub=String(l.suburb|
   const n=a.match(/^(\d+[a-z]?(?:-\d+[a-z]?)?)\s+(.+)$/i); return n?{house_number:n[1],street:n[2],suburb:sub}:{house_number:'',street:a,suburb:sub}; }
 async function leadMove6(id,stage){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) return; closeOv();
   if(l.property_id) return setStage(l.property_id,stage);
-  const a=addrParts6(l), source=LSRC6[l.source]||'other', where=stage==='appraisal'?'Appraisals':'Listings';
-  if(a.house_number&&a.street&&a.suburb){ try{ await api('add_pipeline',{...a,owner_name:l.name||'',phone:l.phone||'',stage,source,lead_id:id}); toast('Moved to '+where); S.leads=null; render(); }catch(e){ toast(e.message); } return; }
-  openAddPipe(); S.addp.stage=stage; S.addp.source=source; S.addp.lead_id=id;
+  const a=addrParts6(l), source=LSRC6[l.source]||'other', where={appraisal:'Appraisals',listed:'Listings',sold:'Sold',listed_other:'Listed elsewhere'}[stage]||'Listings';
+  const first=stage==='appraisal'?'appraisal':'listed', after=first===stage?null:stage;
+  if(a.house_number&&a.street&&a.suburb){ try{ const r=await api('add_pipeline',{...a,owner_name:l.name||'',phone:l.phone||'',stage:first,source,lead_id:id}); if(after&&r&&r.property_id) await api('set_stage',{property_id:r.property_id,stage:after}); toast('Moved to '+where); S.leads=null; render(); }catch(e){ toast(e.message); } return; }
+  openAddPipe(); S.addp.stage=first; S.addp.after=after; S.addp.source=source; S.addp.lead_id=id;
   const set=(sel,v)=>{ const i=$(sel); if(i&&v) i.value=v; };
   set('#ap_no',a.house_number); set('#ap_st',a.street); set('#ap_sub',a.suburb); set('#ap_own',l.name); set('#ap_ph',l.phone);
-  document.querySelectorAll('#ap_stage button').forEach((b,i)=>b.classList.toggle('on',i===(stage==='appraisal'?0:1)));
+  document.querySelectorAll('#ap_stage button').forEach((b,i)=>b.classList.toggle('on',i===(first==='appraisal'?0:1)));
   document.querySelectorAll('#ap_source button').forEach(b=>b.classList.toggle('on',(b.getAttribute('onclick')||'').includes(`'${source}'`)));
   const t=$('#sheet .sh2 b'); if(t) t.textContent=`Move ${l.name||'this lead'} to ${where}`; const g=$('#ap_go'); if(g) g.textContent='Move to '+where;
   setTimeout(()=>{ const f=['#ap_no','#ap_st','#ap_sub'].map(s=>$(s)).find(i=>i&&!i.value); (f||$('#ap_go'))?.focus(); },80); }
 function leadMenu6(id){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;   // the ⋯ menu is the status list: picking one moves them
-  const where={'Appraisal Booked':'Moves to Appraisals','Appraisal Done':'Moves to Appraisals','Listing Won':'Moves to Listings','Listing Lost':'Leaves Leads','Do Not Contact':'Leaves Leads','Closed':'Leaves Leads'};
-  openSheet2(esc(l.name||'Lead'),`<div class="mm6s">${LST2.map(([v,t])=>`<button class="mm6${(l.status||'Active')===v?' on':''}" onclick="leadStatus6(${id},'${v}')"><span><b>${t}</b>${where[v]?`<em>${where[v]}</em>`:''}</span>${(l.status||'Active')===v?ic2('check',16):''}</button>`).join('')}
+  const where={'Appraisal Booked':'Stays in Leads','Appraisal':'Moves to Appraisals','Listed':'Moves to Listings','Sold':'Moves to Sold','Listed Elsewhere':'Leaves Leads','Do Not Contact':'Leaves Leads and the call list'};
+  openSheet2(esc(l.name||'Lead'),`<div class="mm6s">${LST2.map(([v,t])=>`<button class="mm6${(l.status||'Lead')===v?' on':''}" onclick="leadStatus6(${id},'${v}')"><span><b>${t}</b>${where[v]?`<em>${where[v]}</em>`:''}</span>${(l.status||'Lead')===v?ic2('check',16):''}</button>`).join('')}
    <button class="mm6" onclick="closeOv();openLead(${id})"><span><b>Open lead</b><em>Notes, follow up and details</em></span>${ic2('chev',16)}</button></div>`); }
 async function leadStatus6(id,val){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) return closeOv();
-  if(val===(l.status||'Active')){ if(MOVE6[val]&&MOVE6[val][0]) return leadMove6(id,MOVE6[val][0]); return closeOv(); }   // already that status but not moved yet: move them now
+  if(val===(l.status||'Lead')){ if(MOVE6[val]&&MOVE6[val][0]) return leadMove6(id,MOVE6[val][0]); return closeOv(); }   // already that status but not moved yet: move them now
   try{ await api('lead_note',{id,body:'',status:val,next_action:l.next_action||null}); l.status=val; }catch(e){ return toast("Couldn't save that. "+e.message); }
   if(MOVE6[val]) return statusMoved6(id,val); closeOv(); toast('Status saved'); render(); }
 // dragging a lead onto Appraisals or Listings goes through the same steps
@@ -2310,8 +2317,8 @@ window.previewCSV=(function(orig){ return async function(){
 window.smsLink=function(phone,body){ return `sms:${telOf(phone)}${/iPhone|iPad/.test(navigator.userAgent)?"&":"?"}body=${encodeURIComponent(body)}`; };
 window.openLead=(function(orig){ return function(id,opts){ const r=orig(id,opts);
   try{ const l=(S.leads||[]).find(x=>x.id===id), c=document.querySelector('#sheet .lcta'); const ps=l?phList(l.phone):[];
-    if(c&&ps.length){ const a=c.querySelector('a.call'); if(a){ a.href='tel:'+ps[0]; a.innerHTML=a.innerHTML.replace(/Call .*$/,(ps.length>1?'':'Call ')+esc(fmtOne2(ps[0]))); }
-      if(ps.length>1) c.classList.add('two6'); if(ps.length>1&&!c.querySelector('.call2')) c.querySelector('a.call').insertAdjacentHTML('afterend',ps.slice(1).map(p=>`<a class="call call2" href="tel:${p}" aria-label="Call ${esc(fmtOne2(p))}"><i class="ti ti-phone"></i>${esc(fmtOne2(p))}</a>`).join('')); } }catch(e){}
+    if(c&&ps.length){ const a=c.querySelector('a.call'); const tg=[...String(l.phone||'').matchAll(/(\d[\d\s-]{7,}\d)\s*\(([A-Za-z])\)/g)].map(m=>m[2].toUpperCase()), nm=inis7(names7(l.name),ps.length).map(x=>x[0]); const ii=ps.length>1?(tg.length===ps.length&&tg.every(t=>nm.includes(t))?tg:inis7(names7(l.name),ps.length)):[]; if(a){ a.href='tel:'+ps[0]; a.innerHTML=a.innerHTML.replace(/Call .*$/,(ps.length>1?ini7(ii[0]):'Call ')+esc(fmtOne2(ps[0]))); }
+      if(ps.length>1) c.classList.add('two6'); if(ps.length>1&&!c.querySelector('.call2')) c.querySelector('a.call').insertAdjacentHTML('afterend',ps.slice(1).map((p,k)=>`<a class="call call2" href="tel:${p}" aria-label="Call ${esc(fmtOne2(p))}"><i class="ti ti-phone"></i>${ini7(ii[k+1])}${esc(fmtOne2(p))}</a>`).join('')); } }catch(e){}
   return r; }; })(window.openLead);
 
 // Keep an open app on the newest version (22 Nov): fixes were going live but a tab left open all day kept running the old code.
@@ -2353,3 +2360,32 @@ window.previewCSV=(function(orig){ return async function(){
   ir.innerHTML=`<b>${list.length} files, ${all.length.toLocaleString()} houses, ${wp.toLocaleString()} with a number.</b><br>${per.join(' · ')}<br>Tap Import.`;
 }; })(window.previewCSV);
 window.importCSV=(function(orig){ return async function(){ const r=await orig(); if(!S.pending) S.impDir=null; return r; }; })(window.importCSV);
+// Notes sit together (23 Nov): the entries, oldest to newest, with the box to write the next one right under them
+function notesBlock7(l){ const ns=(l.notes||[]).slice().sort((a,b)=>String(a.at).localeCompare(String(b.at)));
+  const when=n=>{ const d=new Date(n.at); return isNaN(d)?'':d.toLocaleDateString('en-AU',{timeZone:'Australia/Sydney',day:'numeric',month:'short',year:d.getFullYear()===new Date().getFullYear()?undefined:'numeric'}); };
+  const one=n=>`<li class="nt7"><time>${esc(when(n))}</time><p>${esc(n.body)}</p></li>`;
+  const old=ns.slice(0,Math.max(0,ns.length-3)), recent=ns.slice(-3);
+  return `<div class="nb7"><div class="nh7">Notes${ns.length?`<span>${ns.length}</span>`:''}</div>${old.length?`<button class="nmore7" onclick="this.nextElementSibling.hidden=false;this.remove()">Show ${old.length} earlier note${old.length>1?'s':''}</button><ol class="nl7" hidden>${old.map(one).join('')}</ol>`:''}<ol class="nl7">${recent.map(one).join('')}</ol></div>`; }
+window.openLead=(function(orig){ return function(id,opts){ const r=orig(id,opts);
+  try{ const l=(S.leads||[]).find(x=>x.id===id), ta=document.getElementById('ln_body'); if(!l||!ta) return r;
+    document.querySelectorAll('#sheet .lsec.tight').forEach(s=>{ if(s.firstElementChild&&s.firstElementChild.textContent.trim()==='Notes') s.remove(); });
+    if(!document.querySelector('#sheet .nb7')){ ta.insertAdjacentHTML('beforebegin',notesBlock7(l)); const nb=document.querySelector('#sheet .nb7'); nb.appendChild(ta); ta.placeholder=(l.notes||[]).length?'Add a note':'What did they say?'; }
+  }catch(e){}
+  return r; }; })(window.openLead);
+// Address search (23 Nov): "9/18 spinks rd" means unit 9, number 18, Spinks Road. Only that building shows, the exact home first.
+const ABR7={rd:'road',st:'street',ave:'avenue',av:'avenue',dr:'drive',cl:'close',cr:'crescent',cres:'crescent',pde:'parade',pl:'place',hwy:'highway',tce:'terrace',ct:'court',ln:'lane',gr:'grove',cct:'circuit',bvd:'boulevard',blvd:'boulevard',esp:'esplanade',wy:'way',sq:'square',mt:'mount'};
+const nw7=s=>String(s||'').toLowerCase().replace(/[^a-z0-9\/ ]/g,' ').split(/\s+/).filter(Boolean).map(w=>ABR7[w]||w);
+function addrQ7(q){ const m=String(q).trim().toLowerCase().match(/^(?:(?:unit|u|apt|flat)\s*)?(?:([0-9]+[a-z]?)\s*\/\s*)?([0-9]+[a-z]?)\s+([a-z].*)$/); if(!m) return null; const words=nw7(m[3]); return words.length?{unit:m[1]||'',no:m[2],words}:null; }
+function addrSplit7(a){ const m=String(a||'').trim().toLowerCase().match(/^(?:([0-9a-z]+)\s*\/\s*)?([0-9]+[a-z]?)\s+(.*)$/); return m?{unit:m[1]||'',no:m[2],street:m[3]}:null; }
+// score: 0 the exact home, 1 same building, null not this address
+function addrScore7(A,addr,suburb){ const p=addrSplit7(addr); if(!p||p.no!==A.no) return null; const hay=nw7(p.street+' '+(suburb||''));
+  if(!A.words.every(w=>hay.some(h=>h.startsWith(w)))) return null; return A.unit?(p.unit===A.unit?0:1):(p.unit?1:0); }
+function addrRank7(q,res,calls){ const A=addrQ7(q); if(!A) return null;
+  const rank=(xs,ad,sb)=>xs.map(x=>[x,addrScore7(A,ad(x),sb(x))]).filter(z=>z[1]!==null).sort((a,b)=>a[1]-b[1]||String(ad(a[0])).localeCompare(String(ad(b[0])),'en',{numeric:true})).map(z=>z[0]);
+  const props=rank(res.props||[],p=>p.street_address,p=>p.suburb), cl=rank(calls,r=>r.street_address,r=>r.suburb);
+  const leads=(res.leads||[]).filter(l=>addrScore7(A,l.address,l.suburb)!==null);
+  const exact=[...props,...cl].some(x=>addrScore7(A,x.street_address,x.suburb)===0)||leads.some(l=>addrScore7(A,l.address,l.suburb)===0);
+  const any=props[0]||cl[0]; const street=any?addrSplit7(any.street_address).street:'';
+  const label=((A.unit?A.unit+'/':'')+A.no+' '+(street||A.words.join(' '))).replace(/\b[a-z]/g,c=>c.toUpperCase());
+  return {props,calls:cl,leads,exact,label,suburb:any?any.suburb:''}; }
+function addMissing7(addr,sub){ addPerson2(); setTimeout(()=>{ const a=$('#ap_addr'),s=$('#ap_sub'); if(a) a.value=addr; if(s&&sub) s.value=sub; $('#ap_name')?.focus(); },60); }

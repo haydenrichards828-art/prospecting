@@ -204,8 +204,8 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="preload" href="v2.js?v=170" as="script">
-<link rel="stylesheet" href="v2.css?v=174">
+<link rel="preload" href="v2.js?v=172" as="script">
+<link rel="stylesheet" href="v2.css?v=177">
 </head>
 <body>
 <div id="app"></div>
@@ -249,7 +249,7 @@ function demoApi(action, body){
     case "today": { const o=ov(); return {today_calls:o.today_calls,today_connected:o.today_connected,today_appraisals:o.today_appraisals,ready_texts:D.msgs.filter(m=>m.status==="ready").length,failed:false,settings:o.settings,times:o.times,holidays:[]}; }
     case "callbacks": return {rows:[{call_id:1,callback_at:new Date().toISOString(),notes:"Wants a price guide first",property_id:201,owner_name:"Tony Marino",phone:"0400555666",street_address:"22 Hill St",suburb:"Bulli"}]};
     case "outcome": { const r=D.rows.find(x=>x.property_id===body.property_id); D.calls++; if(body.outcome!=="no_answer") D.connected++; if(body.outcome==="appraisal"){ D.appr++; if(r) D.pipe.unshift({property_id:r.property_id,stage:"appraisal",updated_at:new Date().toISOString(),appraisal_at:new Date().toISOString(),appt_at:body.appt_at||null,owner_name:r.owner_name,phone:r.phone,street_address:r.street_address,suburb:r.suburb,notes:null}); }
-      if(body.outcome==="lead"){ demoLeads(D); const id=Date.now(); const r2=r||{property_id:body.property_id,owner_name:"Tony Marino",phone:"0400555666",street_address:"22 Hill St",suburb:"Bulli"}; D.leads.unshift({id,property_id:r2.property_id,name:r2.owner_name,phone:r2.phone,address:r2.street_address,suburb:r2.suburb,source:"Cold Call",temperature:"Warm",status:"Active",follow_up:addDaysKey(3),last_contact:todayKey(),lead_type:"Potential Vendor",buy:{},notes:body.notes?[{at:new Date().toISOString(),body:body.notes}]:[]}); return {id:Date.now(),lead_id:id}; }
+      if(body.outcome==="lead"){ demoLeads(D); const id=Date.now(); const r2=r||{property_id:body.property_id,owner_name:"Tony Marino",phone:"0400555666",street_address:"22 Hill St",suburb:"Bulli"}; D.leads.unshift({id,property_id:r2.property_id,name:r2.owner_name,phone:r2.phone,address:r2.street_address,suburb:r2.suburb,source:"Cold Call",temperature:"Warm",status:"Lead",follow_up:addDaysKey(3),last_contact:todayKey(),lead_type:"Potential Vendor",buy:{},notes:body.notes?[{at:new Date().toISOString(),body:body.notes}]:[]}); return {id:Date.now(),lead_id:id}; }
       return {id:Date.now()}; }
     case "undo_outcome": D.calls=Math.max(0,D.calls-1); return {ok:true};
     case "templates": return {rows:D.templates};
@@ -262,9 +262,9 @@ function demoApi(action, body){
     case "cancel_message": D.msgs=D.msgs.map(m=>m.id===body.id?{...m,status:"cancelled"}:m); return {ok:true};
     case "pipeline": return {rows:D.pipe};
     case "set_appt": D.pipe=D.pipe.map(x=>x.property_id===body.property_id?{...x,appt_at:body.appt_at||null}:x); return {ok:true};
-    case "leads": { demoLeads(D); const gone=new Set((D.pipe||[]).filter(x=>["appraisal","listed","sold","withdrawn","listed_other"].includes(x.stage)).map(x=>x.property_id)); return {leads:D.leads.filter(l=>!["Closed","Do Not Contact","Listing Won","Listing Lost"].includes(l.status)&&!(l.property_id&&gone.has(l.property_id))),listings:D.listings,closed:0}; }
-    case "save_lead": { demoLeads(D); if(body.id){ const l=D.leads.find(x=>x.id===body.id); Object.assign(l,body.lead); return {ok:true,id:l.id}; } if(body.property_id){ const ex=D.leads.find(x=>x.property_id===body.property_id); if(ex){ Object.assign(ex,body.lead); return {ok:true,id:ex.id,existing:true}; } } const id=Date.now(); D.leads.unshift({id,status:"Active",notes:[],buy:{},property_id:body.property_id||null,...body.lead}); return {ok:true,id}; }
-    case "lead_note": { demoLeads(D); const l=D.leads.find(x=>x.id===body.id); if(body.body) l.notes.unshift({id:Date.now(),body:body.body,at:new Date().toISOString()}); ["follow_up","temperature","status","next_action"].forEach(k=>{ if(k in body) l[k]=body[k]; }); l.last_contact=todayKey(); { const st={"Appraisal Booked":"appraisal","Appraisal Done":"appraisal","Listing Won":"listed","Listing Lost":"listed_other"}[body.status]; if(st&&l.property_id){ const x=D.pipe.find(r=>r.property_id===l.property_id); if(x) x.stage=st; else D.pipe.unshift({property_id:l.property_id,stage:st,source:"other",updated_at:new Date().toISOString(),owner_name:l.name,phone:l.phone,street_address:l.address,suburb:l.suburb}); } } return {ok:true}; }
+    case "leads": { demoLeads(D); const gone=new Set((D.pipe||[]).filter(x=>["appraisal","listed","sold","withdrawn","listed_other"].includes(x.stage)).map(x=>x.property_id)); return {leads:D.leads.filter(l=>(["Lead","Appraisal Booked","Not Ready"].includes(l.status||"Lead")||(["Appraisal","Listed","Sold","Listed Elsewhere"].includes(l.status)&&!(l.property_id&&(D.pipe||[]).some(x=>x.property_id===l.property_id))))&&!(l.property_id&&gone.has(l.property_id))),listings:D.listings,closed:0}; }
+    case "save_lead": { demoLeads(D); if(body.id){ const l=D.leads.find(x=>x.id===body.id); Object.assign(l,body.lead); return {ok:true,id:l.id}; } if(body.property_id){ const ex=D.leads.find(x=>x.property_id===body.property_id); if(ex){ Object.assign(ex,body.lead); return {ok:true,id:ex.id,existing:true}; } } const id=Date.now(); D.leads.unshift({id,status:"Lead",notes:[],buy:{},property_id:body.property_id||null,...body.lead}); return {ok:true,id}; }
+    case "lead_note": { demoLeads(D); const l=D.leads.find(x=>x.id===body.id); if(body.body) l.notes.unshift({id:Date.now(),body:body.body,at:new Date().toISOString()}); ["follow_up","temperature","status","next_action"].forEach(k=>{ if(k in body) l[k]=body[k]; }); l.last_contact=todayKey(); { const st={"Appraisal":"appraisal","Listed":"listed","Sold":"sold","Listed Elsewhere":"listed_other","Lead":"lost","Appraisal Booked":"lost","Not Ready":"lost"}[body.status]; if(st==="lost"){ const x=l.property_id&&D.pipe.find(r=>r.property_id===l.property_id); if(x) x.stage="lost"; } else if(st&&l.property_id){ const x=D.pipe.find(r=>r.property_id===l.property_id); if(x) x.stage=st; else D.pipe.unshift({property_id:l.property_id,stage:st,source:"other",updated_at:new Date().toISOString(),owner_name:l.name,phone:l.phone,street_address:l.address,suburb:l.suburb}); } } return {ok:true}; }
     case "save_listing": { demoLeads(D); if(body.id) Object.assign(D.listings.find(x=>x.id===body.id),body.listing); else D.listings.unshift({id:Date.now(),...body.listing}); return {ok:true}; }
     case "remove_listing": D.listings=D.listings.filter(x=>x.id!==body.id); return {ok:true};
     case "import_leads_sheet": return {added:0,skipped:0};
@@ -279,8 +279,8 @@ function demoApi(action, body){
         by_hour:[[9,14,4],[10,16,5],[11,12,3],[16,9,4],[17,11,5]].map(([h,c,a])=>({h,calls:c*k,answered:a*k,appraisals:0,days:k})),
         long_gaps:[{from_at:"Thu 12 Nov 10:42am",mins:24},{from_at:"Wed 11 Nov 11:15am",mins:16}],skips:{n:4*k,med_s:9}}; }
     case "seen_matches": { demoLeads(D); const l=D.leads.find(x=>x.id===body.id); if(l) l.seen_listings=[...(l.seen_listings||[]),...body.ids]; return {ok:true}; }
-    case "make_lead": { demoLeads(D); const id=Date.now(); D.leads.unshift({id,name:"New lead",status:"Active",temperature:"Warm",follow_up:addDaysKey(3),buy:{},notes:[]}); return {lead_id:id}; }
-    case "add_pipeline": { const pid=Date.now(); if(body.lead_id){ demoLeads(D); const l=D.leads.find(x=>x.id===body.lead_id); if(l&&!l.property_id){ l.property_id=pid; if(body.stage==="appraisal") l.status="Appraisal Booked"; } } D.pipe.unshift({property_id:pid,stage:body.stage,source:body.source,updated_at:new Date().toISOString(),owner_name:body.owner_name||null,phone:body.phone||null,street_address:`${body.house_number} ${body.street}`.trim(),suburb:body.suburb,notes:body.notes||null}); return {ok:true,property_id:pid}; }
+    case "make_lead": { demoLeads(D); const id=Date.now(); D.leads.unshift({id,name:"New lead",status:"Lead",temperature:"Warm",follow_up:addDaysKey(3),buy:{},notes:[]}); return {lead_id:id}; }
+    case "add_pipeline": { const pid=Date.now(); if(body.lead_id){ demoLeads(D); const l=D.leads.find(x=>x.id===body.lead_id); if(l&&!l.property_id){ l.property_id=pid; if(body.stage==="appraisal") l.status="Appraisal"; } } D.pipe.unshift({property_id:pid,stage:body.stage,source:body.source,updated_at:new Date().toISOString(),owner_name:body.owner_name||null,phone:body.phone||null,street_address:`${body.house_number} ${body.street}`.trim(),suburb:body.suburb,notes:body.notes||null}); return {ok:true,property_id:pid}; }
     case "set_source": D.pipe=D.pipe.map(x=>x.property_id===body.property_id?{...x,source:body.source}:x); return {ok:true};
     case "set_stage": D.pipe=D.pipe.map(x=>x.property_id===body.property_id?{...x,stage:body.stage,notes:body.notes??x.notes,updated_at:new Date().toISOString()}:x); return {ok:true};
     case "drops": { if(!D.drops){ const C={Austinmer:[-34.3065,150.9300],Thirroul:[-34.3170,150.9215],Bulli:[-34.3350,150.9150],Woonona:[-34.3480,150.9080],Corrimal:[-34.3720,150.8990],"Fairy Meadow":[-34.3920,150.8920],Wollongong:[-34.4250,150.8930]};
@@ -356,20 +356,23 @@ const sHay=(...xs)=>xs.map(x=>String(x??"")).join(" ").toLowerCase()+" "+xs.map(
 const sHit=(words,hay)=>words.every(w=>hay.includes(w));
 async function runSearch(q, pre){
   const seq=++searchSeq, words=sWords(q);
-  const calls=[...(S.callbacks||[]),...(S.rows||[])].filter((r,i,a)=>a.findIndex(x=>x.property_id===r.property_id)===i)
-    .filter(r=>sHit(words,sHay(r.owner_name,r.phone,r.street_address,r.suburb))).slice(0,15);
+  const isAddr=typeof addrQ7==="function"&&addrQ7(q);
+  let calls=[...(S.callbacks||[]),...(S.rows||[])].filter((r,i,a)=>a.findIndex(x=>x.property_id===r.property_id)===i)
+    .filter(r=>isAddr||sHit(words,sHay(r.owner_name,r.phone,r.street_address,r.suburb))).slice(0,isAddr?100000:15);
   let res={leads:[],props:[],listings:[]};
   if (pre) res=pre; else try { res=await api("search",{q}); } catch(e){ if(seq!==searchSeq) return; $("#main").innerHTML=`<div class="empty"><i class="ti ti-wifi-off"></i>${esc(e.message)}</div>`; return; }
   if (seq!==searchSeq || !S.searching) return;
-  S.sres={...res,calls};
+  let calls2=calls, miss=""; const AR=typeof addrRank7==="function"?addrRank7(q,res,calls):null;
+  if(AR){ res={...res,props:AR.props,leads:AR.leads}; calls2=AR.calls; if(!AR.exact) miss=`<div class="card lead srow miss7" onclick="addMissing7('${esc(AR.label).replace(/'/g,"\\'")}','${esc(AR.suburb).replace(/'/g,"\\'")}')"><div class="lname" style="font-size:16px">${esc(AR.label)}${AR.suburb?", "+esc(AR.suburb):""} isn't on file</div><div class="addr">Tap to add it${AR.props.length||AR.calls.length?". Other homes at this address are below":""}</div></div>`; }
+  S.sres={...res,calls:calls2}; const callsAll=calls; calls=calls2;
   const fmtPh=p=>esc(fmtPh2(p));
   const row=(title,sub,tap,phone,tag)=>`<div class="card lead srow" onclick="${tap}"><div style="display:flex;gap:10px;align-items:center"><div style="flex:1;min-width:0"><div class="lname" style="font-size:16px">${esc(title)}${tag?` <span class="stag">${tag}</span>`:""}</div><div class="addr" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(sub)}</div></div>${phone?`<a class="lcall" href="tel:${esc(telOf(phone))}" onclick="event.stopPropagation()" aria-label="Call"><i class="ti ti-phone"></i></a>`:""}</div></div>`;
   const sec=(t,n,html)=>n?`<h2 style="margin:14px 0 6px">${t} <span class="muted" style="font-weight:400">${n}</span></h2>${html}`:"";
   const leadIds=new Set(res.leads.map(l=>l.id));
   const props=res.props.filter(p=>!calls.some(c=>c.property_id===p.id));
   const total=res.leads.length+calls.length+res.listings.length+props.length;
-  $("#main").innerHTML=`<p class="muted" style="margin:12px 0 0;font-size:13px">${total?`Results for "${esc(q)}"`:`Nothing found for "${esc(q)}"`}</p>`
-   + sec("Leads",res.leads.length,res.leads.map(l=>row(l.name||l.address||l.phone,[l.name?l.address:null,l.suburb,l.phone?fmtPh(l.phone):null,l.status!=="Active"?l.status:null].filter(Boolean).join(" · "),`openSearchLead(${l.id})`,l.phone)).join(""))
+  $("#main").innerHTML=`<p class="muted" style="margin:12px 0 0;font-size:13px">${total?`Results for "${esc(q)}"`:miss?"":`Nothing found for "${esc(q)}"`}</p>`+miss
+   + sec("Leads",res.leads.length,res.leads.map(l=>row(l.name||l.address||l.phone,[l.name?l.address:null,l.suburb,l.phone?fmtPh(l.phone):null,l.status!=="Lead"?l.status:null].filter(Boolean).join(" · "),`openSearchLead(${l.id})`,l.phone)).join(""))
    + sec("Today's calls",calls.length,calls.map(r=>row(r.owner_name||"Owner unknown",[r.street_address,r.suburb,r.today_outcome?LABEL[r.today_outcome]:null].filter(Boolean).join(" · "),`openSearchProp(${r.property_id},true)`,r.phone,r.callback?"callback":"")).join(""))
    + sec("Listings",res.listings.length,res.listings.map(t=>row(t.address,[t.suburb,t.price_text].filter(Boolean).join(" · "),`openSearchListing(${t.id})`)).join(""))
    + sec("Addresses",props.length,props.map(p=>row(p.owner_name||`${p.street_address}`,[p.owner_name?p.street_address:null,p.suburb,p.phone?fmtPh(p.phone):null].filter(Boolean).join(" · "),`openSearchProp(${p.id})`,p.phone,p.is_lead?"lead":"")).join(""))
@@ -1057,7 +1060,7 @@ function downloadDrops(){
 // ---------- Leads: follow up driven, with buyer criteria matched to Dignam listings ----------
 const LO={
   temperature:["Hot","Warm","Nurture","Cold"],
-  status:["Active","Appraisal Booked","Appraisal Done","Listing Won","Listing Lost","Not Ready","Do Not Contact","Closed"],
+  status:["Lead","Appraisal Booked","Appraisal","Listed","Sold","Listed Elsewhere","Not Ready","Do Not Contact"],
   timeframe:["Now","0–1 month","1–3 months","3–6 months","6–12 months","12+ months","Unknown"],
   next_action:["Call","Text","Email","Check In","Book Appraisal","Appraisal Booked","Confirm Appraisal","Appraisal Complete","Book Listing","Listing Booked"],
   source:["Cold Call","Just Listed","Just Sold","Open Home","Database","Referral","Door Knock","Card Drop","Social Media","Website"],
@@ -1115,9 +1118,9 @@ function smsLink(phone, body){ return `sms:${String(phone||"").replace(/[^\d+]/g
 const pitch=(l,t)=>`Hi ${(l.name||"").split(/[ &]/)[0]||"there"}, a home I think suits you: ${t.address}${t.suburb?", "+t.suburb:""}. ${listingLine(t)}.${t.url?" "+t.url:""} Keen to take a look?`;
 
 function demoLeads(D){ if(D.leads) return;
-  D.leads=[{id:1,name:"Sam Carter",phone:"0400 111 333",address:"12 Example St",suburb:"Fairy Meadow",temperature:"Warm",status:"Active",follow_up:addDaysKey(-2),next_action:"Call",lead_type:"Buyer/Vendor",motivation:"Upsizing",buy:{min:1200000,max:1500000,beds:3,baths:2,cars:2,land:550,types:["House"],musts:["Garage","Yard"],suburbs:["Balgownie","Tarrawanna"]},notes:[{id:1,body:"Wants 3 bed with double garage. Budget $1.5M.",at:new Date().toISOString()}]},
+  D.leads=[{id:1,name:"Sam Carter",phone:"0400 111 333",address:"12 Example St",suburb:"Fairy Meadow",temperature:"Warm",status:"Lead",follow_up:addDaysKey(-2),next_action:"Call",lead_type:"Buyer/Vendor",motivation:"Upsizing",buy:{min:1200000,max:1500000,beds:3,baths:2,cars:2,land:550,types:["House"],musts:["Garage","Yard"],suburbs:["Balgownie","Tarrawanna"]},notes:[{id:1,body:"Wants 3 bed with double garage. Budget $1.5M.",at:new Date().toISOString()}]},
     {id:2,name:"Pat Nguyen",phone:"0400 222 444",address:"5 Sample Ave",suburb:"Thirroul",temperature:"Hot",status:"Appraisal Booked",follow_up:todayKey(),next_action:"Confirm Appraisal",lead_type:"Potential Vendor",buy:{},notes:[]},
-    {id:3,name:"Alex Morgan",phone:"0400 333 555",address:"8 Demo Rd",suburb:"Woonona",temperature:"Nurture",status:"Active",follow_up:addDaysKey(5),lead_type:"Buyer/Vendor",buy:{musts:["No stairs"],suburbs:["Woonona","Bulli"]},notes:[]},
+    {id:3,name:"Alex Morgan",phone:"0400 333 555",address:"8 Demo Rd",suburb:"Woonona",temperature:"Nurture",status:"Lead",follow_up:addDaysKey(5),lead_type:"Buyer/Vendor",buy:{musts:["No stairs"],suburbs:["Woonona","Bulli"]},notes:[]},
     {id:4,name:"Jo Smith",phone:"0400 444 666",suburb:"Corrimal",temperature:"Cold",status:"Not Ready",follow_up:addDaysKey(40),lead_type:"Potential Vendor",buy:{},notes:[]}];
   D.listings=[{id:11,address:"14 Hill View Cl",suburb:"Tarrawanna",price_text:"Guide $1.45M",price_min:1400000,price_max:1450000,beds:4,baths:2,cars:2,ptype:"House",land:620,description:"Family home with double lock up garage and level yard."},
     {id:12,address:"3 Ocean Pde",suburb:"Bulli",price_text:"$1.2M",price_min:1200000,price_max:1200000,beds:3,baths:2,cars:1,ptype:"Villa",description:"Single level villa, no stairs, close to the beach."},
@@ -1149,7 +1152,7 @@ function leadRow(l){
     <div style="display:flex;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0">
      <div class="lname" style="display:flex;align-items:center">${nw?`<span class="newtag">${nw} new</span>`:""}<span style="overflow:hidden;text-overflow:ellipsis">${esc(leadTitle(l))}</span></div>
      <div class="addr" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc([l.name?l.address:null,l.suburb].filter(Boolean).join(", ")||l.motivation||"")}${l.address||l.rp_link?rpBtn(l.address,l.suburb,l.rp_link):""}</div>
-     <div class="lmeta"><span style="${n!==null&&n<0?"color:var(--bad);font-weight:600":n===0?"color:var(--accent);font-weight:600":""}">${dueLabel(l.follow_up)}</span>${l.next_action?` · ${esc(l.next_action)}`:""}${l.status&&l.status!=="Active"?` · <b>${esc(l.status)}</b>`:""}${top?` · <span style="color:var(--good);font-weight:600"><i class="ti ti-home-check"></i>${Math.min(top,5)} match${Math.min(top,5)===1?"":"es"}</span>`:""}</div>
+     <div class="lmeta"><span style="${n!==null&&n<0?"color:var(--bad);font-weight:600":n===0?"color:var(--accent);font-weight:600":""}">${dueLabel(l.follow_up)}</span>${l.status&&l.status!=="Lead"?` · <b>${esc(l.status)}</b>`:""}${top?` · <span style="color:var(--good);font-weight:600"><i class="ti ti-home-check"></i>${Math.min(top,5)} match${Math.min(top,5)===1?"":"es"}</span>`:""}</div>
     </div>${l.phone?`<a class="lcall" href="tel:${esc(telOf(l.phone))}" onclick="event.stopPropagation()" aria-label="Call"><i class="ti ti-phone"></i></a>`:""}</div></div>`;
 }
 
@@ -1179,9 +1182,9 @@ function editWants(open){ const v=$("#wview_box"), e=$("#weditor"); if(!v||!e) r
 function editDetails(){ const e=$("#deditor"); if(e) e.hidden=!e.hidden; }
 // One lead on one screen: who they are, log the contact, matches, then what they want and details folded into one line each
 function openLead(id, opts={}){
-  const l=id?(S.leads||[]).find(x=>x.id===id):{id:null,status:"Active",temperature:"Warm",buy:{},notes:[]};
+  const l=id?(S.leads||[]).find(x=>x.id===id):{id:null,status:"Lead",temperature:"Warm",buy:{},notes:[]};
   if(!l){ toast("Lead not found"); return; }
-  S.ol={id:l.id, follow_up:null, temperature:l.temperature||null, status:l.status||"Active", next_action:l.next_action||null};
+  S.ol={id:l.id, follow_up:null, temperature:l.temperature||null, status:l.status||"Lead", next_action:l.next_action||null};
   const keepScroll=opts.keepScroll?$("#sheet").scrollTop:0;
   const opt=(arr,cur)=>`<option value="">None</option>`+arr.map(o=>`<option ${o===cur?"selected":""}>${esc(o)}</option>`).join("");
   const fu=[["Tmrw",1],["3 days",3],["1 wk",7],["2 wks",14],["1 mth",30],["3 mths",91]];
@@ -1196,11 +1199,11 @@ function openLead(id, opts={}){
   const notes=l.notes||[], fmtN=n=>`<p class="lnote"><span class="muted">${new Date(n.at).toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"2-digit",timeZone:"Australia/Sydney"})}</span> ${esc(n.body)}</p>`;
   $("#sheet").classList.add("lsheet");
   $("#sheet").innerHTML=`
-   <div class="lhead"><div style="flex:1;min-width:0"><h3>${esc(id?leadTitle(l):"New lead")}</h3>${id?`<div class="muted lsub"><span style="${dueIn(l.follow_up)<0?"color:var(--bad);font-weight:600":""}">${dueLabel(l.follow_up)}</span>${l.status&&l.status!=="Active"?` · <b>${esc(l.status)}</b>`:""}</div>`:""}</div>
+   <div class="lhead"><div style="flex:1;min-width:0"><h3>${esc(id?leadTitle(l):"New lead")}</h3>${id?`<div class="muted lsub"><span style="${dueIn(l.follow_up)<0?"color:var(--bad);font-weight:600":""}">${dueLabel(l.follow_up)}</span>${l.status&&l.status!=="Lead"?` · <b>${esc(l.status)}</b>`:""}</div>`:""}</div>
     <button class="lact ghost" onclick="closeOv();$('#sheet').classList.remove('lsheet');if(S.tab==='leads')drawLeads()" aria-label="Close"><i class="ti ti-x"></i></button></div>
    ${id&&(l.address||l.suburb||l.rp_link)?`<div class="laddr"><span>${esc([l.address,l.suburb].filter(Boolean).join(", "))}</span>${rpBtn(l.address,l.suburb,l.rp_link,"rpb big").replace(">RP<",">RP Data<")}</div>`:""}
    ${id&&tel?`<div class="lcta"><a class="call" href="tel:${esc(tel)}"><i class="ti ti-phone"></i>Call ${esc(fmtPh2(l.phone))}</a><a class="txt" href="${smsLink(l.phone,"")}"><i class="ti ti-message"></i>Text</a></div>`:""}
-   ${id?`<div class="lcta lstat">${l.status==="Listing Won"?`<button class="listedbtn on" disabled><i class="ti ti-star-filled"></i>Listed</button>`:`<button class="listedbtn" onclick="markLeadListed(${id})"><i class="ti ti-star"></i>Listed</button>`}</div>`:""}
+   ${id?`<div class="lcta lstat">${l.status==="Listed"?`<button class="listedbtn on" disabled><i class="ti ti-star-filled"></i>Listed</button>`:`<button class="listedbtn" onclick="markLeadListed(${id})"><i class="ti ti-star"></i>Listed</button>`}</div>`:""}
    ${opts.fresh?`<div class="banner info" style="margin:8px 0 0;padding:8px 10px"><i class="ti ti-sparkles"></i><div>Added to Leads. Fill in what they want below, then Save.</div></div>`:""}
    ${id?`<div class="lcard"><textarea id="ln_body" rows="2" data-grow placeholder="What did they say?" class="lin"></textarea>
     <div class="lk2">Follow up</div><div class="fu4" id="ln_fu">${[["Tomorrow",1],["1 week",7],["1 month",30]].map(([t,n])=>`<button onclick="S.ol.follow_up='${addDaysKey(n)}';pickOne(this);fuSave6()">${t}</button>`).join("")}<button onclick="const d=this.nextElementSibling;try{d.showPicker()}catch(e){d.click()}">Pick date</button><input type="date" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none" onchange="S.ol.follow_up=this.value;const b=this.previousElementSibling;pickOne(b);b.textContent=new Date(this.value+'T00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'});fuSave6()"></div></div>
@@ -1209,7 +1212,7 @@ function openLead(id, opts={}){
      <button class="ghost" style="margin-top:6px;width:100%" onclick="editDetails()"><i class="ti ti-pencil"></i>Edit name, phone and address</button></details>`:""}
    <div id="wview_box" ${opts.fresh||!id?"hidden":""}>${wantsView(b)}</div>
    <div class="weditor" id="weditor" ${opts.fresh||!id?"":"hidden"}><div class="wlabel">What they want to buy</div>
-    <input id="b_max" class="sm" inputmode="decimal" placeholder="Budget up to" value="${b.max?money(b.max):""}"><input id="b_min" type="hidden" value="${b.min?money(b.min):""}">
+    <div class="lrow2 bud7"><label><span>Budget from</span><input id="b_min" class="sm" inputmode="decimal" placeholder="$800k" value="${b.min?money(b.min):""}"></label><label><span>Budget to</span><input id="b_max" class="sm" inputmode="decimal" placeholder="$1.2M" value="${b.max?money(b.max):""}"></label></div>
     <div class="lrow3">${["beds","baths","cars"].map(k=>`<select id="b_${k}" class="sm" aria-label="${k}"><option value="">${{beds:"Beds",baths:"Baths",cars:"Parking"}[k]} any</option>${[1,2,3,4,5].map(n=>`<option value="${n}" ${+b[k]===n?"selected":""}>${n}+ ${{beds:"bed",baths:"bath",cars:"car"}[k]}</option>`).join("")}</select>`).join("")}</div>
     <div class="chipgrid sm" id="b_types">${LO.types.map(t=>`<button class="${(b.types||[]).includes(t)?"on":""}" onclick="this.classList.toggle('on')">${t}</button>`).join("")}<button id="b_flat" class="${b.flat?"on":""}" onclick="this.classList.toggle('on')">Flat block</button></div>
     <div class="chipgrid sm" id="b_musts">${[...new Set([...LO.musts,...(b.musts||[])])].map(t=>`<button class="${(b.musts||[]).includes(t)?"on":""}" onclick="this.classList.toggle('on')">${esc(t)}</button>`).join("")}</div>
@@ -1238,7 +1241,7 @@ async function saveLeadAll(id){
   if(!id){ btn.disabled=true; btn.textContent="Adding…"; try{ await saveLeadDetails(null, readBuy()); }finally{ btn.disabled=false; } return; }
   const cur=(S.leads||[]).find(x=>x.id===id)||{}, jobs=[];
   const body=$("#ln_body").value.trim(), st=$("#ln_status").value, nx=$("#ln_next").value||null;
-  const contactChanged=body||S.ol.follow_up||st!==(cur.status||"Active")||(S.ol.temperature||null)!==(cur.temperature||null)||nx!==(cur.next_action||null);
+  const contactChanged=body||S.ol.follow_up||st!==(cur.status||"Lead")||(S.ol.temperature||null)!==(cur.temperature||null)||nx!==(cur.next_action||null);
   if(contactChanged){ const p={id,body,status:st,next_action:nx}; if(S.ol.follow_up) p.follow_up=S.ol.follow_up; if(S.ol.temperature) p.temperature=S.ol.temperature; jobs.push(api("lead_note",p)); }
   const buy=readBuy(), det=readDetails(), lead={};
   if(JSON.stringify(buy)!==S.olOrig.buy){ lead.buy=buy; if(hasCriteria(buy)&&(!cur.lead_type||cur.lead_type==="Potential Vendor")&&!det.lead_type) lead.lead_type="Buyer/Vendor"; }
@@ -1249,12 +1252,12 @@ async function saveLeadAll(id){
   try{ await Promise.all(jobs); await loadLeads(); openLead(id,{saved:true,keepScroll:true}); if(S.tab==="leads") drawLeads(); }
   catch(e){ btn.disabled=false; btn.textContent="Didn't save. Tap to try again"; btn.classList.add("err"); }
 }
-// One tap: lead status becomes Listing Won and, if it came from a property, the pipeline moves to Listed
+// One tap: lead status becomes Listed and, if it came from a property, the pipeline moves to Listed
 async function markLeadListed(id){
   const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;
   if(!confirm("Mark "+(l.name||l.address||"this lead")+" as listed?")) return;
   try{
-    await api("lead_note",{id,body:"Listed",status:"Listing Won",next_action:null});
+    await api("lead_note",{id,body:"Listed",status:"Listed",next_action:null});
     if(l.property_id) await api("set_stage",{property_id:l.property_id,stage:"listed"});
     await loadLeads(); openLead(id,{keepScroll:true}); if(S.tab==="leads") drawLeads(); toast("Marked as listed");
   }catch(e){ toast(e.message); }
@@ -1367,7 +1370,7 @@ async function saveAddPipe(){
   const v=id=>$(id).value.trim(), b={house_number:v("#ap_no"),street:v("#ap_st"),suburb:v("#ap_sub"),owner_name:v("#ap_own"),phone:v("#ap_ph"),stage:S.addp.stage,source:S.addp.source,lead_id:S.addp.lead_id||undefined};
   if(!b.street||!b.suburb){ toast("Enter the street and suburb"); return; }
   $("#ap_go").disabled=true;
-  try{ await api("add_pipeline",b); closeOv(); toast("Added to pipeline"); render(); }catch(e){ $("#ap_go").disabled=false; toast(e.message); }
+  try{ const r=await api("add_pipeline",b); if(S.addp.after&&r&&r.property_id) await api("set_stage",{property_id:r.property_id,stage:S.addp.after}); closeOv(); toast(S.addp.lead_id?"Moved":"Added to pipeline"); S.leads=null; render(); }catch(e){ $("#ap_go").disabled=false; toast(e.message); }
 }
 
 // ---------- Weekly funnel scorecard ----------
@@ -1619,7 +1622,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=170"></script>
+<script src="v2.js?v=172"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>
