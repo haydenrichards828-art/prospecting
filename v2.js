@@ -725,7 +725,7 @@ function setTemplates(){
   openSheet2('Message templates',`<p class="hint2">Fill ins: {first_name} {address} {street} {suburb} {appt_date} {callback_date}</p>${S.templates.map(card).join('')}<div class="sth2">New template</div>${card({id:0,name:'',body:'',default_delay:'now'})}`); }
 function setImport(){
   openSheet2('Import a file',`<div class="fg2 one"><label><span>What is it?</span><select id="ik" onchange="S.pending=null;previewCSV()"><option value="properties">RP Data or Pricefinder export</option><option value="crm">Dignam CRM contacts</option><option value="probate">Probate notices</option><option value="withdrawn">Withdrawn or expired listings</option><option value="on_market">Currently for sale</option><option value="dncr">DNCR wash results</option><option value="crm_notes">Office notes (file from Claude)</option></select></label>
-   <label><span>File</span><input type="file" id="if" accept=".csv,.json" onchange="S.pending=null;previewCSV()"></label></div><div id="ir" class="hint2"></div>
+   <label><span>File</span><input type="file" id="if" accept=".csv,.json,.pdf,.xlsx,.xls,application/pdf" onchange="S.pending=null;previewCSV()"></label></div><div id="ir" class="hint2"></div>
    <button class="b2 pri wide2b" onclick="importCSV()">${ic2('plus',18)}Import</button>`); }
 function setSheets(){
   openSheet2('Import leads from Google Sheets',`<p class="hint2">Share the sheet as "Anyone with the link can view", then paste the link.</p><div class="fg2 one"><label><span>Sheet link</span><input id="gs_url" placeholder="https://docs.google.com/spreadsheets/d/…"></label></div><div id="gs_r" class="hint2"></div>
@@ -2242,3 +2242,64 @@ addEventListener('click',e=>{ const a=e.target.closest&&e.target.closest('a[href
   e.preventDefault(); e.stopPropagation(); const ph=decodeURIComponent(a.getAttribute('href').slice(4).split(/[?&]/)[0]); sendInfo(whoByPhone6(ph,a)); },true);
 // the lead panel had both a Text button and Send info: Text opens the message sheet now, so Send info goes
 window.openLead=(function(orig){ return function(...a){ const r=orig.apply(this,a); document.querySelectorAll('#sheet .snd2 button').forEach(b=>{ if(/Send info/.test(b.textContent)) b.remove(); }); return r; }; })(window.openLead);
+
+// ── Import a file: PDF and Excel as well as CSV (22 Nov) ──
+// A Dignam CRM "Detailed Contact Report" PDF is recognised on its own, whatever is picked in the list.
+// Dignam CRM "Detailed Contact Report" PDF -> property rows. Same rules as parse_v7.py.
+function crmPdfRecords(txt){
+  const HEADER=/Name\s+Details\s+Contact\s+Related\s+Contacts\s+Related\s+Properties\s+Requirements\s+Notes\s+Record\s+Details/i;
+  const TAIL=/Last\s+Modified:\s*\d{1,2}\s+\w{3,9}\s+\d{4}/ig, PRINT=/Print this Page/ig;
+  const FURN=/Printed by:|Print Date:|Detailed Contact Report|Marlowe Richards|\d{1,2}-\w{3}-\d{4}|Contact report is ready.*/ig;
+  const ADDR=/\[Address\]:\s*([\s\S]+?)(?:\[Postal\]|\[E\]|\[M\]|\[H\]|\[W\]|Spouse:|\?:|Buyer:|For Sale:|For Lease:|Owner Occupier|Owner:|Tenant:|Last 3 notes|Comments:|Primary\s+Owner|First\s+Created|Full\s+Access|$)/i;
+  const PHONE=/\[([MHW])\]:\s*(0\d[\d \-]{6,})/g, ws=s=>String(s||'').replace(/\s+/g,' ').trim();
+  const addr=a=>{ a=ws(a); const parts=a.split(',').map(p=>p.trim()).filter(Boolean); if(parts.length<2) return null;
+    const pc=(a.match(/\b(2\d{3})\b/)||[])[1]||''; const drop=new Set(['australia','nsw','act','qld','vic','wa','sa','tas','nt']);
+    const core=parts.filter(p=>!drop.has(p.toLowerCase())&&!/^2\d{3}$/.test(p)); if(core.length<2) return null;
+    let unit='',house='',street=core[0]; const suburb=core[1];
+    const hm=core[0].match(/^\s*([0-9]+[A-Za-z]?(?:\/[0-9]+[A-Za-z]?)?|[0-9]+-[0-9]+)\s+(.+)/); if(hm){ house=hm[1]; street=hm[2].trim(); }
+    if(house.includes('/')) [unit,house]=house.split('/');
+    if(street.length<2||suburb.length<2||suburb.length>30||/\d/.test(suburb)) return null;
+    return {unit,house_number:house,street,suburb,postcode:pc}; };
+  const name=src=>{ let cut=0; for(const re of [TAIL,PRINT]){ re.lastIndex=0; let m; while((m=re.exec(src))) cut=Math.max(cut,m.index+m[0].length); }
+    const h=[...src.matchAll(new RegExp(HEADER.source,'ig'))].pop(); if(h) cut=Math.max(cut,h.index+h[0].length);
+    let s=ws(src.slice(cut).replace(FURN,' ')).split('(')[0].replace(/^[ ,\-]+|[ ,\-]+$/g,'');
+    return s.length<2||s.length>55||!/[A-Za-z]/.test(s)?'':s; };
+  const pieces=txt.split('Status:'), out=[];
+  for(let k=0;k<pieces.length-1;k++){ let body=pieces[k+1]; const hb=body.search(HEADER); if(hb>=0) body=body.slice(0,hb);
+    const ma=body.match(ADDR); if(!ma) continue; const ad=addr(ma[1]); if(!ad) continue;
+    const ph=[]; for(const m of body.matchAll(PHONE)){ const d=m[2].replace(/\D/g,''); if(d.length>=8&&d.length<=10&&!ph.includes(d)) ph.push(d); }
+    out.push({...ad,owner_name:name(pieces[k]),phone:ph[0]||'',phone2:ph[1]||'',crm_flag:true}); }
+  return {rows:out,records:pieces.length-1}; }
+async function pdfText(pdfjs,data,onPage){ const doc=await pdfjs.getDocument({data}).promise; let t='';
+  for(let p=1;p<=doc.numPages;p++){ const tc=await (await doc.getPage(p)).getTextContent();
+    for(const it of tc.items){ t+=it.str+(it.hasEOL?'\n':''); } t+='\n'; onPage&&onPage(p,doc.numPages); } return t; }
+
+window.previewCSV=(function(orig){ return async function(){
+  const f=$("#if")&&$("#if").files[0]; if(!f) return;
+  const pdf=/\.pdf$/i.test(f.name)||f.type==="application/pdf", xl=/\.xlsx?$/i.test(f.name);
+  if(!pdf&&!xl) return orig();
+  const ir=$("#ir"); ir.textContent="Reading…";
+  try{
+    let rows;
+    if(pdf){
+      const pdfjs=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs');
+      pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+      const txt=await pdfText(pdfjs,new Uint8Array(await f.arrayBuffer()),(p,n)=>{ if(p%10===0||p===n) ir.textContent=`Reading page ${p} of ${n}…`; });
+      if(/Detailed Contact Report|Related\s+Properties/i.test(txt)&&/\[Address\]:/.test(txt)){
+        const r=crmPdfRecords(txt); S.pending=r.rows; $("#ik").value="crm";
+        const wp=r.rows.filter(x=>x.phone).length, ex=r.rows[0];
+        ir.innerHTML=r.rows.length?`<b>Dignam CRM contact report. ${r.rows.length.toLocaleString()} houses found, ${wp.toLocaleString()} with a number.</b><br>${(r.records-r.rows.length).toLocaleString()} contacts skipped with no street address.<br>First one reads as: ${esc([ex.unit&&ex.unit+"/",ex.house_number," ",ex.street,", ",ex.suburb," · ",ex.owner_name," · ",ex.phone].join("").replace(/\s+/g," "))}<br>Tap Import.`:"No addresses found in that report.";
+        return; }
+      const fake={name:f.name,type:f.type,arrayBuffer:async()=>new Uint8Array(await f.arrayBuffer()).buffer};
+      rows=await pdfRows(fake);
+    } else {
+      const X=await import('https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs'); const wb=X.read(await f.arrayBuffer(),{cellDates:true});
+      rows=X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''}).map(r=>r.map(c=>String(c??'')));
+    }
+    const hi=rows.findIndex(r=>r.filter(c=>String(c).trim()).length>=3); if(hi>0) rows=rows.slice(hi);
+    if(rows.length<2){ ir.textContent="Couldn't find a table in that file. Export it from the CRM as CSV or Excel instead."; return; }
+    const {out,col}=mapRows(rows); S.pending=out;
+    const ok=out.filter(o=>o.street||$("#ik").value==="dncr").length;
+    ir.innerHTML=`<b>${out.length.toLocaleString()} rows found, ${ok.toLocaleString()} with a usable address.</b><br>Matched columns: ${esc(Object.entries(col).map(([k,i])=>rows[0][i].trim()+" → "+k.replace(/_/g," ")).join(" · ")||"none")}`;
+  }catch(e){ S.pending=null; ir.textContent="Couldn't read that file. "+e.message; }
+}; })(window.previewCSV);

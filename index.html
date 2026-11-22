@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="preload" href="v2.js?v=165" as="script">
+<link rel="preload" href="v2.js?v=166" as="script">
 <link rel="stylesheet" href="v2.css?v=170">
 </head>
 <body>
@@ -1490,7 +1490,7 @@ async function viewSettings(){
    <details class="sec" open><summary>Import data</summary><div>
     <p class="muted" style="margin-top:0">Export a CSV from Pricefinder, RP Data or the CRM. Columns are matched automatically and you see how it was read first.</p>
     <select id="ik" onchange="S.pending=null;previewCSV()"><option value="properties">Pricefinder or RP Data export</option><option value="crm">Dignam CRM contacts</option><option value="probate">Probate or estate notices</option><option value="withdrawn">Withdrawn or expired listings</option><option value="on_market">Currently for sale (RP Data)</option><option value="dncr">DNCR wash results</option><option value="crm_notes">Office notes and last Dignam contact (file from Claude)</option></select>
-    <input type="file" id="if" accept=".csv,.json" style="margin-top:8px" onchange="S.pending=null;previewCSV()"><button class="primary" style="margin-top:10px;width:100%" onclick="importCSV()"><i class="ti ti-upload"></i>Import</button><p class="muted" id="ir"></p></div></details>
+    <input type="file" id="if" accept=".csv,.json,.pdf,.xlsx,.xls,application/pdf" style="margin-top:8px" onchange="S.pending=null;previewCSV()"><button class="primary" style="margin-top:10px;width:100%" onclick="importCSV()"><i class="ti ti-upload"></i>Import</button><p class="muted" id="ir"></p></div></details>
    <details class="sec"><summary>Import leads from Google Sheets</summary><div>
     <p class="muted" style="margin-top:0">Share the sheet as "Anyone with the link can view", then paste the link. Reads the Master Leads, Appraisal and Listed tabs. Anyone already in Leads is skipped.</p>
     <input id="gs_url" placeholder="https://docs.google.com/spreadsheets/d/..."><button class="primary" id="gs_go" style="margin-top:10px;width:100%" onclick="importLeadsSheet()"><i class="ti ti-upload"></i>Import leads</button><p class="muted" id="gs_r"></p></div></details>
@@ -1619,7 +1619,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=165"></script>
+<script src="v2.js?v=166"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>
