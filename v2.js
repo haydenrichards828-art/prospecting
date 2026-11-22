@@ -1325,7 +1325,7 @@ function fqStart(){ const ids=dueLeads2().map(l=>l.id); if(!ids.length) return t
 function fqSkip(){ if(!S.fq) return; const nx=S.fq.ids[S.fq.i+1]; if(nx==null){ S.fq=null; closeOv(); if(S.tab==='leads') drawLeads(); return toast('That was the last one'); } S.fq.i++; openLead(nx,{fq:true}); }
 window.drawLeads=(function(orig){ return function(){ orig(); if(S.lview==='listings') return; const n=dueLeads2().length; if(!n) return;
   const ph=document.querySelector('#main .ph2'); if(!ph) return; ph.querySelector('.flag2')?.remove();
-  ph.querySelector('h1')?.insertAdjacentHTML('afterend',`<button class="fqb2" onclick="fqStart()">${ic2('phone',15)} ${n} follow up${n===1?'':'s'} due <span>Start</span></button>`); }; })(window.drawLeads);
+  ph.querySelector('h1')?.insertAdjacentHTML('afterend',`<button class="fqb2" onclick="fqStart()" title="Call the leads due for a follow up, one after another">${ic2('phone',15)}<span>Call ${n} follow up${n===1?'':'s'}</span></button>`); }; })(window.drawLeads);
 
 // Send info goes back to the lead it came from
 window.swSend=(function(orig){ return async function(ch){ const w=S.sw; await orig(ch); if(ch!=='copy'&&w&&w.lead_id&&S.swBack){ S.swBack=false; setTimeout(()=>openLead(w.lead_id),120); } }; })(window.swSend);

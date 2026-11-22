@@ -1198,3 +1198,22 @@ header.top2 .dic5~.tsearch{margin-left:0}
 .pg2:has(.sg5) details.sec>summary{padding:12px 18px!important}}
 .vbk5{height:34px;min-height:0!important;padding:0 12px 0 8px!important;display:flex;align-items:center;gap:6px;border-radius:4px!important;background:#1c2129!important;border:1px solid #363e4b!important;color:#f2f4f7!important;font-size:14px!important;font-weight:600;flex:none}
 .vbk5:hover{background:#272d37!important}
+/* Leads top bar: page name and its switch on the left; follow ups, search and Add on the right; one height and shape */
+header.top2 .tabbtn{order:0}
+header.top2 .lift5.seg2{order:1}
+header.top2 .hc5{order:1}
+header.top2 .lift5.fqb2{order:3;margin-left:auto}
+header.top2 .tsearch{order:4}
+header.top2 .hadd5{order:5}
+header.top2 .dic5{order:3}
+header.top2 .lift5.fqb2~.tsearch{margin-left:0}
+header.top2 .lift5.seg2{height:36px!important;padding:3px!important;border-radius:4px!important;background:#171b21!important}
+header.top2 .lift5.seg2 button{height:30px!important;min-height:0!important;padding:0 14px!important;font-size:14px!important;border-radius:3px!important}
+header.top2 .fqb2{height:36px!important;padding:0 14px!important;gap:8px!important;border-radius:4px!important;background:none!important;border:1px solid #b45309!important;color:#ffc864!important;font-size:14px!important;font-weight:600}
+header.top2 .fqb2:hover{background:#2a2112!important}
+header.top2 .fqb2 span{background:none!important;color:inherit!important;padding:0!important;margin:0!important;border-radius:0!important}
+header.top2 .tsearch{height:36px}
+header.top2 .hadd5{height:36px!important;border-radius:4px!important}
+header.top2 .lift5.fqb2{margin-left:auto!important}
+header.top2 .lift5.fqb2~.tsearch{margin-left:8px!important}
+.fqb2 span{background:none!important;color:inherit!important;padding:0!important;margin:0!important;border-radius:0!important}
