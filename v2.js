@@ -37,6 +37,7 @@ const MONS=MONF.map(m=>m.slice(0,3));
 const NAVI={calls:['#3b82f6','phone'],enquiry:['#d97706','msg'],leads:['#6366f1','users'],pipeline:['#0d9488','appr'],drops:['#db2777','mail'],insights:['#16a34a','chart'],settings:['#4b5565','gear']};
 const TABS2=[['calls','Calls'],['enquiry','Call sheets'],['leads','Leads'],['pipeline','Appraisals and Listings'],['drops','Card drops'],['insights','Stats'],['settings','Settings']];
 const RC2={users:'#7c3aed',tag:'#d97706',trend:'#16a34a',land:'#0d9488',clock:'#2563eb',house:'#db2777',bed:'#0891b2',fire:'#dc2626',drop:'#0284c7',cal:'#b45309'};   // each kind of reason has its own colour
+const LVW6={Strong:'Strong sign',Medium:'Some sign',Light:'Weak sign',Note:'Note'};   // plain words under each reason
 const LVL2={Strong:['var(--acc)','#93c0ff'],Medium:['#6366f1','#a5b4fc'],Light:['#475063','var(--t2)'],Note:['#b45309','#ffc864']};
 
 // ---------- small helpers ----------
@@ -262,7 +263,7 @@ function drawCall2(){
     <div><h1 class="nm2">${esc(nm)}</h1>${ppl.length>1?`<div class="also2">Also on file: ${ppl.slice(1).map(esc).join(', ')}</div>`:''}<button class="ad2 cp2" onclick="copyAddr(${id})" title="Copy address for RP Data">${ic2('pin',21)}<span>${addr}</span><span class="cpl" title="Copy address" aria-label="Copy address">${COPYIC5}</span></button>${dignamLine(r)}</div>
     ${tag}${warnBox(r)}
     ${numBtn(r,'num2')}
-    ${why.length?`<div class="whyl2"><div class="wl2" style="grid-template-columns:repeat(${Math.min(why.length,4)},minmax(0,1fr))">${why.slice(0,4).map(([i,t,l])=>`<div class="wc2" style="--c:${RC2[i]||LVL2[l][0]};--t:${LVL2[l][1]}"><span class="ti2">${ic2(i,18,'#fff')}</span><span><b>${esc(t)}</b><em>${l}</em></span></div>`).join('')}</div></div>`:''}
+    ${why.length?`<div class="whyl2"><div class="wl2" style="grid-template-columns:repeat(${Math.min(why.length,4)},minmax(0,1fr))">${why.slice(0,4).map(([i,t,l])=>`<div class="wc2" style="--c:${RC2[i]||LVL2[l][0]};--t:${LVL2[l][1]}"><span class="ti2">${ic2(i,18,'#fff')}</span><span><b>${esc(t)}</b><em>${LVW6[l]||l}</em></span></div>`).join('')}</div></div>`:''}
     <label class="nw2"><span class="h"><span class="lab2">Note <span class="nsaved" style="font-weight:600;color:var(--t3)">${note?'· saved':''}</span></span><span class="kb2">N</span></span>
      <textarea class="note2" id="note2" data-note placeholder="Type while you talk" oninput="setNote(${id},this.value)">${esc(note)}</textarea></label>
     ${barHTML2(id)}
@@ -321,7 +322,7 @@ function details2(id,tab){
   const r=queue().find(x=>x.property_id===id); if(!r) return;
   const R=reasonOf(r), hist=histRows(r);
   const body={calls:()=>callCards2(r),
-   why:()=>`<div class="g2">${whyRows(r).map(([i,t,l])=>row2(RC2[i]||LVL2[l][0],i,esc(t),`<span style="color:${LVL2[l][1]};font-weight:700">${l}</span>`)).join('')}</div><div class="g2" style="padding:14px 16px"><b style="display:block;margin-bottom:4px">${esc(R.head)}</b><span style="color:var(--t2)">${esc(R.sub)}</span></div>`,
+   why:()=>`<div class="g2">${whyRows(r).map(([i,t,l])=>row2(RC2[i]||LVL2[l][0],i,esc(t),`<span style="color:${LVL2[l][1]};font-weight:700">${LVW6[l]||l}</span>`)).join('')}</div><div class="g2" style="padding:14px 16px"><b style="display:block;margin-bottom:4px">${esc(R.head)}</b><span style="color:var(--t2)">${esc(R.sub)}</span></div>`,
    history:()=>`${photo2(r,'height:190px',true)}<div class="g2" style="padding:16px;display:flex;flex-direction:column;gap:14px">${hist.length?hist.map((h,j)=>`<div class="tl2"><div class="d"><i style="background:${h.col};box-shadow:0 0 0 3px ${h.col}33"></i>${j<hist.length-1?'<u></u>':''}</div><div><div class="tlh2"><b>${h.lab}</b>${h.val?`<em style="color:${h.col==='#9ba4b2'?'var(--t1)':h.col}">${h.val}</em>`:''}</div><small>${esc(h.when)}</small></div></div>`).join(''):'<span class="emptyline">No sales on record</span>'}</div>
      <div class="g2">${[['bed',[r.bedrooms>0?r.bedrooms+' bed':null,r.baths>0?r.baths+' bath':null,r.cars>0?r.cars+' car':null].filter(Boolean).join(', ')||'Not known yet','Rooms'],['clock',yrsSince(r.last_sale_date)!=null?yrsSince(r.last_sale_date)+' years':'Not known','Owned'],['trend',String(r.street_sales_12m||0),'Street sales this year']].map(([i,v,l])=>row2('#4b5565',i,esc(v),l)).join('')}</div>
 `}[tab]();
@@ -2098,3 +2099,61 @@ addEventListener('resize',()=>{ clearTimeout(window.__st6); window.__st6=setTime
     uxPush('resp',{dt:q(.75),m:{n:r.length,p50:q(.5),p75:q(.75),max:r[r.length-1]}}); };
   setInterval(sum,14000); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') sum(); });
 })();
+
+// ---------- Moving a lead along the pipeline (22 Nov): 84% of leads had no house linked, so dragging them did nothing ----------
+// Lead cards get the same ⋯ menu as appraisal and listing cards. With no house linked, the typed address is used;
+// with no address at all, the add form opens with their details filled in.
+const LSRC6={'Cold Call':'calls','Just Listed':'just_listed','Just Sold':'just_sold','Open Home':'open_home','Database':'crm','Referral':'referral','Door Knock':'door_knock','Letterbox Drop':'card_drop','Social Media':'social','Website':'website'};
+function addrParts6(l){ let a=String(l.address||'').trim(), sub=String(l.suburb||'').trim();
+  if(a.includes(',')){ const ps=a.split(','); a=ps[0].trim(); if(!sub) sub=ps.slice(1).join(',').trim(); }
+  const u=a.match(/^(?:unit\s*|u\s*)?(\d+[a-z]?)\s*\/\s*(\d+[a-z]?(?:-\d+[a-z]?)?)\s+(.+)$/i); if(u) return {unit:u[1],house_number:u[2],street:u[3],suburb:sub};
+  const n=a.match(/^(\d+[a-z]?(?:-\d+[a-z]?)?)\s+(.+)$/i); return n?{house_number:n[1],street:n[2],suburb:sub}:{house_number:'',street:a,suburb:sub}; }
+async function leadMove6(id,stage){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) return; closeOv();
+  if(l.property_id) return setStage(l.property_id,stage);
+  const a=addrParts6(l), source=LSRC6[l.source]||'other', where=stage==='appraisal'?'Appraisals':'Listings';
+  if(a.house_number&&a.street&&a.suburb){ try{ await api('add_pipeline',{...a,owner_name:l.name||'',phone:l.phone||'',stage,source,lead_id:id}); toast('Moved to '+where); S.leads=null; render(); }catch(e){ toast(e.message); } return; }
+  openAddPipe(); S.addp.stage=stage; S.addp.source=source; S.addp.lead_id=id;
+  const set=(sel,v)=>{ const i=$(sel); if(i&&v) i.value=v; };
+  set('#ap_no',a.house_number); set('#ap_st',a.street); set('#ap_sub',a.suburb); set('#ap_own',l.name); set('#ap_ph',l.phone);
+  document.querySelectorAll('#ap_stage button').forEach((b,i)=>b.classList.toggle('on',i===(stage==='appraisal'?0:1)));
+  document.querySelectorAll('#ap_source button').forEach(b=>b.classList.toggle('on',(b.getAttribute('onclick')||'').includes(`'${source}'`)));
+  const t=$('#sheet .sh2 b'); if(t) t.textContent=`Move ${l.name||'this lead'} to ${where}`; const g=$('#ap_go'); if(g) g.textContent='Move to '+where;
+  setTimeout(()=>{ const f=['#ap_no','#ap_st','#ap_sub'].map(s=>$(s)).find(i=>i&&!i.value); (f||$('#ap_go'))?.focus(); },80); }
+function leadMenu6(id){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;
+  const row=(go,t,sub)=>`<button class="mm6" onclick="${go}"><span><b>${t}</b><em>${sub}</em></span>${ic2('chev',16)}</button>`;
+  openSheet2(esc(l.name||'Lead'),`<div class="mm6s">${row(`leadMove6(${id},'appraisal')`,'Move to Appraisals','They booked an appraisal')}${row(`leadMove6(${id},'listed')`,'Move to Listings','They listed with us')}${row(`closeOv();openLead(${id})`,'Open lead','Notes, follow up and details')}</div>`); }
+// dragging a lead onto Appraisals or Listings goes through the same steps
+window.drop3=(function(orig){ return async function(e,col){ let d; try{ d=JSON.parse(e.dataTransfer.getData('text/plain')); }catch{ return orig(e,col); }
+  if(d.kind==='ld'&&(col==='ap'||col==='ls')){ e.preventDefault(); dragEnd3(); return leadMove6(d.id,col==='ap'?'appraisal':'listed'); } return orig(e,col); }; })(window.drop3);
+// the ⋯ button on each lead card, after call and text
+window.board3=(function(orig){ return async function(local){ const r=await orig(local);
+  document.querySelectorAll('.bd3 .bc3.ld .cd3').forEach(cd=>{ const o=cd.querySelector('.cn3')?.getAttribute('onclick')||'', m=o.match(/openLead\((\d+)\)/); if(!m||cd.querySelector('.lm6')) return;
+    const acts=cd.querySelector('.cb3'); if(!acts) return; const b=document.createElement('button');
+    b.className='lm6'; b.setAttribute('aria-label','Move to the next stage'); b.title='Move to the next stage'; b.innerHTML=ic2('more',16); b.onclick=ev=>{ ev.stopPropagation(); leadMenu6(+m[1]); }; acts.appendChild(b); });
+  return r; }; })(window.board3);
+
+// ---------- Lead follow up saves the moment it is tapped (22 Nov): it used to need Save, and closing the panel lost it ----------
+async function fuSave6(){ const o=S.ol; if(!o||!o.id||!o.follow_up) return; const l=(S.leads||[]).find(x=>x.id===o.id), prev=l?l.follow_up:null, val=o.follow_up;
+  const nice=new Date(val+'T00:00').toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
+  try{ await api('save_lead',{id:o.id,lead:{follow_up:val}}); if(l) l.follow_up=val;
+    toast(`Follow up saved for ${nice}`,prev?async()=>{ try{ await api('save_lead',{id:o.id,lead:{follow_up:prev}}); if(l) l.follow_up=prev; if(S.ol&&S.ol.id===o.id) S.ol.follow_up=prev; document.querySelectorAll('#ln_fu button').forEach(b=>b.classList.remove('on')); toast('Follow up put back'); }catch(e){ toast(e.message); } }:undefined); }
+  catch(e){ toast(e.message); } }
+
+// ---------- Call screen for first timers (22 Nov) ----------
+// Top bar: just calls against the goal and appraisals (it showed five numbers, two of them about list position)
+window.drawProg=function(){ const ov=S.ov; if(!ov) return; const tg=ov.settings?.daily_target||100, c=ov.today_calls||0, a=ov.today_appraisals||0;
+  const t=$("#tstats"); if(t) t.innerHTML=`<div><b>${c}</b><span>/ ${tg} calls</span></div><div><b style="color:var(--ok)">${a}</b><span>appraisals</span></div>`;
+  const p=$("#pstats"); if(p) p.innerHTML=`<span><b>${c}</b> / ${tg}</span><span><b style="color:var(--ok)">${a}</b> appr</span>`; };
+// Keyboard letters on buttons stay hidden until a shortcut key is used once (they show on hover meanwhile)
+(function(){ const on=()=>document.body.classList.add('kb6'); try{ if(localStorage.getItem('dp_kb6')) on(); }catch{}
+  document.addEventListener('keydown',e=>{ if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||'')||e.ctrlKey||e.metaKey||e.altKey) return;
+    if(/^[1-5scnm]$/i.test(e.key)&&S.tab==='calls'){ on(); try{ localStorage.setItem('dp_kb6','1'); }catch{} } },true); })();
+// One time help on the first call: three steps, gone after Got it or the first outcome
+function hint6done(){ try{ localStorage.setItem('dp_hint6','1'); }catch{} document.querySelectorAll('.fh6').forEach(x=>x.remove()); }
+function hint6(){ try{ if(localStorage.getItem('dp_hint6')) return; }catch{ return; } if(S.tab!=='calls'||S.view==='list'||document.querySelector('.fh6')) return;
+  const num=[...document.querySelectorAll('a.num2,a.pnum2')].find(x=>x.offsetParent); if(!num) return;
+  const d=document.createElement('div'); d.className='fh6'; d.setAttribute('role','note');
+  d.innerHTML=`<ol><li><b>1</b>Tap the number to call</li><li><b>2</b>Type notes while you talk</li><li><b>3</b>Tap what happened</li></ol><button onclick="hint6done()">Got it</button>`;
+  num.parentElement.insertBefore(d,num); }
+window.drawList=(function(orig){ return function(...a){ const r=orig.apply(this,a); hint6(); return r; }; })(window.drawList);
+window.act2=(function(orig){ return function(...a){ hint6done(); return orig.apply(this,a); }; })(window.act2);

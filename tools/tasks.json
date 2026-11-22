@@ -23,6 +23,14 @@
   "effort": 4,
   "screens": 2
  },
+ "desktop: Move a lead to appraisals": {
+  "effort": 1,
+  "screens": 1
+ },
+ "desktop: Move a lead to appraisals with the menu": {
+  "effort": 2,
+  "screens": 2
+ },
  "desktop: Plan a card drop walk": {
   "effort": 2,
   "screens": 1
@@ -49,6 +57,10 @@
  },
  "phone: Add a lead by hand": {
   "effort": 4,
+  "screens": 2
+ },
+ "phone: Move a lead to appraisals with the menu": {
+  "effort": 2,
   "screens": 2
  }
 }

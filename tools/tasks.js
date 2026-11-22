@@ -15,7 +15,8 @@ const JOBS=[
  {name:'Book a call back',                     go:p=>p.evaluate(()=>go('calls')), steps:[['tap',NUM],['tap',bar('Call back')],['tap','#sheet button.r2 >> nth=0']], ok:p=>p.evaluate(()=>!document.getElementById('ov').classList.contains('show'))},
  {name:'Find a person and open them',          go:p=>p.evaluate(()=>go('calls')), steps:[['tap','#hq:visible, button.ib3:visible'],['type','#hq:visible, #hq2:visible','Hill'],['wait',900],['tap','#main .card.lead >> nth=0']], ok:p=>p.evaluate(()=>document.getElementById('ov').classList.contains('show')||!!document.querySelector('.lsheet,.lp2,.ldet'))},
  {name:'Add a lead by hand',                   go:p=>p.evaluate(()=>go('leads')), steps:[['tap','.hadd5:visible, button[aria-label="Add"]:visible'],['type','#qa_name','Kim Lee'],['type','#qa_phone','0400111222'],['type','#qa_addr','9 Test St, Thirroul'],['tap','#qa_go']], ok:p=>p.evaluate(()=>!document.getElementById('ov').classList.contains('show'))},
- {name:'Move a lead to appraisals',            go:p=>p.click('button.si2:has-text("Pipeline")'), steps:[['drag','.bc3.ld .cd3 >> nth=1','.bd3 > .bc3 >> nth=1']], ok:p=>p.evaluate(()=>document.querySelectorAll('.bd3 > .bc3')[1].querySelectorAll('.cd3').length>=2), note:'fails when the lead has no house linked (84% of real leads on 22 Nov)'},
+ {name:'Move a lead to appraisals',            go:p=>p.click('button.si2:has-text("Pipeline")'), steps:[['drag','.bc3.ld .cd3 >> nth=0','.bd3 > .bc3 >> nth=1']], ok:p=>p.evaluate(()=>document.querySelectorAll('.bd3 > .bc3')[1].querySelectorAll('.cd3').length>=2)},
+ {name:'Move a lead to appraisals with the menu', go:p=>p.evaluate(()=>sideGo('board')), steps:[['tap','.bc3.ld .cd3 >> nth=1 >> .lm6'],['tap','#sheet .mm6 >> nth=0']], ok:p=>p.evaluate(()=>document.querySelectorAll('.bd3 > .bc3')[1].querySelectorAll('.cd3').length>=2)},
  {name:'Plan a card drop walk',                go:p=>p.evaluate(()=>go('drops')), steps:[['tap','.wkb5'],['tap','button.wkr5 >> nth=0']], ok:p=>p.evaluate(()=>true)},
 ];
 async function run(b,job,vw){ const p=await b.newPage({viewport:vw}); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
@@ -41,7 +42,7 @@ async function run(b,job,vw){ const p=await b.newPage({viewport:vw}); const errs
 const job_note=k=>(JOBS.find(j=>k.endsWith(j.name))||{}).note;
 (async()=>{ const b=await chromium.launch(); const out={};
   for(const [dev,vw] of [['desktop',{width:1213,height:720}],['phone',{width:400,height:860}]]){
-    for(const j of JOBS){ if(dev==='phone'&&/Move a lead|card drop/.test(j.name)) continue; out[dev+': '+j.name]=await run(b,j,vw); } }
+    for(const j of JOBS){ if(dev==='phone'&&/appraisals$|card drop/.test(j.name)) continue; out[dev+': '+j.name]=await run(b,j,vw); } }
   await b.close();
   const bud=fs.existsSync(BUD)?JSON.parse(fs.readFileSync(BUD,'utf8')):{}; let bad=0;
   console.log('Job'.padEnd(54)+'taps typed screens  est  tap p75  worst');

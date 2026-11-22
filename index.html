@@ -204,8 +204,8 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="preload" href="v2.js?v=159" as="script">
-<link rel="stylesheet" href="v2.css?v=165">
+<link rel="preload" href="v2.js?v=160" as="script">
+<link rel="stylesheet" href="v2.css?v=166">
 </head>
 <body>
 <div id="app"></div>
@@ -280,7 +280,7 @@ function demoApi(action, body){
         long_gaps:[{from_at:"Thu 12 Nov 10:42am",mins:24},{from_at:"Wed 11 Nov 11:15am",mins:16}],skips:{n:4*k,med_s:9}}; }
     case "seen_matches": { demoLeads(D); const l=D.leads.find(x=>x.id===body.id); if(l) l.seen_listings=[...(l.seen_listings||[]),...body.ids]; return {ok:true}; }
     case "make_lead": { demoLeads(D); const id=Date.now(); D.leads.unshift({id,name:"New lead",status:"Active",temperature:"Warm",follow_up:addDaysKey(3),buy:{},notes:[]}); return {lead_id:id}; }
-    case "add_pipeline": D.pipe.unshift({property_id:Date.now(),stage:body.stage,source:body.source,updated_at:new Date().toISOString(),owner_name:body.owner_name||null,phone:body.phone||null,street_address:`${body.house_number} ${body.street}`.trim(),suburb:body.suburb,notes:body.notes||null}); return {ok:true};
+    case "add_pipeline": { const pid=Date.now(); if(body.lead_id){ demoLeads(D); const l=D.leads.find(x=>x.id===body.lead_id); if(l&&!l.property_id){ l.property_id=pid; if(body.stage==="appraisal") l.status="Appraisal Booked"; } } D.pipe.unshift({property_id:pid,stage:body.stage,source:body.source,updated_at:new Date().toISOString(),owner_name:body.owner_name||null,phone:body.phone||null,street_address:`${body.house_number} ${body.street}`.trim(),suburb:body.suburb,notes:body.notes||null}); return {ok:true,property_id:pid}; }
     case "set_source": D.pipe=D.pipe.map(x=>x.property_id===body.property_id?{...x,source:body.source}:x); return {ok:true};
     case "set_stage": D.pipe=D.pipe.map(x=>x.property_id===body.property_id?{...x,stage:body.stage,notes:body.notes??x.notes,updated_at:new Date().toISOString()}:x); return {ok:true};
     case "drops": { if(!D.drops){ const C={Austinmer:[-34.3065,150.9300],Thirroul:[-34.3170,150.9215],Bulli:[-34.3350,150.9150],Woonona:[-34.3480,150.9080],Corrimal:[-34.3720,150.8990],"Fairy Meadow":[-34.3920,150.8920],Wollongong:[-34.4250,150.8930]};
@@ -1203,7 +1203,7 @@ function openLead(id, opts={}){
    ${id?`<div class="lcta lstat">${l.status==="Listing Won"?`<button class="listedbtn on" disabled><i class="ti ti-star-filled"></i>Listed</button>`:`<button class="listedbtn" onclick="markLeadListed(${id})"><i class="ti ti-star"></i>Listed</button>`}</div>`:""}
    ${opts.fresh?`<div class="banner info" style="margin:8px 0 0;padding:8px 10px"><i class="ti ti-sparkles"></i><div>Added to Leads. Fill in what they want below, then Save.</div></div>`:""}
    ${id?`<div class="lcard"><textarea id="ln_body" rows="2" data-grow placeholder="What did they say?" class="lin"></textarea>
-    <div class="lk2">Follow up</div><div class="fu4" id="ln_fu">${[["Tomorrow",1],["1 week",7],["1 month",30]].map(([t,n])=>`<button onclick="S.ol.follow_up='${addDaysKey(n)}';pickOne(this)">${t}</button>`).join("")}<button onclick="const d=this.nextElementSibling;try{d.showPicker()}catch(e){d.click()}">Pick date</button><input type="date" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none" onchange="S.ol.follow_up=this.value;const b=this.previousElementSibling;pickOne(b);b.textContent=new Date(this.value+'T00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'})"></div></div>
+    <div class="lk2">Follow up</div><div class="fu4" id="ln_fu">${[["Tomorrow",1],["1 week",7],["1 month",30]].map(([t,n])=>`<button onclick="S.ol.follow_up='${addDaysKey(n)}';pickOne(this);fuSave6()">${t}</button>`).join("")}<button onclick="const d=this.nextElementSibling;try{d.showPicker()}catch(e){d.click()}">Pick date</button><input type="date" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none" onchange="S.ol.follow_up=this.value;const b=this.previousElementSibling;pickOne(b);b.textContent=new Date(this.value+'T00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'});fuSave6()"></div></div>
     <details class="lmore"><summary>More: status, next action, edit contact ›</summary>
      <div class="lrow2"><select id="ln_status" class="sm" aria-label="Status">${LO.status.map(o=>`<option ${o===S.ol.status?"selected":""}>${o}</option>`).join("")}</select><select id="ln_next" class="sm" aria-label="Next action"><option value="">Next action</option>${LO.next_action.map(o=>`<option ${o===l.next_action?"selected":""}>${esc(o)}</option>`).join("")}</select></div>
      <button class="ghost" style="margin-top:6px;width:100%" onclick="editDetails()"><i class="ti ti-pencil"></i>Edit name, phone and address</button></details>`:""}
@@ -1364,7 +1364,7 @@ function openAddPipe(){
   $("#ov").classList.add("show"); setTimeout(()=>$("#ap_no").focus(),50);
 }
 async function saveAddPipe(){
-  const v=id=>$(id).value.trim(), b={house_number:v("#ap_no"),street:v("#ap_st"),suburb:v("#ap_sub"),owner_name:v("#ap_own"),phone:v("#ap_ph"),stage:S.addp.stage,source:S.addp.source};
+  const v=id=>$(id).value.trim(), b={house_number:v("#ap_no"),street:v("#ap_st"),suburb:v("#ap_sub"),owner_name:v("#ap_own"),phone:v("#ap_ph"),stage:S.addp.stage,source:S.addp.source,lead_id:S.addp.lead_id||undefined};
   if(!b.street||!b.suburb){ toast("Enter the street and suburb"); return; }
   $("#ap_go").disabled=true;
   try{ await api("add_pipeline",b); closeOv(); toast("Added to pipeline"); render(); }catch(e){ $("#ap_go").disabled=false; toast(e.message); }
@@ -1619,7 +1619,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=159"></script>
+<script src="v2.js?v=160"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

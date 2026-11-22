@@ -47,3 +47,18 @@ This is a judgement score until two or three new people try it and fill in the S
 5. Hide the keyboard letters on buttons until someone uses a key, and replace Strong with plain words.
 6. Server tail: run agency sync less often and keep the call list ready ahead of time.
 7. Keyboard focus outlines.
+
+## After the fixes, 22 Nov afternoon
+
+Speed 84 to 92. Usability 74 to 86.
+
+| Change | What it fixed | Score effect |
+|---|---|---|
+| Lead cards have a ⋯ menu (Move to Appraisals, Move to Listings, Open lead); dragging works too. With no house linked, the typed address is used and the lead is linked to the new house; with no address, the form opens filled in | the 84% of leads that could not be moved | walkthrough 3 checks pass |
+| Lead follow up saves on tap, with undo | dates lost when the panel closed | 1 check passes |
+| One time three step help on the first call; top bar cut to calls and appraisals; Strong shown as Strong sign; keyboard letters hidden until a key is used (shown on hover) | first timers not knowing what to do | 2 checks pass |
+| Focus ring on every control | keyboard users could not see where they were | (accessibility) |
+| Server: big database library loaded only when the list is rebuilt; browsers remember the permission check for 2 hours; one minute ping 7am to 9pm | cold opens took about 2s per request and every request was doubled | server part 12 to 20 |
+
+Walkthrough now 29 of 30. The one left: after moving a lead to Appraisals they show in both columns. That is on purpose (follow ups keep working until they list), but a first timer may read it as a double.
+Server timing is from the first minutes after the change (cold runs 1.5 to 2.1s before, pings 0.2 to 0.4s after). Rerun `select ux_report(7);` in a week to confirm with real use, and the real use part of the usability score (still 18 of 30) needs that week of data too.

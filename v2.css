@@ -1307,3 +1307,24 @@ b,strong,b b,strong b,b strong{font-weight:700}
 .pg2.st6pg{padding-top:0!important}.st6pg .res2{margin-top:0!important}
 .p6 .hgrid2 i.top{margin:0!important}
 .sr6{gap:0!important}.sr6>div{padding:0 12px}
+/* lead card menu: plain rows, title and one line under it */
+.mm6s{display:flex;flex-direction:column;border-top:1px solid #232831}
+.mm6{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 4px!important;background:none!important;border:0!important;border-bottom:1px solid #232831!important;border-radius:0!important;color:var(--t1);text-align:left;cursor:pointer;width:100%}
+.mm6>span{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mm6 b{font-size:16px;font-weight:600}.mm6 em{font-style:normal;font-size:13px;color:var(--t2)}
+.mm6:hover{background:#1e232b!important}
+.cb3 .lm6{width:32px;height:32px;display:grid;place-items:center;background:none;border:0;color:var(--t2);cursor:pointer;padding:0}
+/* keyboard letters hidden until a shortcut is used; shown on hover so they can be found */
+body:not(.kb6) .bar2x .k,body:not(.kb6) .ends2 .k,body:not(.kb6) .cl2 .kb2,body:not(.kb6) .cl2 .key2,body:not(.kb6) .dialer kbd{display:none!important}
+body:not(.kb6) .bar2x button:hover .k,body:not(.kb6) .ends2 button:hover .k{display:block!important}
+/* first call help */
+.fh6{display:flex;align-items:center;gap:12px;padding:8px 12px;margin:0 0 12px;background:#16233a;border:1px solid #2a4a7a}
+.fh6 ol{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;margin:0;padding:0;list-style:none}
+.fh6 li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--t1);white-space:nowrap}
+.fh6 li b{width:20px;height:20px;display:grid;place-items:center;background:var(--acc);color:#fff;font-size:12px;font-weight:700;border-radius:50%}
+.fh6 button{height:32px;min-height:0!important;padding:0 12px!important;background:#1e232b;border:1px solid #2c333e;color:var(--t1);font-size:13px;font-weight:600;cursor:pointer;flex:none}
+@media (max-width:699px){.fh6 ol{flex-direction:column}.fh6{margin:0 0 8px}}
+/* keyboard focus: a clear ring on whatever has focus, only when moving with the keyboard (WCAG 2.4.7) */
+:focus-visible{outline:2px solid #93c0ff!important;outline-offset:2px!important}
+input:focus-visible,textarea:focus-visible,select:focus-visible{outline-offset:-2px!important}
+.bar2x button:focus-visible,.cd3 button:focus-visible{outline-offset:-3px!important}
