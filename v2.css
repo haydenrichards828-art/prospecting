@@ -1428,3 +1428,9 @@ header.top2 .hc5{display:inline-grid;place-items:center;min-width:24px;height:24
 .wx8:hover{background:var(--btn)!important;color:var(--t1)!important}
 .fu4 button{transition:background .12s,box-shadow .12s}
 @media (hover:hover){.fu4 button:hover{background:#353d49!important;box-shadow:inset 0 0 0 1px #4a5463}}
+/* Search focus (23 Nov): the whole box lights up and the magnifier steps aside while you type */
+.tsearch{transition:box-shadow .15s,background .15s}
+.tsearch svg{transition:opacity .12s,width .15s,margin .15s;flex:none}
+.tsearch input:focus,.tsearch input:focus-visible{outline:none!important;box-shadow:none!important}
+.tsearch:focus-within{box-shadow:inset 0 0 0 1.5px var(--acc),0 0 0 3px #2563eb33;background:var(--rowbg)}
+.tsearch:focus-within svg{opacity:0;width:0;margin-right:-8px}
