@@ -2291,7 +2291,7 @@ window.previewCSV=(function(orig){ return async function(){
       if(/Detailed Contact Report|Related\s+Properties/i.test(txt)&&/\[Address\]:/.test(txt)){
         const r=crmPdfRecords(txt); S.pending=r.rows; $("#ik").value="crm";
         const wp=r.rows.filter(x=>x.phone).length, ex=r.rows[0];
-        ir.innerHTML=r.rows.length?`<b>Dignam CRM contact report. ${r.rows.length.toLocaleString()} houses found, ${wp.toLocaleString()} with a number.</b><br>${(r.records-r.rows.length).toLocaleString()} contacts skipped with no street address.<br>First one reads as: ${esc([ex.unit&&ex.unit+"/",ex.house_number," ",ex.street,", ",ex.suburb," · ",ex.owner_name," · ",ex.phone].join("").replace(/\s+/g," "))}<br>Tap Import.`:"No addresses found in that report.";
+        ir.innerHTML=r.rows.length?`<b>Dignam CRM contact report. ${r.rows.length.toLocaleString()} ${r.rows.length===1?'house':'houses'} found, ${wp.toLocaleString()} with a number.</b><br>${(r.records-r.rows.length).toLocaleString()} contacts skipped with no street address.<br>First one reads as: ${esc([ex.unit&&ex.unit+"/",ex.house_number," ",ex.street,", ",ex.suburb," · ",ex.owner_name," · ",ex.phone].join("").replace(/\s+/g," "))}<br>Tap Import.`:"No addresses found in that report.";
         return; }
       const fake={name:f.name,type:f.type,arrayBuffer:async()=>new Uint8Array(await f.arrayBuffer()).buffer};
       rows=await pdfRows(fake);
@@ -2314,3 +2314,12 @@ window.openLead=(function(orig){ return function(id,opts){ const r=orig(id,opts)
     if(c&&ps.length){ const a=c.querySelector('a.call'); if(a){ a.href='tel:'+ps[0]; a.innerHTML=a.innerHTML.replace(/Call .*$/,(ps.length>1?'':'Call ')+esc(fmtOne2(ps[0]))); }
       if(ps.length>1) c.classList.add('two6'); if(ps.length>1&&!c.querySelector('.call2')) c.querySelector('a.call').insertAdjacentHTML('afterend',ps.slice(1).map(p=>`<a class="call call2" href="tel:${p}" aria-label="Call ${esc(fmtOne2(p))}"><i class="ti ti-phone"></i>${esc(fmtOne2(p))}</a>`).join('')); } }catch(e){}
   return r; }; })(window.openLead);
+
+// Keep an open app on the newest version (22 Nov): fixes were going live but a tab left open all day kept running the old code.
+(function(){ const mine=+(([...document.scripts].map(x=>x.src).join(' ').match(/v2\.js\?v=(\d+)/)||[])[1]||0); if(!mine||window.DEMO_ON&&location.hostname==='localhost') return;
+  let busy=false; const check=async()=>{ if(busy||document.hidden) return; busy=true;
+    try{ const t=await (await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'})).text(); const v=+((t.match(/v2\.js\?v=(\d+)/)||[])[1]||0);
+      if(v>mine){ const typing=document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName), open=document.querySelector('#ov.show');
+        if(!typing&&!open) location.reload(); else if(!document.querySelector('.upd6')) document.body.insertAdjacentHTML('beforeend','<button class="upd6" onclick="location.reload()">New version ready. Tap to update</button>'); } }catch(e){}
+    busy=false; };
+  document.addEventListener('visibilitychange',check); setInterval(check,10*60*1000); })();
