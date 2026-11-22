@@ -728,7 +728,7 @@ function setTemplates(){
   openSheet2('Message templates',`<p class="hint2">Fill ins: {first_name} {address} {street} {suburb} {appt_date} {callback_date}</p>${S.templates.map(card).join('')}<div class="sth2">New template</div>${card({id:0,name:'',body:'',default_delay:'now'})}`); }
 function setImport(){
   openSheet2('Import a file',`<div class="fg2 one"><label><span>What is it?</span><select id="ik" onchange="S.pending=null;previewCSV()"><option value="properties">RP Data or Pricefinder export</option><option value="crm">Dignam CRM contacts</option><option value="probate">Probate notices</option><option value="withdrawn">Withdrawn or expired listings</option><option value="on_market">Currently for sale</option><option value="dncr">DNCR wash results</option><option value="crm_notes">Office notes (file from Claude)</option></select></label>
-   <label><span>File</span><input type="file" id="if" accept=".csv,.json,.pdf,.xlsx,.xls,application/pdf" onchange="S.pending=null;previewCSV()"></label></div><div id="ir" class="hint2"></div>
+   <label><span>Files</span><input type="file" id="if" multiple accept=".csv,.json,.pdf,.xlsx,.xls,application/pdf" onchange="S.impDir=null;S.pending=null;previewCSV()"></label><button type="button" class="b2 ghost dir6" onclick="$('#ifd').click()">Choose a whole folder</button><input type="file" id="ifd" webkitdirectory multiple hidden onchange="S.impDir=[...this.files];S.pending=null;previewCSV()"></div><div id="ir" class="hint2"></div>
    <button class="b2 pri wide2b" onclick="importCSV()">${ic2('plus',18)}Import</button>`); }
 function setSheets(){
   openSheet2('Import leads from Google Sheets',`<p class="hint2">Share the sheet as "Anyone with the link can view", then paste the link.</p><div class="fg2 one"><label><span>Sheet link</span><input id="gs_url" placeholder="https://docs.google.com/spreadsheets/d/…"></label></div><div id="gs_r" class="hint2"></div>
@@ -2275,7 +2275,7 @@ function crmPdfRecords(txt){
   return {rows:out,records:pieces.length-1}; }
 async function pdfText(pdfjs,data,onPage){ const doc=await pdfjs.getDocument({data}).promise; let t='';
   for(let p=1;p<=doc.numPages;p++){ const tc=await (await doc.getPage(p)).getTextContent();
-    for(const it of tc.items){ t+=it.str+(it.hasEOL?'\n':''); } t+='\n'; onPage&&onPage(p,doc.numPages); } return t; }
+    for(const it of tc.items){ t+=it.str+(it.hasEOL?'\n':''); } t+='\n'; onPage&&onPage(p,doc.numPages); } try{ await doc.destroy(); }catch(e){} return t; }
 
 window.previewCSV=(function(orig){ return async function(){
   const f=$("#if")&&$("#if").files[0]; if(!f) return;
@@ -2323,3 +2323,34 @@ window.openLead=(function(orig){ return function(id,opts){ const r=orig(id,opts)
         if(!typing&&!open) location.reload(); else if(!document.querySelector('.upd6')) document.body.insertAdjacentHTML('beforeend','<button class="upd6" onclick="location.reload()">New version ready. Tap to update</button>'); } }catch(e){}
     busy=false; };
   document.addEventListener('visibilitychange',check); setInterval(check,10*60*1000); })();
+
+// Import many files or a whole folder at once (22 Nov). Every file is read in turn and the rows go up as one import.
+async function pdfjs6(){ const p=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs'); p.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs'; return p; }
+async function readOne6(f,say){
+  if(/\.pdf$/i.test(f.name)||f.type==='application/pdf'){
+    const txt=await pdfText(await pdfjs6(),new Uint8Array(await f.arrayBuffer()),(p,n)=>{ if(p%20===0||p===n) say(`page ${p} of ${n}`); });
+    if(/Detailed Contact Report|Related\s+Properties/i.test(txt)&&/\[Address\]:/.test(txt)){ const r=crmPdfRecords(txt); return {rows:r.rows,crm:true}; }
+    const fake={name:f.name,type:f.type,arrayBuffer:async()=>new Uint8Array(await f.arrayBuffer()).buffer}; return {rows:tab6(await pdfRows(fake))}; }
+  if(/\.xlsx?$/i.test(f.name)){ const X=await import('https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs'); const wb=X.read(await f.arrayBuffer(),{cellDates:true});
+    return {rows:tab6(X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''}).map(r=>r.map(c=>String(c??''))))}; }
+  if(/\.csv$/i.test(f.name)) return {rows:tab6(parseCSV(await f.text()))};
+  return {rows:[],skip:true}; }
+function tab6(rows){ const hi=rows.findIndex(r=>r.filter(c=>String(c).trim()).length>=3); if(hi>0) rows=rows.slice(hi); return rows.length<2?[]:mapRows(rows).out; }
+window.previewCSV=(function(orig){ return async function(){
+  const files=S.impDir||[...(($("#if")||{}).files||[])];
+  if(files.length<2||$("#ik").value==="crm_notes"){ if(S.impDir&&files.length===1){ const dt=new DataTransfer(); dt.items.add(files[0]); $("#if").files=dt.files; S.impDir=null; } return orig(); }
+  const ir=$("#ir"), list=files.filter(f=>/\.(pdf|csv|xlsx?)$/i.test(f.name)).sort((a,b)=>a.name.localeCompare(b.name));
+  if(!list.length){ ir.textContent="No PDF, CSV or Excel files in that folder."; return; }
+  const all=[], seen=new Set(), per=[]; let crm=0;
+  for(const [i,f] of list.entries()){ const nm=f.name.replace(/\.[^.]+$/,'').replace(/^Contact Report\s*-?\s*/i,'')||f.name;
+    const say=t=>{ ir.textContent=`Reading ${i+1} of ${list.length}: ${nm}${t?', '+t:''}…`; }; say('');
+    try{ const r=await readOne6(f,say); if(r.crm) crm++;
+      let n=0; for(const o of r.rows){ const k=[o.unit,o.house_number,o.street,o.suburb].join('|').toLowerCase(); if(o.street&&seen.has(k)) continue; seen.add(k); all.push(o); n++; }
+      per.push(`${esc(nm)} ${n.toLocaleString()}`); }
+    catch(e){ per.push(`${esc(nm)}: couldn't read`); } }
+  if(crm) $("#ik").value="crm";
+  S.pending=all;
+  const wp=all.filter(x=>x.phone).length;
+  ir.innerHTML=`<b>${list.length} files, ${all.length.toLocaleString()} houses, ${wp.toLocaleString()} with a number.</b><br>${per.join(' · ')}<br>Tap Import.`;
+}; })(window.previewCSV);
+window.importCSV=(function(orig){ return async function(){ const r=await orig(); if(!S.pending) S.impDir=null; return r; }; })(window.importCSV);
