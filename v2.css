@@ -243,7 +243,8 @@ a{color:var(--accT)}
   .lh2{padding:12px 20px}
   .lt2{grid-template-columns:minmax(0,1.3fr) minmax(0,1.4fr) 130px 92px;gap:14px}.lt2>.c4,.lt2>.c5{display:none}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* reduce motion keeps colour and fade changes, drops movement (23 Nov) */
+@media (prefers-reduced-motion:reduce){*{transition-property:color,background-color,border-color,box-shadow,opacity,filter!important}}
 /* ---------- nav popover, phone search ---------- */
 #popscrim2{position:fixed;inset:0;z-index:44;display:none}#popscrim2.show{display:block}
 #pop2{position:fixed;z-index:45;width:300px;padding:8px;background:var(--panel);border:1px solid var(--line2);box-shadow:0 18px 40px rgba(0,0,0,.5);display:none}
@@ -1434,3 +1435,79 @@ header.top2 .hc5{display:inline-grid;place-items:center;min-width:24px;height:24
 .tsearch input:focus,.tsearch input:focus-visible{outline:none!important;box-shadow:none!important}
 .tsearch:focus-within{box-shadow:inset 0 0 0 1.5px var(--acc),0 0 0 3px #2563eb33;background:var(--rowbg)}
 .tsearch:focus-within svg{opacity:0;width:0;margin-right:-8px}
+
+/* ================= Feel (23 Nov): micro animations ================= */
+/* Press: everything you can tap sinks a touch and darkens for a moment */
+:where(button,a.b2,a.num2,a.pnum2,a.call,a.lcall,.lg3,.lt3,.pt3,.lead2,.card.lead,.cd3,[role=button]){transition:transform .09s ease-out,filter .12s ease-out,background-color .15s,border-color .15s,box-shadow .15s,color .15s,opacity .15s}
+:where(button:not(:disabled),a.b2,a.num2,a.pnum2,a.call,a.lcall,[role=button]):active{transform:scale(.97);filter:brightness(.88)}
+:where(.lg3,.lt3:not(.h),.pt3:not(.h),.lead2,.card.lead,.cd3,.r2):active{transform:scale(.995);filter:brightness(1.12)}
+:where(a.num2,a.pnum2):active{transform:scale(.985)}
+.side2 :where(button,a):active{transform:none;filter:brightness(1.25)}
+.toast button:active{transform:scale(.95)}
+
+/* Logging a call: the next person fades in fast, the button you hit flashes in the new bar */
+#main.in8>*{animation:in8 .14s ease-out}
+@keyframes in8{from{opacity:.35}}
+.bar2x button.hit8{animation:hit8 .32s ease-out}
+@keyframes hit8{0%{filter:brightness(1.5);box-shadow:inset 0 0 0 2px #fff}100%{filter:none;box-shadow:inset 0 0 0 2px transparent}}
+
+/* Panels: rise in; on the phone the bottom sheet slides up; on the desktop the lead panel slides in from the right */
+.overlay.show{animation:ovf8 .16s ease-out}
+.overlay.show>#sheet{animation:up8 .18s cubic-bezier(.2,.8,.2,1)}
+@media (max-width:899px){.overlay.show>#sheet{animation:bot8in .22s cubic-bezier(.2,.8,.2,1)}}
+body:has(.ltab3) .overlay.show:has(#sheet.lsheet){animation:none}
+@media (min-width:900px){body:has(.ltab3) .overlay.show>#sheet.lsheet{animation:side8in .2s cubic-bezier(.2,.8,.2,1)}}
+@keyframes ovf8{from{background-color:transparent}}
+@keyframes up8{from{opacity:0;transform:translateY(8px) scale(.985)}}
+@keyframes bot8in{from{transform:translateY(40px);opacity:.4}}
+@keyframes side8in{from{transform:translateX(28px);opacity:0}}
+.ghost8{position:fixed;inset:0;z-index:39;pointer-events:none;animation:out8 .11s ease-in forwards}
+.ghost8>*{animation:outs8 .11s ease-in forwards}
+.ghost8.side8{background:none!important}.ghost8.side8>*{animation-name:outside8}
+.ghost8.bot8>*{animation-name:outbot8}
+@keyframes out8{to{opacity:0}}
+@keyframes outs8{to{opacity:0;transform:translateY(4px) scale(.99)}}
+@keyframes outside8{to{opacity:0;transform:translateX(20px)}}
+@keyframes outbot8{to{opacity:0;transform:translateY(30px)}}
+
+/* Saved and Undo message: rises in, a thin bar shows how long Undo lasts */
+.toast.show{animation:toast8 .2s cubic-bezier(.2,.8,.2,1);overflow:hidden}
+@media (min-width:900px){.toast.show{animation-name:toast8c}}
+.toast.show:has(button)::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:#2563eb;transform-origin:left;animation:bar8 5s linear forwards}
+@keyframes toast8{from{opacity:0;transform:translateY(12px)}}
+@keyframes toast8c{from{opacity:0;transform:translate(-50%,12px)}}
+@keyframes bar8{to{transform:scaleX(0)}}
+
+/* Save buttons: spinner while it works, then a green edge, or a red one if it failed */
+.spin8{color:transparent!important;pointer-events:none}
+.spin8>*{visibility:hidden}
+.spin8::after{content:"";position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:sp8 .8s linear infinite}
+.ok8b{animation:okb8 .7s ease-out}
+@keyframes okb8{0%,40%{box-shadow:inset 0 0 0 2px #7ee2a8,0 0 0 3px #16a34a44}100%{box-shadow:none}}
+.bad8{animation:badb8 .4s ease-out}
+@keyframes badb8{0%{box-shadow:inset 0 0 0 2px #ff9aa6}25%{transform:translateX(-3px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}100%{box-shadow:none;transform:none}}
+
+/* Option bars: the highlight slides to the new choice */
+.segind8{position:absolute;z-index:0;pointer-events:none;transition:transform .18s cubic-bezier(.2,.8,.2,1),width .18s cubic-bezier(.2,.8,.2,1)}
+.sliding8>button{position:relative;z-index:1}
+.sliding8>button.on{background:transparent!important;box-shadow:none!important}
+
+/* Stats: bars grow once when the page opens */
+.gy8{transform-origin:bottom;animation:gy8 .45s cubic-bezier(.2,.8,.2,1) backwards}
+.gx8{transform-origin:left;animation:gx8 .45s cubic-bezier(.2,.8,.2,1) backwards}
+.fd8{animation:fd8 .3s ease-out backwards}
+@keyframes gy8{from{transform:scaleY(0)}}
+@keyframes gx8{from{transform:scaleX(0)}}
+@keyframes fd8{from{opacity:0}}
+
+/* Arrow keys: the highlighted row */
+.kf8{box-shadow:inset 3px 0 0 #2563eb,inset 0 0 0 1px #2563eb66!important;background-color:#16213a!important;outline:none!important}
+.kf8:focus-visible{outline:none!important}
+
+/* Phone reduce motion: fades stay, movement goes */
+@media (prefers-reduced-motion:reduce){
+ :where(button,a,.lg3,.lt3,.pt3,.r2,.card,.cd3):active{transform:none!important}
+ .overlay.show>#sheet,.toast.show,.ghost8>*{animation-name:fd8!important}
+ .ghost8>*{animation-name:out8!important}
+ .bad8{animation:none}
+}
