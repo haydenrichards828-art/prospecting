@@ -2472,11 +2472,17 @@ window.drawCall2=(function(o){ return function(...a){ const r=o(...a); try{
 
 // The fading copy loses styles written against #sheet, so each element keeps its own look as drawn
 const FZ=['display','position','top','left','right','bottom','width','height','marginTop','marginRight','marginBottom','marginLeft','paddingTop','paddingRight','paddingBottom','paddingLeft','color','backgroundColor','backgroundImage','borderTop','borderRight','borderBottom','borderLeft','borderTopLeftRadius','borderTopRightRadius','borderBottomLeftRadius','borderBottomRightRadius','fontSize','fontWeight','lineHeight','letterSpacing','textAlign','whiteSpace','gap','gridTemplateColumns','flexDirection','flexWrap','alignItems','justifyContent','boxShadow','opacity','listStyle','overflow','textOverflow','visibility','boxSizing','objectFit','fill','stroke'];
+const FZC=FZ.map(k=>[k,k.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())]);
 function freeze8(src,dst){ const a=[src,...src.querySelectorAll('*')], b=[dst,...dst.querySelectorAll('*')]; if(a.length>1500) return;
-  for(let i=0;i<a.length;i++){ const cs=getComputedStyle(a[i]), st=b[i].style; for(const k of FZ) st[k]=cs[k]; st.transition='none'; st.animation='none'; } }
+  // read everything first, then write once per element, so the browser works out styles once instead of thousands of times
+  const vh=innerHeight, css=new Array(a.length);
+  for(let i=0;i<a.length;i++){ const r=i?a[i].getBoundingClientRect():null; if(r&&(r.bottom<-50||r.top>vh+50)){ css[i]=null; continue; }
+    const cs=getComputedStyle(a[i]); let t=''; for(const [k,c] of FZC){ const v=cs[k]; if(v) t+=c+':'+v+';'; } css[i]=t+'transition:none;animation:none;'; }
+  for(let i=0;i<b.length;i++) if(css[i]!==null) b[i].style.cssText=css[i]; else b[i].style.cssText='visibility:hidden'; }
 // ---- 2. Panels: open with a short rise (CSS), close with a quick fade of a copy so the app's state changes instantly ----
 window.closeOv=(function(o){ return function(...a){ try{ const ov=document.getElementById('ov'), sh=document.getElementById('sheet');
-  if(ov&&sh&&ov.classList.contains('show')&&sh.innerHTML.trim()){ const r=sh.getBoundingClientRect(), cs=getComputedStyle(sh), oc=getComputedStyle(ov);
+  const big=sh.getElementsByTagName('*').length>(innerWidth<900||matchMedia('(pointer: coarse)').matches?120:700);
+  if(ov&&sh&&!big&&ov.classList.contains('show')&&sh.innerHTML.trim()){ const r=sh.getBoundingClientRect(), cs=getComputedStyle(sh), oc=getComputedStyle(ov);
     const g=document.createElement('div'); g.className='ghost8'; g.setAttribute('aria-hidden','true'); g.style.background=oc.backgroundColor;
     const c=sh.cloneNode(true); freeze8(sh,c); c.removeAttribute('id'); c.removeAttribute('class'); c.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));
     
@@ -2596,7 +2602,7 @@ document.addEventListener('pointerdown',()=>{ document.querySelectorAll('.kf8').
     if(old&&old.querySelector('.p6b').innerHTML.trim()) prevPhone={b:old.querySelector('.p6b').innerHTML,h:old.querySelector('.p6h b').textContent};
     const k0=prevK, onStats=!!document.querySelector('#main .st6pg'); const r=o(...a); prevK=S.period;
     try{ const t=document.getElementById('tphone'); if(t&&prevPhone&&!t.querySelector('.p6b').innerHTML.trim()){ t.querySelector('.p6b').innerHTML=prevPhone.b; t.querySelector('.p6h b').textContent=prevPhone.h; }
-      if(onStats&&k0&&k0!==S.period&&!matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('#main .st6pg .p6b, #main .st6pg .p6h b, #main .st6pg .rv6').forEach(x=>x.animate([{opacity:.45},{opacity:1}],{duration:160,easing:'ease-out'}));
+      if(onStats&&k0&&k0!==S.period&&!matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('#main .st6pg .st6, #main .st6pg .res2').forEach(x=>x.animate([{opacity:.55},{opacity:1}],{duration:160,easing:'ease-out'}));
       if(!window.__ph8){ window.__ph8=1; setTimeout(()=>{ for(const d of Object.values(PERIOD_DAYS)) if(!(S.ph6&&S.ph6[d])) api('work_stats',{days:d}).then(w=>{ S.ph6=S.ph6||{}; S.ph6[d]=w; }).catch(()=>{}); },400); }
     }catch(e){} return r; }; })(window.paintInsights);
 })();
