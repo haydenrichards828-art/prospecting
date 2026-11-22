@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="preload" href="v2.js?v=163" as="script">
+<link rel="preload" href="v2.js?v=164" as="script">
 <link rel="stylesheet" href="v2.css?v=169">
 </head>
 <body>
@@ -1060,7 +1060,7 @@ const LO={
   status:["Active","Appraisal Booked","Appraisal Done","Listing Won","Listing Lost","Not Ready","Do Not Contact","Closed"],
   timeframe:["Now","0–1 month","1–3 months","3–6 months","6–12 months","12+ months","Unknown"],
   next_action:["Call","Text","Email","Check In","Book Appraisal","Appraisal Booked","Confirm Appraisal","Appraisal Complete","Book Listing","Listing Booked"],
-  source:["Cold Call","Just Listed","Just Sold","Open Home","Database","Referral","Door Knock","Letterbox Drop","Social Media","Website"],
+  source:["Cold Call","Just Listed","Just Sold","Open Home","Database","Referral","Door Knock","Card Drop","Social Media","Website"],
   lead_type:["Potential Vendor","Buyer/Vendor","Buyer","Past Appraisal","Past Client","Investor","Other"],
   types:["House","Apartment","Townhouse","Villa","Land"],
   musts:["No stairs","Granny flat","Pool","Ocean view","Double garage","Yard","Near school"]};
@@ -1219,7 +1219,7 @@ function openLead(id, opts={}){
    <div class="deditor" id="deditor" ${id?"hidden":""}>
     <div class="lrow2"><input id="d_name" class="sm" placeholder="Name" value="${esc(l.name||"")}"><input id="d_phone" class="sm" inputmode="tel" placeholder="Phone" value="${esc(fmtPh2(l.phone||""))}"></div>
     <div class="lrow2"><input id="d_address" class="sm" placeholder="Address" value="${esc(l.address||"")}"><input id="d_suburb" class="sm" list="sublist" placeholder="Suburb" value="${esc(l.suburb||"")}"></div>
-    <div class="lrow3"><select id="d_lead_type" class="sm" aria-label="Lead type">${opt(LO.lead_type,l.lead_type)}</select><select id="d_source" class="sm" aria-label="Source">${opt(LO.source,l.source)}</select><select id="d_timeframe" class="sm" aria-label="Timeframe">${opt(LO.timeframe,l.timeframe)}</select></div>
+    <div class="lrow3"><select id="d_lead_type" class="sm" aria-label="Lead type">${opt(LO.lead_type,l.lead_type)}</select><select id="d_source" class="sm" aria-label="Source">${opt(LO.source,l.source==='Letterbox Drop'?'Card Drop':l.source)}</select><select id="d_timeframe" class="sm" aria-label="Timeframe">${opt(LO.timeframe,l.timeframe)}</select></div>
     <textarea id="d_motivation" class="sm" rows="1" data-grow placeholder="Motivation or situation">${esc(l.motivation||"")}</textarea>
     <input id="d_rp_link" type="hidden" value="${esc(l.rp_link||"")}"></div>
    ${id&&hasCriteria(l.buy)?`<div class="lsec tight"><b>Matching Dignam homes</b>${!(S.listings||[]).length?` <span class="muted" style="font-size:13px">none loaded yet</span>`:(m1.length||m2.length)?(m1.length?m1.slice(0,5).map(mcard).join("")+(m1.length>5||m2.length?`<details><summary class="muted" style="font-size:13px;padding:6px 0">Show ${m1.length-Math.min(5,m1.length)+m2.length} more</summary>${m1.slice(5).map(mcard).join("")}${m2.length?`<div class="muted" style="font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin:12px 0 4px">Other areas</div>`+m2.map(mcard).join(""):""}</details>`:""):` <span class="muted" style="font-size:13px">nothing in their suburbs yet</span>`):` <span class="muted" style="font-size:13px">nothing matches yet</span>`}</div>`:""}
@@ -1619,7 +1619,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=163"></script>
+<script src="v2.js?v=164"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

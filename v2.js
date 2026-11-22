@@ -1116,10 +1116,11 @@ async function sendInfo(who){ S.sw=who; if(!S.templates&&!DEMO) api('templates')
   opts.push(['appraisal','Offer a free appraisal',`${hi} If you're curious what your home would sell for in today's market, I can arrange a free, no obligation appraisal at a time that suits you.`]);
   (S.templates||[]).slice(0,4).forEach(t=>opts.push(['tpl'+t.id,t.name,t.body.replace(/\{first_name\}/g,fn!=='them'?fn:'there')]));
   S.swOpts=opts;
-  openSheet2(`Send to ${esc(who.name||'them')}`,`<div class="later2" style="grid-template-columns:repeat(2,minmax(0,1fr))">${opts.map((o,i)=>`<button onclick="swPick(${i},this)"><b>${esc(o[1])}</b></button>`).join('')}</div>
+  openSheet2(`Message ${esc(who.name||'them')}`,`<div class="later2" style="grid-template-columns:repeat(2,minmax(0,1fr))">${opts.map((o,i)=>`<button onclick="swPick(${i},this)"><b>${esc(o[1])}</b></button>`).join('')}</div>
     <div id="sw_list"></div>
     <label class="fl2">Message<textarea id="sw_body" rows="4" data-grow placeholder="Pick one above or write your own"></textarea></label>
-    <div class="sw2">${who.phone?`<button class="b2 pri" onclick="swSend('text')">${ic2('msg',18)}Text</button>`:''}${who.email?`<button class="b2" onclick="swSend('email')">${ic2('mail',18)}Email</button>`:''}<button class="b2" onclick="swSend('copy')">Copy</button></div>
+    <div class="sw2">${who.phone&&canText6()?`<button class="b2 pri" onclick="swSend('text')">${ic2('msg',18)}Text</button>`:''}${who.email?`<button class="b2" onclick="swSend('email')">${ic2('mail',18)}Email</button>`:''}<button class="b2${who.phone&&canText6()?'':' pri'}" onclick="swSend('copy')">Copy</button></div>
+    ${who.phone&&!canText6()?'<p class="hint2">This computer can\'t send texts. Copy it and send it from your phone.</p>':''}
     ${who.phone?'':'<p class="hint2">No phone number on file, so copy it and paste where you need it.</p>'}`); }
 async function swPick(i,btn){ pickOne(btn,'#sheet .later2'); const o=S.swOpts[i], w=S.sw, fn=firstName(w.name||''), hi=`Hi ${fn!=='them'?fn:'there'}, it's ${ME}.`; $('#sw_list').innerHTML='';
   if(o[0]==='street'){ $('#sw_body').value='Looking up recent sales…'; try{ const r=(await api2('street_update',{property_id:w.property_id})).rows||[];
@@ -1167,11 +1168,11 @@ window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const 
 // Call screen More: adds Refer to a partner
 window.moreSheet2=(function(orig){ return function(id){ orig(id); const r=findRow(id); const g=document.querySelector('#sheet .sb2 .g2'); if(!g||!r) return;
   const who=JSON.stringify({name:people(r.owner_name)[0]||'',phone:r.owner_phone||r.phone||'',property_id:id});
-  g.insertAdjacentHTML('afterbegin',row2('var(--acc)','msg','Send info','Recent street sales, a listing, a check in',chev2(),`sendInfo(${esc(who)})`)+row2('#6366f1','users','Refer','To a broker, conveyancer or agent you work with',chev2(),`referSheet(${esc(who)})`)); }; })(window.moreSheet2);
+  g.insertAdjacentHTML('afterbegin',row2('var(--acc)','msg','Message','Text them: street sales, a listing, a check in',chev2(),`sendInfo(${esc(who)})`)+row2('#6366f1','users','Refer','To a broker, conveyancer or agent you work with',chev2(),`referSheet(${esc(who)})`)); }; })(window.moreSheet2);
 // Pipeline sheet: adds Refer to a partner
 window.pipeSheet=(function(orig){ return function(id){ orig(id); const x=(S.pipe||[]).find(r=>r.property_id===id); const gs=document.querySelectorAll('#sheet .sb2 .g2'); const g=gs[gs.length-1]; if(!g||!x) return;
   const who=JSON.stringify({name:people(x.owner_name)[0]||'',phone:x.phone||'',property_id:id,lead_id:x.lead_id||null});
-  g.insertAdjacentHTML('beforeend',row2('var(--acc)','msg','Send info','',chev2(),`sendInfo(${esc(who)})`)+row2('#6366f1','users','Refer','',chev2(),`referSheet(${esc(who)})`)); }; })(window.pipeSheet);
+  g.insertAdjacentHTML('beforeend',row2('var(--acc)','msg','Message','',chev2(),`sendInfo(${esc(who)})`)+row2('#6366f1','users','Refer','',chev2(),`referSheet(${esc(who)})`)); }; })(window.pipeSheet);
 
 // ---------- Stats: results for the period at the top (appraisals, listings, sold, referrals), then referrals to manage ----------
 window.paintInsights=(function(orig){ return function(ov){ orig(ov); const R=ov.results||{}, k=S.period||'week', a=R[k]||{}, b=R[k+'_prev']||{};
@@ -1300,7 +1301,8 @@ function lmenuGo(k){ const m=document.getElementById('lmenu2'); if(m) m.hidden=t
     const r=rows.querySelector(`.ldr4[data-k="${k}"]`); lrToggle(k,r.dataset.h); rows.scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
   if(k==='who'){ const d=document.getElementById('deditor'); if(d){ d.hidden=false; d.scrollIntoView({block:'nearest',behavior:'smooth'}); d.querySelector('input')?.focus(); } return; }
   if(k==='buy'){ editWants(true); document.getElementById('weditor')?.scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
-  const b=[...document.querySelectorAll('.snd2 button')].find(x=>x.textContent.includes(k==='send'?'Send info':'Refer')); b?.click(); }
+  if(k==='send'){ const l=S.ol&&(S.leads||[]).find(x=>x.id===S.ol.id); if(l) sendInfo({name:leadTitle(l),phone:l.phone||'',lead_id:l.id,property_id:l.property_id||null,lead:l}); return; }
+  const b=[...document.querySelectorAll('.snd2 button')].find(x=>x.textContent.includes('Refer')); b?.click(); }
 // Lead panel: picking status or next action updates the panel in place
 window.lrPick=(function(orig){ return function(...a){ orig(...a); const rows=document.querySelector('.ldrows4'); if(rows) rows.hidden=true;
   const sub=document.querySelector('.lhead .lsub b'); const l=(S.leads||[]).find(x=>x.id===a[0]); if(a[1]==='status'&&l){ const t=(LST2.find(s=>s[0]===l.status)||[0,l.status])[1]; if(sub) sub.textContent=t; }
@@ -1315,7 +1317,7 @@ window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const 
   const it=(k,ic,t,v='')=>`<button onclick="lmenuGo('${k}')">${ic2(ic,17)}<span>${t}</span>${v?`<em>${esc(v)}</em>`:''}</button>`;
   const x=sh.querySelector('.lhead .lact');
   if(x) x.insertAdjacentHTML('beforebegin',`<div class="ldw2"><button class="ldots2" onclick="lmenuOpen(this)" aria-label="More options" aria-haspopup="menu">${ic2('more',20)}</button>
-   <div id="lmenu2" class="lmenu2" role="menu" hidden>${it('status','flag','Status',st)}${it('next_action','skip','Next step',l.next_action||'')}${it('who','user','Edit')}${it('buy','search','What they want to buy')}<hr>${it('send','msg','Send info')}${it('refer','users','Refer')}</div></div>`);
+   <div id="lmenu2" class="lmenu2" role="menu" hidden>${it('status','flag','Status',st)}${it('next_action','skip','Next step',l.next_action||'')}${it('who','user','Edit')}${it('buy','search','What they want to buy')}<hr>${it('send','msg','Message')}${it('refer','users','Refer')}</div></div>`);
 }; })(window.openLead);
 
 // ================= Audit fixes, 20 Nov =================
@@ -1401,7 +1403,7 @@ window.dueItems=(function(orig){ return function(){ const out=orig(), now=Date.n
 window.checkReminders=(function(orig){ return async function(){ try{ if(!S.pipe||Date.now()-(S.pipeAt||0)>30*60e3){ const r=await api('pipeline'); S.pipe=r.rows||[]; S.pipeAt=Date.now(); } }catch{} return orig(); }; })(window.checkReminders);
 
 // Quick add lead: who, where (picked from the property register), seller or buyer, when to follow up
-const QFU2=[['Tomorrow',1],['3 days',3],['1 week',7],['1 month',30]], QT2=[['Seller','Potential Vendor'],['Buyer','Buyer'],['Both','Buyer/Vendor']], QSRC2=['Referral','Open Home','Database','Other'];
+const QFU2=[['Tomorrow',1],['3 days',3],['1 week',7],['1 month',30]], QT2=[['Seller','Potential Vendor'],['Buyer','Buyer'],['Both','Buyer/Vendor']], QSRC2=['Referral','Card Drop','Open Home','Database','Other'];
 function quickAdd2(){ S.qa={type:'Potential Vendor',fu:3,pid:null,src:null,types:[],beds:null,subs:[]};
   openSheet2('New lead',`<div class="qa2">
    <div class="qr2"><input id="qa_name" placeholder="Name" autocomplete="off"><input id="qa_phone" inputmode="tel" placeholder="Phone" autocomplete="off" onblur="qaDupe()"></div>
@@ -1411,7 +1413,7 @@ function quickAdd2(){ S.qa={type:'Potential Vendor',fu:3,pid:null,src:null,types
    <div class="ql2">They are</div><div class="qc2" id="qa_type">${QT2.map(([l,v])=>`<button class="${v===S.qa.type?'on':''}" onclick="pickOne(this);S.qa.type='${v}';qaBuy()">${l}</button>`).join('')}</div>
    <div id="qa_buy" hidden></div>
    <div class="ql2">Follow up</div><div class="qc2">${QFU2.map(([l,d])=>`<button class="${d===S.qa.fu?'on':''}" onclick="pickOne(this);S.qa.fu=${d}">${l}</button>`).join('')}</div>
-   <div class="ql2">Where from <span>optional</span></div><div class="qc2">${QSRC2.map(x=>`<button onclick="const on=this.classList.contains('on');pickOne(this);if(on)this.classList.remove('on');S.qa.src=on?null:'${x}'">${x==='Open Home'?'Open home':x}</button>`).join('')}</div>
+   <div class="ql2">Where from <span>optional</span></div><div class="qc2">${QSRC2.map(x=>`<button onclick="const on=this.classList.contains('on');pickOne(this);if(on)this.classList.remove('on');S.qa.src=on?null:'${x}'">${x==='Open Home'?'Open home':x==='Card Drop'?'Card drop':x}</button>`).join('')}</div>
    <textarea id="qa_note" rows="2" data-grow placeholder="Note, optional"></textarea>
    <button class="b2 pri" id="qa_go" onclick="qaSave()">Add lead</button></div>`);
   setTimeout(()=>$('#qa_name')?.focus(),60); }
@@ -2113,7 +2115,7 @@ addEventListener('resize',()=>{ clearTimeout(window.__st6); window.__st6=setTime
 // ---------- Moving a lead along the pipeline (22 Nov): 84% of leads had no house linked, so dragging them did nothing ----------
 // Lead cards get the same ⋯ menu as appraisal and listing cards. With no house linked, the typed address is used;
 // with no address at all, the add form opens with their details filled in.
-const LSRC6={'Cold Call':'calls','Just Listed':'just_listed','Just Sold':'just_sold','Open Home':'open_home','Database':'crm','Referral':'referral','Door Knock':'door_knock','Letterbox Drop':'card_drop','Social Media':'social','Website':'website'};
+const LSRC6={'Card Drop':'card_drop','Cold Call':'calls','Just Listed':'just_listed','Just Sold':'just_sold','Open Home':'open_home','Database':'crm','Referral':'referral','Door Knock':'door_knock','Letterbox Drop':'card_drop','Social Media':'social','Website':'website'};
 function addrParts6(l){ let a=String(l.address||'').trim(), sub=String(l.suburb||'').trim();
   if(a.includes(',')){ const ps=a.split(','); a=ps[0].trim(); if(!sub) sub=ps.slice(1).join(',').trim(); }
   const u=a.match(/^(?:unit\s*|u\s*)?(\d+[a-z]?)\s*\/\s*(\d+[a-z]?(?:-\d+[a-z]?)?)\s+(.+)$/i); if(u) return {unit:u[1],house_number:u[2],street:u[3],suburb:sub};
@@ -2224,3 +2226,19 @@ window.drawList2=(function(orig){ return function(...a){ const r=orig.apply(this
     if(!h){ h=document.createElement('div'); h.className='rh5'; h.textContent='Lists'; const sub=[...rail.querySelectorAll('.rh5')].find(x=>/Suburbs/.test(x.textContent)); rail.insertBefore(h,sub||null); }
     let after=h; while(after.nextElementSibling&&after.nextElementSibling.tagName==='BUTTON') after=after.nextElementSibling; after.insertAdjacentElement('afterend',b); }
   return r; }; })(window.drawList2);
+
+// ---------- One way to message someone (22 Nov) ----------
+// The text icons used to open the phone's Messages with a blank text, and Send info was a separate button for the same job.
+// Now every text icon opens the message sheet (ready made messages, edit, then text or copy), and Send info is gone.
+function canText6(){ return /Android|iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent); }   // a computer without a Messages app shows an error instead
+function whoByPhone6(ph,el){ const d=String(ph||'').replace(/\D/g,'').replace(/^61/,'0'), same=x=>String(x||'').replace(/\D/g,'').replace(/^61/,'0')===d;
+  const lid=+(el&&(el.closest('[data-id]')?.dataset.id||((el.closest('.cd3')?.querySelector('.cn3')?.getAttribute('onclick')||'').match(/openLead\((\d+)\)/)||[])[1]))||(document.getElementById('sheet')?.contains(el)&&S.ol?S.ol.id:0);
+  const l=(S.leads||[]).find(x=>x.id===lid&&same(x.phone))||(S.leads||[]).find(x=>same(x.phone));
+  if(l) return {name:leadTitle(l),phone:l.phone,lead_id:l.id,property_id:l.property_id||null,lead:l};
+  const r=[...(S.rows||[]),...(S.callbacks||[]),...(S.pipe||[])].find(x=>same(x.phone)||same(x.owner_phone));
+  return r?{name:people(r.owner_name)[0]||'',phone:r.phone||r.owner_phone,property_id:r.property_id||null}:{name:'',phone:ph}; }
+addEventListener('click',e=>{ const a=e.target.closest&&e.target.closest('a[href^="sms:"]'); if(!a||a.dataset.direct) return;
+  if(document.getElementById('sheet')?.contains(a)&&/^Message /.test(document.querySelector('#sheet .sh2 b')?.textContent||'')) return;
+  e.preventDefault(); e.stopPropagation(); const ph=decodeURIComponent(a.getAttribute('href').slice(4).split(/[?&]/)[0]); sendInfo(whoByPhone6(ph,a)); },true);
+// the lead panel had both a Text button and Send info: Text opens the message sheet now, so Send info goes
+window.openLead=(function(orig){ return function(...a){ const r=orig.apply(this,a); document.querySelectorAll('#sheet .snd2 button').forEach(b=>{ if(/Send info/.test(b.textContent)) b.remove(); }); return r; }; })(window.openLead);
