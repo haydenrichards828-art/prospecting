@@ -1919,11 +1919,12 @@ function lsFilter5(ls){ const q=bqv5('ld'); if(!q) return ls; const d=q.replace(
 let bq5t;
 function bq5(k,v){ S.bq5o=S.bq5o||{}; S.bq5o[k]=v; clearTimeout(bq5t); bq5t=setTimeout(()=>{ const pos=document.getElementById('bq5_'+k)?.selectionStart; board3(true).then(()=>{ const i=document.getElementById('bq5_'+k); if(i){ i.focus(); try{ i.setSelectionRange(pos,pos); }catch{} } }); },120); }
 // Each column header has a search icon; it opens a thin search line under the header
+function bqToggle5(k){ const open=!!((S.bqOpen5||{})[k]||bqv5(k)); return open?bqClose5(k):bqOpen5(k); }
 function bqOpen5(k){ S.bqOpen5=S.bqOpen5||{}; S.bqOpen5[k]=true; bqHeads5(); setTimeout(()=>document.getElementById('bq5_'+k)?.focus(),0); }
 function bqClose5(k){ S.bqOpen5=S.bqOpen5||{}; S.bqOpen5[k]=false; const had=bqv5(k); S.bq5o=S.bq5o||{}; S.bq5o[k]=''; had?board3(true):bqHeads5(); }
 function bqHeads5(){ const PH={ld:'Find a lead',ap:'Find an appraisal',ls:'Find a listing'};
   document.querySelectorAll('.bd3 .bc3').forEach(c=>{ const k=c.classList.contains('ap')?'ap':c.classList.contains('ls')?'ls':'ld', h=c.querySelector('.bh3'); if(!h) return;
-    if(!h.querySelector('.bs5')){ const ad=h.querySelector('.ad3'); ad&&ad.insertAdjacentHTML('beforebegin',`<button class="bs5" aria-label="${PH[k]}" title="${PH[k]}" onclick="bqOpen5('${k}')">${ic2('search',15)}</button>`); }
+    if(!h.querySelector('.bs5')){ const ad=h.querySelector('.ad3'); ad&&ad.insertAdjacentHTML('beforebegin',`<button class="bs5" aria-label="${PH[k]}" title="${PH[k]}" onclick="bqToggle5('${k}')">${ic2('search',15)}</button>`); }
     const open=!!((S.bqOpen5||{})[k]||bqv5(k)); h.querySelector('.bs5')?.classList.toggle('on',open);
     let row=c.querySelector('.bq5');
     if(open&&!row){ h.insertAdjacentHTML('afterend',`<label class="bq5">${ic2('search',14)}<input id="bq5_${k}" type="search" placeholder="${PH[k]}" value="${esc((S.bq5o||{})[k]||'')}" oninput="bq5('${k}',this.value)" onkeydown="if(event.key==='Escape')bqClose5('${k}')" autocomplete="off" aria-label="${PH[k]}"><button class="bx5" aria-label="Close search" onclick="event.preventDefault();bqClose5('${k}')">${ic2('x',14)}</button></label>`); }
