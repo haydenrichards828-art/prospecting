@@ -53,7 +53,7 @@ const hl2=h=>(h%12||12)+(h<12?'am':'pm');
 const firstName=n=>((people(n)[0]||'').split(' ')[0])||'them';
 
 // ---------- why each person is on the list ----------
-const RC={wd:['#d97706','var(--cbT)','tag','Withdrawn'],pb:['#64748b','#cbd5e1','users','Estate'],st:['#0891b2','#a5f3fc','trend','Street sale'],da:['#8b5cf6','#ddd6fe','land','DA lodged'],lh:['#6366f1','#c7d2fe','clock','Long hold'],crm:['#3b82f6','#93c0ff','users','In CRM'],inv:['#0d9488','#99f6e4','house','Investor'],cb:['#d97706','var(--cbT)','cal','Call back'],gen:['#475063','var(--t2)','tag','On the list']};
+const RC={wd:['#d97706','var(--cbT)','tag','Withdrawn'],pb:['#64748b','#cbd5e1','users','Estate'],st:['#0891b2','#a5f3fc','trend','Street sale'],da:['#8b5cf6','#ddd6fe','land','DA lodged'],lh:['#6366f1','#c7d2fe','clock','Long hold'],crm:['#3b82f6','#93c0ff','users','In CRM'],inv:['#0d9488','#5eead4','house','Investor'],cb:['#d97706','var(--cbT)','cal','Call back'],gen:['#475063','var(--t2)','tag','On the list']};
 function reasonOf(r){
   const sig=r.signals||[], rs=r.reasons||[];
   const own=rs.find(x=>/^Owned /.test(x)), yrs=own&&(own.match(/Owned (\d+)/)||[])[1];
@@ -140,7 +140,7 @@ function callCards2(r){
   const when=a=>{ if(!a) return 'no date'; const d=new Date(a); return (Date.now()-d)<330*864e5?dayMonLong(a):monYear(a.slice(0,10)); };
   return cbn+t.map(e=>{
     if(e.mine){ const k=OC2[e.o]||OC2.no_answer; return `<div class="cc2"><i style="background:${k[0]}"></i><div><div class="h"><b style="color:${k[1]}">${esc(LABEL[e.o]||e.o)}${e.n>1?` ×${e.n}`:''}</b><span class="lab2">You · ${e.n>1?'latest ':''}${esc(when(e.at))}</span></div>${e.text?`<p>${esc(e.text)}</p>`:''}</div></div>`; }
-    return `<div class="cc2"><i style="background:#14b8a6"></i><div><div class="h"><b style="color:#99f6e4">${esc(e.who||'Dignam')}</b><span class="lab2">${esc(when(e.at))}</span></div><p>${esc(e.text)}</p></div></div>`; }).join('');
+    return `<div class="cc2"><i style="background:#14b8a6"></i><div><div class="h"><b style="color:#5eead4">${esc(e.who||'Dignam')}</b><span class="lab2">${esc(when(e.at))}</span></div><p>${esc(e.text)}</p></div></div>`; }).join('');
 }
 
 // ---------- photos: NSW aerial imagery plus a Street View link ----------
@@ -263,7 +263,7 @@ function drawCall2(){
     ${tag}${warnBox(r)}
     ${numBtn(r,'num2')}
     ${why.length?`<div class="whyl2"><div class="wl2" style="grid-template-columns:repeat(${Math.min(why.length,4)},minmax(0,1fr))">${why.slice(0,4).map(([i,t,l])=>`<div class="wc2" style="--c:${RC2[i]||LVL2[l][0]};--t:${LVL2[l][1]}"><span class="ti2">${ic2(i,18,'#fff')}</span><span><b>${esc(t)}</b><em>${l}</em></span></div>`).join('')}</div></div>`:''}
-    <label class="nw2"><span class="h"><span class="lab2">Note <span class="nsaved" style="font-weight:500;color:var(--t3)">${note?'· saved':''}</span></span><span class="kb2">N</span></span>
+    <label class="nw2"><span class="h"><span class="lab2">Note <span class="nsaved" style="font-weight:600;color:var(--t3)">${note?'· saved':''}</span></span><span class="kb2">N</span></span>
      <textarea class="note2" id="note2" data-note placeholder="Type while you talk" oninput="setNote(${id},this.value)">${esc(note)}</textarea></label>
     ${barHTML2(id)}
     <div class="ends2"><button onclick="skip2(${id})">${ic2('skip',16)}Skip<span class="k kb2">S</span></button><button onclick="moreSheet2(${id})">${ic2('more',16)}More<span class="k kb2">M</span></button></div>
@@ -277,7 +277,7 @@ function drawCall2(){
   </div>
   <div class="pcall2">
    <div class="pb2">
-    <div class="ptyp2" style="align-items:center;gap:12px;flex:none;padding-bottom:4px">${photo2(r,'width:44px;height:44px;border-radius:11px',false,!desk2())}<div style="min-width:0"><b style="font-size:18px;display:block">${esc(nm)}</b><span style="font-size:14px;color:var(--t2)">${addr}</span></div></div>
+    <div class="ptyp2" style="align-items:center;gap:12px;flex:none;padding-bottom:4px">${photo2(r,'width:44px;height:44px;border-radius:11px',false,!desk2())}<div style="min-width:0"><b style="font-size:20px;display:block">${esc(nm)}</b><span style="font-size:14px;color:var(--t2)">${addr}</span></div></div>
     <div class="pid2"><div class="pidr2">${photo2(r,'',false,!desk2()).replace('class="photo2"',`class="photo2" onclick="bigPhoto(${id})"`)}<div style="min-width:0"><h1>${esc(nm)}</h1><button class="a cp2" onclick="copyAddr(${id})">${addr}<span class="cpl" title="Copy address" aria-label="Copy address">${COPYIC5}</span></button>${dignamLine(r)}</div></div>
      ${icons.length?`<div class="icons2">${icons.map(([i,v])=>`<span>${ic2(i,18,'var(--t2)')}${esc(v)}</span>`).join('')}</div>`:''}</div>
     ${warnBox(r,true)}
@@ -335,7 +335,7 @@ function moreSheet2(id){
 }
 function wrongSheet2(id){
   const r=queue().find(x=>x.property_id===id)||{};
-  openSheet2('What is wrong?',`<p style="margin:0 4px;font-size:15px;line-height:21px;color:var(--t2)">Tap one and ${esc(firstName(r.owner_name))} is skipped straight away. Anything in the note box is sent with it.</p>
+  openSheet2('What is wrong?',`<p style="margin:0 4px;font-size:14px;line-height:21px;color:var(--t2)">Tap one and ${esc(firstName(r.owner_name))} is skipped straight away. Anything in the note box is sent with it.</p>
    <div class="g2">${WRONG.map(([k,l])=>`<button class="r2" style="grid-template-columns:1fr" onclick="wrong2(${id},'${k}')"><span class="rt2"><b>${esc(l)}</b><span>${ISSUE_RULE[k]||''}</span></span></button>`).join('')}</div>`,`moreSheet2(${id})`);
 }
 const ISSUE_RULE={sold:'Off the list for 2 years',on_market:'Off until it sells, then 2 years from the sale',dignam_listed:'Never called again',
@@ -346,9 +346,9 @@ function wrong2(id,k){ closeOv(); if(S.pick===id) S.pick=null; S.skipped.add(id)
   api("report_issue",{property_id:id,kind:k,note:notes[id]||null}).catch(e=>{ S.skipped.delete(id); drawList(); toast("Couldn't save that. "+e.message); }); }
 function dncSheet2(id){
   const r=queue().find(x=>x.property_id===id)||{};
-  openSheet2('Do not call',`<span class="tile" style="width:48px;height:48px;border-radius:14px;background:var(--ns);align-self:center">${ic2('ban',24,'#fff')}</span>
+  openSheet2('Do not call',`<span class="tile" style="width:48px;height:48px;border-radius:8px;background:var(--ns);align-self:center">${ic2('ban',24,'#fff')}</span>
    <b style="font-size:20px;text-align:center">Never call ${esc(firstName(r.owner_name))} again?</b>
-   <p style="margin:0;font-size:15px;line-height:21px;text-align:center;color:var(--t2)">${r.phone?esc(fmtPh2(r.phone))+' comes':'This person comes'} off every list for good.</p>
+   <p style="margin:0;font-size:14px;line-height:21px;text-align:center;color:var(--t2)">${r.phone?esc(fmtPh2(r.phone))+' comes':'This person comes'} off every list for good.</p>
    <button class="b2 dan" onclick="record(${id},'do_not_call')">Do not call</button><button class="b2" onclick="moreSheet2(${id})">Cancel</button>`,`moreSheet2(${id})`);
 }
 function callbackSheet2(id){
@@ -358,7 +358,7 @@ function callbackSheet2(id){
   S.sheetKeys=Object.fromEntries(picks.map(([d,h],i)=>[String(i+1),()=>{ closeOv(); quickCallback(id,d,h); }]));
 }
 function pickSheet2(id){
-  openSheet2('Pick a day and time',`<input type="datetime-local" id="pcb2" value="${sydInput(new Date(Date.now()+2*864e5)).slice(0,11)}10:00" style="height:52px;border-radius:14px;padding:0 14px">
+  openSheet2('Pick a day and time',`<input type="datetime-local" id="pcb2" value="${sydInput(new Date(Date.now()+2*864e5)).slice(0,11)}10:00" style="height:52px;border-radius:8px;padding:0 14px">
    <button class="b2 pri" onclick="const v=$('#pcb2').value;if(!v)return toast('Pick a date and time');closeOv();record(${id},'call_back',sydToISO(v))">Save call back</button>`,`callbackSheet2(${id})`);
 }
 
@@ -375,7 +375,7 @@ function drawList2(){
   const two=(top,col,sub)=>`<b style="color:${col}">${esc(top)}</b><span>${esc(sub)}</span>`;
   const lastC=r=>{ if(r.today_outcome){ const k=OC2[r.today_outcome]||OC2.no_answer; return two(LABEL[r.today_outcome]||r.today_outcome,k[1],'Today'); }
     const g=callGroups(r); if(g.length){ const k=OC2[g[0].o]||OC2.no_answer; return two((LABEL[g[0].o]||g[0].o)+(g[0].n>1?' ×'+g[0].n:''),k[1],'You · '+dayMon(g[0].at)); }
-    const d=dignamLast(r); if(d&&d.when) return two('Dignam','#99f6e4',d.when+(d.by?' · '+d.by:''));
+    const d=dignamLast(r); if(d&&d.when) return two('Dignam','#5eead4',d.when+(d.by?' · '+d.by:''));
     return '<span class="nc3">Not contacted</span>'; };
   $("#main").innerHTML=failStrip()+`<div class="list2">
    <nav class="rail2" aria-label="Suburbs"><div class="seg2 mini lt5"><button class="${S.type==='seller'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button>${subs.some(x=>x[0]===SOL_GROUP)?`<button class="${S.lsub===SOL_GROUP?'on':''}" onclick="S.lsub=SOL_GROUP;drawList()">Solicitors <span style="opacity:.7">${(subs.find(x=>x[0]===SOL_GROUP)||[])[1]}</span></button>`:''}</div><button class="cbk" onclick="upcomingCB()">Booked call backs<span>${ic2('chev',14)}</span></button>${cbs.length?`<button class="cbk ${S.lsub==='Call backs'?'on':''}" onclick="S.lsub='Call backs';drawList()">Call backs<span>${cbs.filter(r=>!r.today_outcome).length}</span></button>`:''}${subs.filter(([s])=>s!==SOL_GROUP).map(([s,n])=>`<button class="${s===S.lsub?'on':''}" onclick="S.lsub=this.dataset.s;drawList()" data-s="${esc(s)}">${esc(s)}<span>${n}</span></button>`).join('')}</nav>
@@ -462,7 +462,7 @@ function callChart2(ov,mode){
   groups.forEach(([v,l],i)=>{ const x0=L+i*cw+gap/2, w=cw-gap, yy=Math.min(y(v),T+ih-6), ch=i?v-groups[i-1][0]:null;
     const last0=i===n-1, up=!last0&&ch!==null&&ch>0&&(!v||ch/v>.03), down=!last0&&ch!==null&&ch<0, col=up?'#34d399':down?'#f0a92b':'#9ba4b2', last=i===n-1;
     g+=`<rect x="${x0}" y="${yy}" width="${w}" height="${T+ih-yy}" rx="8" fill="${last?'#1e2a3d':'#1a1f26'}"/><rect x="${x0}" y="${yy}" width="${w}" height="4" rx="2" fill="${last?'#3b82f6':col}"/>`;
-    g+=`<text x="${x0+w/2}" y="${yy-8}" fill="#f2f4f7" font-size="${ph?11:15}" font-weight="800" text-anchor="middle">${fm(v)}</text>`;
+    g+=`<text x="${x0+w/2}" y="${yy-8}" fill="#f2f4f7" font-size="${ph?11:15}" font-weight="700" text-anchor="middle">${fm(v)}</text>`;
     if(ch&&(up||down)&&T+ih-yy>30) g+=`<text x="${x0+w/2}" y="${yy+22}" fill="${col}" font-size="${ph?10:12}" font-weight="700" text-anchor="middle">${ch>0?'+':'−'}${fm(Math.abs(ch))}</text>`;
     if(!(ph&&n>6&&(n-1-i)%2)) g+=`<text x="${x0+w/2}" y="${H-6}" fill="${last?'#f2f4f7':'#9ba4b2'}" font-size="${fs}" font-weight="${last?700:400}" text-anchor="middle">${l}</text>`; });
   return {svg:`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block" role="img" aria-label="Calls per ${mode}">${g}</svg>`, now:fm(groups[n-1][0])};
@@ -510,7 +510,7 @@ function paintInsights(ov){
     <div class="meter2"><i style="width:${Math.min(100,rate/t*100)}%;background:${rate>=t?'var(--ap)':'var(--acc)'}"></i></div>
     <div class="pair2"><span><b>${grp('Algorithm')}</b> from the list</span><span><b>${grp('Control')}</b> from random picks</span></div></section>
    ${funnel2(ov)}
-   <section class="sec2"><div class="gh2" style="margin:0"><span>Calls a ${S.period}</span>${ch?`<b class="big2" style="font-size:32px;color:var(--t1)">${ch.now}</b>`:''}</div>${ch?ch.svg:'<p class="emptyline">No calls logged yet.</p>'}</section>
+   <section class="sec2"><div class="gh2" style="margin:0"><span>Calls a ${S.period}</span>${ch?`<b class="big2" style="font-size:28px;color:var(--t1)">${ch.now}</b>`:''}</div>${ch?ch.svg:'<p class="emptyline">No calls logged yet.</p>'}</section>
    <section class="sec2"><div class="gh2" style="margin:0"><span>Best time to call</span></div>${heatGrid2(ov.times)}</section>
    <section class="sec2"><div class="gh2" style="margin:0"><span>Suburbs booking appraisals, last 90 days</span>${subs.length?`<b>${subs.reduce((a,s)=>a+s.n,0)} booked</b>`:''}</div>
     ${subs.length?subs.map((s,j)=>`<div class="srow2"><span>${esc(s.suburb)}</span><div class="hbt2"><i style="width:${s.n/smax*100}%;background:${j?'#3a4250':'var(--acc)'}"></i></div><b>${s.n}</b></div>`).join(''):'<p class="emptyline" style="margin:0">No appraisals booked in the last 90 days yet.</p>'}</section>
@@ -577,7 +577,7 @@ async function upcomingCB(){
    :'<p class="emptyline">No call backs booked.</p>');
 }
 function moveCB(i){ const c=S._ucb[i]; if(!c) return; S._cbBack=true;
-  openSheet2('New time for '+esc(people(c.owner_name)[0]||'them'),`<input type="datetime-local" id="mcb2" value="${sydInput(new Date(c.callback_at))}" style="height:52px;border-radius:14px;padding:0 14px">
+  openSheet2('New time for '+esc(people(c.owner_name)[0]||'them'),`<input type="datetime-local" id="mcb2" value="${sydInput(new Date(c.callback_at))}" style="height:52px;border-radius:8px;padding:0 14px">
    <button class="b2 pri" onclick="saveMoveCB(${i})">Save new time</button>`,'upcomingCB()'); }
 async function saveMoveCB(i){ const c=S._ucb[i], v=$('#mcb2').value; if(!v) return toast('Pick a date and time');
   try{ await api("outcome",{property_id:c.property_id,outcome:'call_back',callback_at:sydToISO(v),notes:c.notes||null,list_type:S.type,mode:'list'}); await api("undo_outcome",{call_id:c.call_id}); }catch(e){ return toast(e.message); }
