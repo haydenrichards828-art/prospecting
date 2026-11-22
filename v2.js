@@ -617,7 +617,7 @@ window.viewPipeline=async function(local){
   const when=x=>{ const d=x[PST[x.stage][2]]||x.updated_at; return d?new Date(d).toLocaleDateString('en-AU',{timeZone:'Australia/Sydney',weekday:'short',day:'numeric',month:'short'}):''; };
   $("#main").innerHTML=`<div class="pp2">
    <div class="lh2 pph2"><h1>${PTITLE2[S.pst||'appraisal']||'Appraisals'}</h1>
-    <div class="seg2 mini">${PTABS.map(k=>[k,PST[k]]).map(([k,v])=>`<button class="${S.pst===k?'on':''}" onclick="S.pst='${k}';viewPipeline(true)">${v[0]} <span style="opacity:.65">${cnt(k)}</span></button>`).join('')}</div>
+    <div class="seg2 mini">${PTABS.map(k=>[k,PST[k]]).map(([k,v])=>`<button class="${S.pst===k?'on':''}" onclick="S.pst='${k}';viewPipeline(true)">${v[0]}</button>`).join('')}</div>
     <button class="b2 pri" style="height:40px;margin-left:auto" onclick="openAddPipe()" aria-label="Add appraisal or listing">${ic2('plus',18)}<span class="addt">Add</span></button></div>
    <div class="lg4 h"><span></span><span>Owner</span><span>${PST[S.pst][1]}</span><span>Last bought</span><span></span></div>
    ${list.length?list.map(x=>{ const u=aerialUrl(x,PH_SMALL[0],PH_SMALL[1]), id=x.property_id;
@@ -1611,7 +1611,7 @@ function pipeTable3(local){
      <span class="lb4">${x.last_sale_date?`<b class="due3">${x.last_sale_price?esc(price2(x.last_sale_price)):'Price n/a'}</b><i>${String(x.last_sale_date).slice(0,4)}</i>`:'<i>No sale on record</i>'}</span>
      <span class="ac3">${PNEXT[x.stage].map(([s2,l],i)=>`<button class="${i===0&&!pBad(s2)?'go':''}" onclick="event.stopPropagation();setStage(${id},'${s2}')">${l}</button>`).join('')}${x.phone?`<button class="cl" aria-label="Call" onclick="event.stopPropagation();if(hoursOk())openUrl('tel:${esc(String(x.phone).replace(/[^0-9+]/g,''))}')">${ic2('phone',16)}</button>`:'<span class="cl clx" aria-hidden="true"></span>'}</span></div>`; }).join('');
   $("#main").className='v2main';
-  $("#main").innerHTML=`<div class="pg2 pl3"><div class="ph2"><span class="muted" aria-label="${list.length} ${list.length===1?'person':'people'}">${list.length}</span><button class="b2 pri" onclick="openAddPipe()" aria-label="Add">${ic2('plus',18)}<span>Add</span></button></div>
+  $("#main").innerHTML=`<div class="pg2 pl3"><div class="ph2"><button class="b2 pri" onclick="openAddPipe()" aria-label="Add">${ic2('plus',18)}<span>Add</span></button></div>
    ${list.length?`<div class="ltab3">${head}${body}</div>`:`<div class="empty2"><b>${S.pst==='sold'?'Nothing sold yet':`No ${P[0].toLowerCase()} yet`}</b>${S.pst==='appraisal'?'Book one from the call list and it shows up here.':''}</div>`}</div>`;
 }
 // Pipeline page: Appraisals and Listings tables on desktop
