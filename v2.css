@@ -1372,3 +1372,4 @@ header.top2 .hc5{display:inline-grid;place-items:center;min-width:24px;height:24
 .upd6{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 84px);z-index:60;background:var(--ap,#2563eb);color:#fff;border:0;padding:12px 18px;font:600 15px/1.2 inherit;white-space:nowrap}
 .dir6{margin-top:8px;width:100%}
 @media (pointer:coarse){.dir6{display:none}}
+#ln_next{display:none}

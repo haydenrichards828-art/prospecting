@@ -444,12 +444,12 @@ function drawLeads(){
   const latest=l=>(l.notes||[])[0]?.body||l.motivation||'';
   const tile=l=>`<span class="tile" style="--c:${TCOL2[l.temperature]||'#4b5565'}">${ic2(hasCriteria(l.buy)?'search':'lead',16,'#fff')}</span>`;
   const nw=l=>{ const n=newMatches(l).length; return n?`<em class="nw4">${n} new match${n>1?'es':''}</em>`:''; };
-  const table=`<div class="ltab2"><div class="lt2 h"><span>Lead</span><span>Next step</span><span>Due</span><span class="c4">Notes</span><span class="c5">Last spoke</span><span></span></div>${ls.map(l=>`<div class="lt2" onclick="openLead(${l.id})" data-lq="${esc([l.name,l.address,l.suburb,l.phone].join(' ').toLowerCase())}">
+  const table=`<div class="ltab2"><div class="lt2 h"><span>Lead</span><span>Status</span><span>Due</span><span class="c4">Notes</span><span class="c5">Last spoke</span><span></span></div>${ls.map(l=>`<div class="lt2" onclick="openLead(${l.id})" data-lq="${esc([l.name,l.address,l.suburb,l.phone].join(' ').toLowerCase())}">
      <div class="ltn">${tile(l)}<div><b>${esc(leadTitle(l))}${nw(l)}</b><span>${esc(sub(l))}</span></div></div>
-     <span class="ltnote" style="color:var(--t1)">${l.status&&l.status!=='Active'?`<b style="color:${/Listing Won/.test(l.status)?'#5ee08f':/Appraisal/.test(l.status)?'#93c0ff':'var(--t2)'};margin-right:6px">${esc(l.status==='Listing Won'?'Listed':l.status)}${l.next_action?',':''}</b>`:''}${esc(l.next_action||(l.status&&l.status!=='Active'?'':'Set a next step'))}</span>
+     <span class="ltnote" style="color:var(--t1)">${l.status&&l.status!=='Active'?`<b style="color:${/Listing Won/.test(l.status)?'#5ee08f':/Appraisal/.test(l.status)?'#93c0ff':'var(--t2)'};margin-right:6px">${esc(l.status==='Listing Won'?'Listed':l.status)}</b>`:''}</span>
      <b style="color:${dueCol(l.follow_up)};font-size:14px">${esc(dueLabel(l.follow_up))}</b><span class="ltnote c4">${esc(latest(l))}</span><span class="c5" style="font-size:14px;color:var(--t2)">${l.last_contact?esc(dayMon(l.last_contact)):''}</span>
      <div class="lbtns">${l.phone?`<a class="ib2" href="${smsLink(l.phone,'')}" onclick="event.stopPropagation()" aria-label="Text">${ic2('msg',17,'#fff')}</a><a class="ib2 call" href="tel:${esc(telOf(l.phone))}" onclick="event.stopPropagation()" aria-label="Call">${ic2('phone',17,'#fff')}</a>`:''}</div></div>`).join('')}</div>`;
-  const list=`<div class="g2">${ls.map(l=>`<button class="r2" onclick="openLead(${l.id})">${tile(l)}<span class="rt2"><b>${esc(leadTitle(l))}</b><span>${esc(l.next_action||sub(l))}</span></span><span style="display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:${dueCol(l.follow_up)};white-space:nowrap">${esc(dueLabel(l.follow_up).replace('Follow up today','Today').replace('No follow up set','No date'))}${chev2()}</span></button>`).join('')}</div>`;
+  const list=`<div class="g2">${ls.map(l=>`<button class="r2" onclick="openLead(${l.id})">${tile(l)}<span class="rt2"><b>${esc(leadTitle(l))}</b><span>${esc(sub(l))}</span></span><span style="display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:${dueCol(l.follow_up)};white-space:nowrap">${esc(dueLabel(l.follow_up).replace('Follow up today','Today').replace('No follow up set','No date'))}${chev2()}</span></button>`).join('')}</div>`;
   m.innerHTML=`<div class="pg2">${head}${D?table:list}${S.leadsClosed?`<p class="emptyline" style="text-align:center;margin-top:16px">${S.leadsClosed} closed or do not contact leads hidden</p>`:''}</div>`;
 }
 
@@ -1286,7 +1286,6 @@ window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const 
   const nxHTML=chips('next_action',[['','None'],...LO.next_action.map(v=>[v,v])],l.next_action||'').replace(/"/g,'&quot;');
   const rows=`<div class="ldrows4">
     ${lrowHTML('status','flag','Status',st,`lrToggle('status',this.dataset.h)`).replace('data-k="status"',`data-k="status" data-h="${stHTML}"`)}
-    ${lrowHTML('next_action','skip','Next step',l.next_action||'',`lrToggle('next_action',this.dataset.h)`).replace('data-k="next_action"',`data-k="next_action" data-h="${nxHTML}"`)}
     ${lrowHTML('who','user','Their details',who,`editDetails();this.classList.toggle('open')`)}
     ${hasB?'':lrowHTML('buy','search','What they want to buy','',`editWants(true);this.style.display='none'`)}
   </div>`;
@@ -1320,7 +1319,7 @@ window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const 
   const it=(k,ic,t,v='')=>`<button onclick="lmenuGo('${k}')">${ic2(ic,17)}<span>${t}</span>${v?`<em>${esc(v)}</em>`:''}</button>`;
   const x=sh.querySelector('.lhead .lact');
   if(x) x.insertAdjacentHTML('beforebegin',`<div class="ldw2"><button class="ldots2" onclick="lmenuOpen(this)" aria-label="More options" aria-haspopup="menu">${ic2('more',20)}</button>
-   <div id="lmenu2" class="lmenu2" role="menu" hidden>${it('status','flag','Status',st)}${it('next_action','skip','Next step',l.next_action||'')}${it('who','user','Edit')}${it('buy','search','What they want to buy')}<hr>${it('send','msg','Message')}${it('refer','users','Refer')}</div></div>`);
+   <div id="lmenu2" class="lmenu2" role="menu" hidden>${it('status','flag','Status',st)}${it('who','user','Edit')}${it('buy','search','What they want to buy')}<hr>${it('send','msg','Message')}${it('refer','users','Refer')}</div></div>`);
 }; })(window.openLead);
 
 // ================= Audit fixes, 20 Nov =================
@@ -1569,7 +1568,7 @@ async function board3(local){
   const apA=rows.filter(x=>x.stage==='appraisal'), liA=rows.filter(x=>x.stage==='listed'), ap=apA.filter(x=>pm5(x,'ap')), li=liA.filter(x=>pm5(x,'ls'));
   const n=d=>dueIn(d);
   const lsf=lsFilter5(ls); const lc=lsf.slice(0,S.bfit5||5).map(l=>{ const d=n(l.follow_up); return card3({buyer:hasCriteria(l.buy),photo:aerialUrl(l,PH_SMALL[0],PH_SMALL[1]),name:leadTitle(l),
-    key:d===null?'No date':d<0?`${-d} day${d===-1?'':'s'} overdue`:d===0?'Today':dayK3(l.follow_up),cls:d!==null&&d<0?'od':d===0?'td':'',sub:[ltype3(l),l.next_action].filter(Boolean).join(', '),
+    key:d===null?'No date':d<0?`${-d} day${d===-1?'':'s'} overdue`:d===0?'Today':dayK3(l.follow_up),cls:d!==null&&d<0?'od':d===0?'td':'',sub:ltype3(l),
     addr:[l.address,l.suburb].filter(Boolean).join(', '),open:`openLead(${l.id})`,
     acts:l.phone?`<a class="call" href="tel:${esc(telOf(l.phone))}" aria-label="Call">${ic2('phone',16)}</a><a href="${smsLink(l.phone,'')}" aria-label="Text">${ic2('msg',16)}</a>`:''}); });
   const pc=(x,key,cls,sub)=>card3({photo:aerialUrl(x,PH_SMALL[0],PH_SMALL[1]),name:people(x.owner_name)[0]||'Owner unknown',key,cls,sub,addr:[x.street_address,x.suburb].filter(Boolean).join(', '),
