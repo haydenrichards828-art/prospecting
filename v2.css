@@ -1365,3 +1365,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline-offset:-
 @media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) .lt3>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 /* the count after a page title: the number in a small box, like the counts in the rail and the board (it used to read "1 person") */
 header.top2 .hc5{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 8px;margin-left:-12px!important;background:#1e232b;border-radius:4px;font-size:13px!important;font-weight:600;color:#a3acb9!important}
+
+/* two numbers on one lead: keep each number on one line */
+#sheet .lcta a.call{white-space:nowrap}
+@media (max-width:599px){#sheet .lcta.two6{flex-wrap:wrap}#sheet .lcta.two6>a.call{flex:1 1 calc(50% - 4px);min-width:0;justify-content:center}#sheet .lcta.two6>.txt{flex:1 1 100%}}

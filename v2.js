@@ -43,8 +43,11 @@ const LVL2={Strong:['var(--acc)','#93c0ff'],Medium:['#6366f1','#a5b4fc'],Light:[
 // ---------- small helpers ----------
 const row2=(tile,icon,title,sub='',right='',on='')=>`<${on?'button':'div'} class="r2" ${on?`onclick="${on}"`:''}><span class="tile" style="--c:${tile}">${ic2(icon,17,'#fff')}</span><span class="rt2"><b>${title}</b>${sub?`<span>${sub}</span>`:''}</span>${right||'<span></span>'}</${on?'button':'div'}>`;
 const chev2=()=>ic2('chev',16,'var(--t3)');
-const fmtPh2=p=>{ const d=String(p||'').replace(/[^\d]/g,''); return /^0[2378]\d{8}$/.test(d)?d.replace(/^(\d{2})(\d{4})(\d{4})$/,'$1 $2 $3'):d.replace(/^(\d{4})(\d{3})(\d{3})$/,'$1 $2 $3'); };
-const telOf=p=>String(p||'').replace(/[^\d+]/g,'');
+// A phone field can hold more than one number ("0414 872 772 (M) 0417 962 446"). Keep them apart.
+const phList=p=>{ const t=String(p||''); const m=t.match(/(?:\+?61[\s-]?\(?0?\)?|\(?0)[2-578]\)?(?:[\s-]?\d){8}/g); if(m&&m.length) return m.map(x=>{ let d=x.replace(/\D/g,''); if(d.startsWith('61')) d='0'+d.slice(2).replace(/^0/,''); return d; }).filter((d,i,a)=>a.indexOf(d)===i); const d=t.replace(/[^\d]/g,''); return d?[d]:[]; };
+const fmtOne2=d=>/^0[2378]\d{8}$/.test(d)?d.replace(/^(\d{2})(\d{4})(\d{4})$/,'$1 $2 $3'):d.replace(/^(\d{4})(\d{3})(\d{3})$/,'$1 $2 $3');
+const fmtPh2=p=>phList(p).map(fmtOne2).join(', ');
+const telOf=p=>{ const t=String(p||''); return t.trim().startsWith('+')&&phList(t).length<2?t.replace(/[^\d+]/g,''):(phList(t)[0]||''); };
 const price2=v=>v?(v>=1e6?'$'+(Math.round(v/1e4)/100)+'m':'$'+Math.round(v/1e3)+'k'):'';
 const yrsSince=d=>{ if(!d) return null; const y=(Date.now()-new Date(d+'T12:00:00Z'))/(365.25*864e5); return y>=0?Math.floor(y):null; };
 const monYear=d=>{ const x=new Date(String(d).slice(0,10)+'T12:00:00Z'); return isNaN(x)?'':MONF[x.getUTCMonth()]+' '+x.getUTCFullYear(); };
@@ -2303,3 +2306,11 @@ window.previewCSV=(function(orig){ return async function(){
     ir.innerHTML=`<b>${out.length.toLocaleString()} rows found, ${ok.toLocaleString()} with a usable address.</b><br>Matched columns: ${esc(Object.entries(col).map(([k,i])=>rows[0][i].trim()+" → "+k.replace(/_/g," ")).join(" · ")||"none")}`;
   }catch(e){ S.pending=null; ir.textContent="Couldn't read that file. "+e.message; }
 }; })(window.previewCSV);
+
+// Leads with two numbers in the phone field: call and text the first, and give the second its own call button (22 Nov)
+window.smsLink=function(phone,body){ return `sms:${telOf(phone)}${/iPhone|iPad/.test(navigator.userAgent)?"&":"?"}body=${encodeURIComponent(body)}`; };
+window.openLead=(function(orig){ return function(id,opts){ const r=orig(id,opts);
+  try{ const l=(S.leads||[]).find(x=>x.id===id), c=document.querySelector('#sheet .lcta'); const ps=l?phList(l.phone):[];
+    if(c&&ps.length){ const a=c.querySelector('a.call'); if(a){ a.href='tel:'+ps[0]; a.innerHTML=a.innerHTML.replace(/Call .*$/,(ps.length>1?'':'Call ')+esc(fmtOne2(ps[0]))); }
+      if(ps.length>1) c.classList.add('two6'); if(ps.length>1&&!c.querySelector('.call2')) c.querySelector('a.call').insertAdjacentHTML('afterend',ps.slice(1).map(p=>`<a class="call call2" href="tel:${p}" aria-label="Call ${esc(fmtOne2(p))}"><i class="ti ti-phone"></i>${esc(fmtOne2(p))}</a>`).join('')); } }catch(e){}
+  return r; }; })(window.openLead);
