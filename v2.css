@@ -1333,3 +1333,9 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline-offset:-
 .sk6 i{display:block;height:64px;border-bottom:1px solid #232831;background:linear-gradient(90deg,#171b21 0 72px,transparent 72px),linear-gradient(#1e232b,#1e232b) 88px 18px/40% 12px no-repeat,linear-gradient(#1a1e25,#1a1e25) 88px 38px/25% 10px no-repeat;background-color:#111418}
 @media (prefers-reduced-motion:no-preference){.sk6 i{animation:sk6 1.6s ease-in-out infinite}.sk6 i:nth-child(2n){animation-delay:.2s}}
 @keyframes sk6{50%{opacity:.6}}
+/* Stats: the grid fills the space under the results by layout, not by a measurement taken after the first frame (that caused a jump) */
+@media (min-width:1100px){
+  .pg2.st6pg{display:flex;flex-direction:column}
+  .pg2.st6pg>div{flex:1 0 auto;display:flex;flex-direction:column}
+  .st6pg .st6{flex:1 1 auto;min-height:440px;height:auto!important}
+}

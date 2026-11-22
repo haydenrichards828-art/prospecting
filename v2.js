@@ -2043,10 +2043,10 @@ window.paintInsights=function(ov){ S.period=S.period||'week'; const k=S.period, 
    <div class="st6">
     ${pan('p6calls',`Calls this ${k}`,fm(now),calls)}
     ${pan('p6fun','Call to listing',h?`${f1(per(+c.listed||0))} <small>per 100</small>`:'',fun)}
-    ${pan('tphone','Time on the phone','',none('Loading'))}
+    ${pan('tphone','Time on the phone','','')}
     ${pan('p6best','Best time to call',best,heat)}
     ${pan('p6sub','Appraisals by suburb',subs.length?`${subs.reduce((s,x)=>s+x.n,0)} <small>in 90 days</small>`:'',sub)}
-    ${pan('refs2','Referrals','',none('Loading'),`<button class="ib6" onclick="S.rw=null;partnerSheet()" aria-label="Add who you refer to" title="Add who you refer to">${ic2('plus',16)}</button>`)}
+    ${pan('refs2','Referrals','','',`<button class="ib6" onclick="S.rw=null;partnerSheet()" aria-label="Add who you refer to" title="Add who you refer to">${ic2('plus',16)}</button>`)}
    </div>
    <details class="sec"><summary>How the algorithm is doing</summary><div>
     <div class="ft6 al6"><span></span><em>Answered</em><em>Appraisals</em><em>Per 100</em>${(ov.groups||[]).map(g=>`<span>${g.grp==='Control'?'Random picks':'From the list'} v${g.version??'?'}</span><b>${fm(g.connected)}</b><b>${fm(g.appraisals)}</b><b>${g.rate??0}</b>`).join('')||'<span>No calls yet</span>'}</div>
@@ -2054,11 +2054,12 @@ window.paintInsights=function(ov){ S.period=S.period||'week'; const k=S.period, 
   </div></div>`;
   st6Fit(); requestAnimationFrame(st6Fit); setTimeout(st6Fit,120); phone6(); refs6();   // fit again once the title has moved into the top bar
 };
-function st6Fit(){ const g=document.querySelector('#main .st6'); if(!g) return; g.style.height='';
-  if(innerWidth<1100) return; const det=document.querySelector('#main .st6pg details'), top=g.getBoundingClientRect().top+(document.querySelector('#main')?.scrollTop||0);
-  g.style.height=Math.max(440,innerHeight-top-(det?det.offsetHeight:0))+'px'; }
+function st6Fit(){ const g=document.querySelector('#main .st6'); if(g) g.style.height=''; }   // sizing is done by CSS now
 async function phone6(){ const days=PERIOD_DAYS[S.period||'week'], el=()=>document.getElementById('tphone'); let w;
-  try{ w=await api("work_stats",{days}); }catch{ if(el()) el().querySelector('.p6b').innerHTML='<p class="no6">Could not load</p>'; return; }
+  const last=S.ph6&&S.ph6[days]; if(last) paintPhone6(last);
+  try{ w=await api("work_stats",{days}); }catch{ if(el()&&!last) el().querySelector('.p6b').innerHTML='<p class="no6">Could not load</p>'; return; }
+  S.ph6=S.ph6||{}; S.ph6[days]=w; if(!last||JSON.stringify(last)!==JSON.stringify(w)) paintPhone6(w); }
+function paintPhone6(w){ const el=()=>document.getElementById('tphone');
   const x=el(); if(!x) return; const t=w.totals||{}, body=x.querySelector('.p6b'), head=x.querySelector('.p6h b');
   if(!t.calls){ body.innerHTML='<p class="no6">No calls yet</p>'; return; }
   const noans=t.calls-t.answered, talk=(t.talk_s||0)*t.answered, ring=(t.ring_s||0)*noans+(t.talk_s?0:(t.ring_s||0)*t.answered), betw=((t.prep_s||0)+(t.wrap_s||0))*t.calls, est=talk+ring+betw;
@@ -2068,8 +2069,12 @@ async function phone6(){ const days=PERIOD_DAYS[S.period||'week'], el=()=>docume
   body.innerHTML=`<div class="sp6">${parts.map(([,v,c])=>`<i style="flex:${v||0.001};background:${c}"></i>`).join('')}</div>
    <div class="tq6">${parts.map(([l,v,c])=>`<div><b>${hm2(v)}</b><span><i style="background:${c}"></i>${l}</span></div>`).join('')}<div><b>${fm2(t.calls)}</b><span>Calls</span></div></div>`; }
 const fm2=n=>Math.round(+n||0).toLocaleString('en-AU');
-async function refs6(){ const x=document.getElementById('refs2'); if(!x) return; let d; try{ d=await api2('referrals'); }catch(e){ x.querySelector('.p6b').innerHTML='<p class="no6">Could not load</p>'; return; } S.ref=d;
-  const y=document.getElementById('refs2'); if(!y) return; const rs=d.referrals||[], ps=d.partners||[]; y.querySelector('.p6h b').textContent=rs.length||'';
+async function refs6(){ const x=document.getElementById('refs2'); if(!x) return;
+  let last=S.ref; if(!last){ try{ last=JSON.parse(localStorage.getItem('dp_c6_refs')||'null'); }catch{} } if(last) paintRefs6(last);
+  let d; try{ d=await api2('referrals'); }catch(e){ if(!last) x.querySelector('.p6b').innerHTML='<p class="no6">Could not load</p>'; return; } S.ref=d;
+  try{ if(!DEMO) localStorage.setItem('dp_c6_refs',JSON.stringify(d)); }catch{}
+  if(!last||JSON.stringify(last)!==JSON.stringify(d)) paintRefs6(d); }
+function paintRefs6(d){ const y=document.getElementById('refs2'); if(!y) return; const rs=d.referrals||[], ps=d.partners||[]; y.querySelector('.p6h b').textContent=rs.length||'';
   y.querySelector('.p6b').innerHTML=(rs.length?`<div class="rf6">${rs.slice(0,6).map(r=>`<button onclick="refEdit(${r.id})"><span>${esc(r.person_name||'Someone')} to ${esc(r.partner||'?')}</span><em style="--c:${r.status==='won'?COL.sold:r.status==='lost'?COL.lost:COL.referral}">${esc((RST.find(s=>s[0]===r.status)||[])[1]||r.status)}${r.status==='won'&&r.fee?' $'+fm2(r.fee):''}</em></button>`).join('')}</div>`:'<p class="no6">None yet</p>')
    +(ps.length?`<p class="rp6"><small>Partners</small>${ps.map(p=>`<button onclick="S.rw=null;partnerSheet(S.ref.partners.find(x=>x.id===${p.id}))">${esc(p.name)}</button>`).join('')}</p>`:''); }
 addEventListener('resize',()=>{ clearTimeout(window.__st6); window.__st6=setTimeout(st6Fit,150); });
@@ -2187,7 +2192,9 @@ window.act2=(function(orig){ return function(...a){ hint6done(); return orig.app
     if(c){ net.then(({changed})=>{ if(changed) redraw(action); }).catch(()=>{}); return copy(c.v); }
     const {v}=await net; return copy(v); };
   // fetch the other screens' answers once Calls has shown, then every 10 minutes while the app is open
-  const warm=()=>{ if(DEMO||!S.token||document.visibilityState!=='visible') return; ['pipeline','overview'].forEach(a=>api(a).catch(()=>{})); };
+  const warm=()=>{ if(DEMO||!S.token||document.visibilityState!=='visible') return; ['pipeline','overview'].forEach(a=>api(a).catch(()=>{}));
+    [...new Set(Object.values(PERIOD_DAYS))].forEach(days=>api('work_stats',{days}).then(w=>{ S.ph6=S.ph6||{}; S.ph6[days]=w; }).catch(()=>{}));
+    api2('referrals').then(d=>{ S.ref=d; try{ localStorage.setItem('dp_c6_refs',JSON.stringify(d)); }catch{} }).catch(()=>{}); };
   const idle=f=>('requestIdleCallback' in window)?requestIdleCallback(f,{timeout:3000}):setTimeout(f,1500);
   setTimeout(()=>idle(warm),1200); setInterval(warm,10*60e3);
   // sign out clears the saved answers
