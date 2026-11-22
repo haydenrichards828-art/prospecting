@@ -1947,7 +1947,7 @@ function lift5(){ try{
   });
   ph.replaceWith(Object.assign(document.createElement('i'),{className:'l5mark',hidden:true}));
 }catch(e){ console.error(e); } }
-new MutationObserver(()=>{ clearTimeout(window.__l5t); window.__l5t=setTimeout(lift5,0); }).observe(document.getElementById('app')||document.body,{childList:true,subtree:true});
+new MutationObserver(()=>{ if(window.__l5q) return; window.__l5q=1; queueMicrotask(()=>{ window.__l5q=0; lift5(); }); }).observe(document.getElementById('app')||document.body,{childList:true,subtree:true});
 addEventListener('resize',()=>{ clearTimeout(window.__l5r); window.__l5r=setTimeout(()=>{ if(innerWidth<900&&document.querySelector('.lift5')) render(); },200); });
 
 // Copy address: an icon instead of the word
@@ -2587,4 +2587,16 @@ document.addEventListener('keydown',e=>{
     const bs=[...bar.querySelectorAll(':scope>button')].filter(vis), i=bs.findIndex(b=>b.classList.contains('on')), n=bs[i+(dir==='right'?1:-1)]; if(n){ e.preventDefault(); n.click(); } }
 },true);
 document.addEventListener('pointerdown',()=>{ document.querySelectorAll('.kf8').forEach(x=>x.classList.remove('kf8')); kfKey=null; },true);
+})();
+
+// Stats switching smoothly (23 Nov): keep Time on the phone filled while the new period loads, load all three periods up front,
+// and soften the swap of numbers and bars with a short fade instead of a hard cut
+(function(){ let prevPhone=null, prevK=null;
+  window.paintInsights=(function(o){ return function(...a){ const old=document.querySelector('#tphone');
+    if(old&&old.querySelector('.p6b').innerHTML.trim()) prevPhone={b:old.querySelector('.p6b').innerHTML,h:old.querySelector('.p6h b').textContent};
+    const k0=prevK, onStats=!!document.querySelector('#main .st6pg'); const r=o(...a); prevK=S.period;
+    try{ const t=document.getElementById('tphone'); if(t&&prevPhone&&!t.querySelector('.p6b').innerHTML.trim()){ t.querySelector('.p6b').innerHTML=prevPhone.b; t.querySelector('.p6h b').textContent=prevPhone.h; }
+      if(onStats&&k0&&k0!==S.period&&!matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('#main .st6pg .p6b, #main .st6pg .p6h b, #main .st6pg .rv6').forEach(x=>x.animate([{opacity:.45},{opacity:1}],{duration:160,easing:'ease-out'}));
+      if(!window.__ph8){ window.__ph8=1; setTimeout(()=>{ for(const d of Object.values(PERIOD_DAYS)) if(!(S.ph6&&S.ph6[d])) api('work_stats',{days:d}).then(w=>{ S.ph6=S.ph6||{}; S.ph6[d]=w; }).catch(()=>{}); },400); }
+    }catch(e){} return r; }; })(window.paintInsights);
 })();
