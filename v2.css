@@ -1511,3 +1511,17 @@ body:has(.ltab3) .overlay.show:has(#sheet.lsheet){animation:none}
  .ghost8>*{animation-name:out8!important}
  .bad8{animation:none}
 }
+
+/* From the tracking review (23 Nov) */
+.phr8{display:flex;flex-wrap:nowrap;gap:6px;margin-top:8px;overflow-x:auto;scrollbar-width:none;flex:none}.phr8::-webkit-scrollbar{display:none}.phr8 button{flex:none}
+.phr8 button{height:30px;min-height:0!important;padding:0 10px!important;border-radius:6px!important;border:1px solid var(--line2)!important;background:var(--panel)!important;color:var(--t2)!important;font-size:13px!important;font-weight:600}
+@media (hover:hover){.phr8 button:hover{color:var(--t1)!important;border-color:#3a4250!important}}
+.phr8 button.used8{color:var(--accT)!important;border-color:#2563eb66!important}
+.phr8 .phre8{width:30px;padding:0!important;display:flex;align-items:center;justify-content:center}
+@media (max-width:899px){.phr8{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:6px 0 0}.phr8::-webkit-scrollbar{display:none}.phr8 button{flex:none}}
+button.cbk .n8{font-style:normal;font-weight:700;margin-left:auto;margin-right:6px;color:var(--t2);font-variant-numeric:tabular-nums}
+button.cbk.none8{opacity:.6}
+/* page titles are titles: they don't look or act like buttons, and a quick double click doesn't select the text */
+.ph2 h1,.lh2 h1,.tabbtn{cursor:default!important;user-select:none;-webkit-user-select:none}
+/* clicking outside a panel closes it */
+.overlay.show{cursor:default}
