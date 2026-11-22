@@ -1214,7 +1214,7 @@ const COL={no_answer:'#7C3AED',not_selling:'#d6455a',call_back:'#d97706',lead:'#
 
 // ---------- Side bar on computers: every page one click away (the menu took 7 to 30 seconds to use) ----------
 // Pipeline opens Leads, Appraisals and Listings when you point at it. The button at the top folds the bar down to just the icons.
-const SIDE=[['calls','Calls','phone'],['pipe','Pipeline','appr',[['leads','Leads','users'],['appraisal','Appraisals','appr'],['listed','Listings','star']]],['drops','Card drops','mail'],['insights','Stats','chart']];
+const SIDE=[['calls','Calls','phone'],['pipe','Pipeline','appr',[['leads','Leads','users'],['appraisal','Appraisals','appr'],['listed','Listings','star'],['sold','Sold','tag']]],['drops','Card drops','mail'],['insights','Stats','chart']];
 const LOGO2=`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2.2" width="20" height="15.6" rx="4.2" fill="#3b82f6"/><path d="M5.2 16.8 4.4 22.4 10.6 17.4z" fill="#3b82f6" stroke="#3b82f6" stroke-width="1" stroke-linejoin="round"/><rect x="15.3" y="5.3" width="1.7" height="3.4" rx=".4" fill="#fff"/><path d="M5.8 9.9 12 5l6.2 4.9" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.9 9.4 12 5.4l5.1 4v6.3H6.9z" fill="#fff"/><path d="M10.5 15.7v-4a.4.4 0 0 1 .4-.4h2.2a.4.4 0 0 1 .4.4v4z" fill="#3b82f6"/></svg>`;
 function sideFolded(){ try{ return localStorage.getItem('dp_side')==='1'; }catch{ return false; } }
 function sideFold(){ try{ localStorage.setItem('dp_side',sideFolded()?'0':'1'); }catch{} sideApply(); }
@@ -1225,8 +1225,8 @@ function sideDrag(e){ const n=document.querySelector('.side2'); if(!n) return; e
   const mv=ev=>{ moved=true; const w=ev.clientX-x0; const fold=w<120; try{ localStorage.setItem('dp_side',fold?'1':'0'); if(!fold) localStorage.setItem('dp_side_w',String(Math.round(Math.min(380,Math.max(150,w))))); }catch{} sideApply(); };
   const up=()=>{ window._rzT=moved?0:Date.now(); n.classList.remove('drag'); document.body.classList.remove('rzing'); removeEventListener('pointermove',mv); removeEventListener('pointerup',up); };
   addEventListener('pointermove',mv); addEventListener('pointerup',up); }
-function sideGo(k){ closePop2(); closeOv(); if(k==='appraisal'||k==='listed'){ S.pst=k; go('pipeline'); } else go(k); }
-function sideOn(k){ if(S.searching) return false; if(k==='appraisal'||k==='listed') return S.tab==='pipeline'&&(S.pst||'appraisal')===k; return S.tab===k; }
+function sideGo(k){ closePop2(); closeOv(); if(k==='appraisal'||k==='listed'||k==='sold'){ S.pst=k; go('pipeline'); } else go(k); }
+function sideOn(k){ if(S.searching) return false; if(k==='appraisal'||k==='listed'||k==='sold') return S.tab==='pipeline'&&(S.pst||'appraisal')===k; return S.tab===k; }
 function sideHTML(){ const nl=(S.leads||[]).filter(l=>newMatches(l).length).length;
   const item=(k,l,ic,sub)=>`<button class="si2${sideOn(k)?' on':''}${sub?' sub':''}" onclick="sideGo('${k}')" title="${esc(l)}"${sideOn(k)?' aria-current="page"':''}>${ic2(ic,sub?16:19)}<span class="sl">${esc(l)}</span>${k==='leads'&&nl?'<i class="dot"></i>':''}</button>`;
   const inPipe=['leads','pipeline'].includes(S.tab)&&!S.searching;
@@ -1385,7 +1385,7 @@ window.viewPipeline=(function(orig){ return async function(local){ const r=await
     document.querySelectorAll('#main .lg4[onclick^="pipeSheet("]').forEach(el=>{ const id=+el.getAttribute('onclick').match(/\d+/)[0], x=(S.pipe||[]).find(p=>p.property_id===id), c=el.querySelector('.bt3:not(.pb4)'); if(!x||!c) return;
       const soon=x.appt_at&&new Date(x.appt_at)>Date.now()&&new Date(x.appt_at)-Date.now()<36*3600e3, bk=c.querySelector('b')?.textContent||'', src=c.querySelector('span')?.textContent||'';
       c.innerHTML=`<b class="apt4${x.appt_at?'':' none'}${soon?' soon':''}" onclick="event.stopPropagation();apptEdit2(${id})">${x.appt_at?esc(apptTxt2(x.appt_at)):'Set a time'}</b><span>Booked ${esc(bk)}${src?' · '+esc(src.replace(/^From /,'from ')):''}</span>`; }); }
-  { const seg=document.querySelector('#main .pph2 .seg2.mini'); if(seg){ if(desk2()) seg.remove(); else seg.querySelectorAll('button').forEach(b=>{ const k=(b.getAttribute('onclick')||'').match(/S.pst='(\w+)'/); if(k&&!['appraisal','listed'].includes(k[1])) b.remove(); }); }
+  { const seg=document.querySelector('#main .pph2 .seg2.mini'); if(seg){ if(desk2()) seg.remove(); else seg.querySelectorAll('button').forEach(b=>{ const k=(b.getAttribute('onclick')||'').match(/S.pst='(\w+)'/); if(k&&!['appraisal','listed','sold'].includes(k[1])) b.remove(); }); }
     const pst=S.pst||'appraisal', n=k=>(S.pipe||[]).filter(x=>ptab(x.stage)===k).length, ex=['sold','withdrawn','lost'].filter(k=>n(k));
     if(pst!=='appraisal'&&(ex.length||pst!=='listed')){ document.querySelector('#main .pp2')?.insertAdjacentHTML('beforeend',`<div class="pex2">${pst!=='listed'?`<button onclick="S.pst='listed';viewPipeline(true)">Back to listings</button>`:''}${ex.filter(k=>k!==pst).map(k=>`<button onclick="S.pst='${k}';viewPipeline(true)">${n(k)} ${PST[k][0].toLowerCase()}</button>`).join('')}</div>`); } }
   document.querySelectorAll('.tabbtn').forEach(t=>t.textContent=tabName());
@@ -1603,8 +1603,8 @@ function pipeTable3(local){
      <span class="lb4">${x.last_sale_date?`<b class="due3">${x.last_sale_price?esc(price2(x.last_sale_price)):'Price n/a'}</b><i>${String(x.last_sale_date).slice(0,4)}</i>`:'<i>No sale on record</i>'}</span>
      <span class="ac3">${PNEXT[x.stage].map(([s2,l],i)=>`<button class="${i===0&&!pBad(s2)?'go':''}" onclick="event.stopPropagation();setStage(${id},'${s2}')">${l}</button>`).join('')}${x.phone?`<button class="cl" aria-label="Call" onclick="event.stopPropagation();if(hoursOk())openUrl('tel:${esc(String(x.phone).replace(/[^0-9+]/g,''))}')">${ic2('phone',16)}</button>`:'<span class="cl clx" aria-hidden="true"></span>'}</span></div>`; }).join('');
   $("#main").className='v2main';
-  $("#main").innerHTML=`<div class="pg2 pl3"><div class="ph2"><span class="muted" style="font-size:14px">${list.length} ${list.length===1?'person':'people'}</span><button class="b2 pri" onclick="openAddPipe()" aria-label="Add">${ic2('plus',18)}<span>Add</span></button></div>
-   ${list.length?`<div class="ltab3">${head}${body}</div>`:`<div class="empty2"><b>No ${P[0].toLowerCase()} yet</b>${S.pst==='appraisal'?'Book one from the call list and it shows up here.':''}</div>`}</div>`;
+  $("#main").innerHTML=`<div class="pg2 pl3"><div class="ph2"><span class="muted" aria-label="${list.length} ${list.length===1?'person':'people'}">${list.length}</span><button class="b2 pri" onclick="openAddPipe()" aria-label="Add">${ic2('plus',18)}<span>Add</span></button></div>
+   ${list.length?`<div class="ltab3">${head}${body}</div>`:`<div class="empty2"><b>${S.pst==='sold'?'Nothing sold yet':`No ${P[0].toLowerCase()} yet`}</b>${S.pst==='appraisal'?'Book one from the call list and it shows up here.':''}</div>`}</div>`;
 }
 // Pipeline page: Appraisals and Listings tables on desktop
 window.viewPipeline=(function(orig){ return async function(local){ const r=await orig(local); if(S.pst!=='board'&&desk2()&&PST[S.pst]) pipeTable3(); return r; }; })(window.viewPipeline);

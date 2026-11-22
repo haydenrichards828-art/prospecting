@@ -1363,3 +1363,5 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline-offset:-
 @media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2{min-width:0;overflow:hidden}}
 @media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) .lt3{grid-template-columns:minmax(120px,1.5fr) 72px minmax(110px,1fr)!important}}
 @media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) .lt3>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+/* the count after a page title: the number in a small box, like the counts in the rail and the board (it used to read "1 person") */
+header.top2 .hc5{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 8px;margin-left:-12px!important;background:#1e232b;border-radius:4px;font-size:13px!important;font-weight:600;color:#a3acb9!important}
