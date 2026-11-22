@@ -1409,3 +1409,16 @@ header.top2 .hc5{display:inline-grid;place-items:center;min-width:24px;height:24
 @keyframes ok8{from{transform:scale(.6);opacity:0}}
 @keyframes tick8{from{stroke-dashoffset:24}}
 @media (prefers-reduced-motion:reduce){.sp8,.pb8.ind i,.ok8,.ok8 svg,.b2.busy8 svg{animation:none}}
+/* Stats empty states (23 Nov) */
+.e6{flex:1;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:8px 0;text-align:center}
+.eg6{width:min(220px,80%);opacity:.9;-webkit-mask-image:linear-gradient(#000 40%,transparent);mask-image:linear-gradient(#000 40%,transparent)}
+.eg6 i{display:block;background:#1e242d;border-radius:4px}
+.eg6.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.eg6.grid i{aspect-ratio:1.6;background:#2563eb;border-radius:3px;filter:saturate(.35) brightness(.55)}
+.eg6.bars{display:flex;flex-direction:column;gap:8px}.eg6.bars i{height:10px}
+.eg6.cols{display:flex;align-items:flex-end;gap:8px;height:84px}.eg6.cols i{flex:1;border-radius:4px 4px 2px 2px}
+.eg6.rows{display:flex;flex-direction:column;gap:10px}.eg6.rows i{height:12px}.eg6.rows i:nth-child(2){width:84%}.eg6.rows i:nth-child(3){width:66%}.eg6.rows i:nth-child(4){width:48%}
+.eg6.time{display:flex;gap:4px;height:10px}.eg6.time i{border-radius:999px}
+.eg6.people{width:auto;-webkit-mask-image:none;mask-image:none}.eg6.people svg{width:44px;height:44px;fill:none;stroke:#3a4250;stroke-width:1.6;stroke-linecap:round}
+.e6t{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px;color:var(--t2)}.e6t b{font-weight:600;color:var(--t2)}
+.e6t span{font-size:12px;color:var(--t3);font-variant-numeric:tabular-nums}
+.e6p{width:140px;height:4px;border-radius:999px;background:#1e242d;overflow:hidden}.e6p i{display:block;height:100%;border-radius:999px;background:var(--acc)}

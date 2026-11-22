@@ -2031,24 +2031,24 @@ window.paintInsights=function(ov){ S.period=S.period||'week'; const k=S.period, 
   const money=n=>'$'+fm(n);
   const res=`<section class="res2" aria-label="Results this ${k}">${tile('Appraisals',COL.appraisal,a.appraisals,b.appraisals)}${tile('Listings',COL.listed,a.listed,b.listed)}${tile('Sold',COL.sold,a.sold,b.sold)}${tile('Referrals',COL.referral,a.referrals,b.referrals)}${tile('Referral fees',COL.referral,a.fees,b.fees,money)}${tile('Info sent',COL.sent,a.sent,b.sent)}</section>`;
   const pan=(id,title,val,body,extra='')=>`<section class="p6" id="${id}"><div class="p6h"><span>${title}</span>${extra}<b>${val}</b></div><div class="p6b">${body}</div></section>`;
-  const none=t=>`<p class="no6">${t}</p>`;
+  const none=t=>empty6('cols',t);
   // calls: progress to this period's goal, then the history as bars scaled to the calls themselves
   const raw=(ov.periods||{})[k]||[], MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const pl=s=>{ const d=new Date(s+'T12:00:00Z'); return k==='week'?`${d.getUTCDate()} ${MON[d.getUTCMonth()]}`:k==='month'?MON[d.getUTCMonth()]:`Q${Math.floor(d.getUTCMonth()/3)+1}`; };
   const now=raw.length?+raw[raw.length-1].n||0:0, goal=(ov.settings?.daily_target||100)*PERIOD_WD[k], mx=Math.max(1,...raw.map(x=>+x.n||0));
   const calls=raw.length?`<div class="m6"><i style="width:${Math.min(100,now/goal*100)}%"></i></div><div class="m6l"><span>${Math.round(now/goal*100)}% of goal</span><span>goal ${fm(goal)}</span></div>
-    <div class="cb6">${raw.map((x,i)=>{ const v=+x.n||0, p=v/mx*84, last=i===raw.length-1; return `<div class="${last?'on':''}"><div class="t6"><b style="bottom:calc(${p}% + 4px)">${fm(v)}</b><i style="height:${Math.max(p,v?2:0)}%"></i></div><span>${raw.length>8&&(raw.length-1-i)%2?'':pl(x.start)}</span></div>`; }).join('')}</div>`:none('No calls yet');
+    <div class="cb6">${raw.map((x,i)=>{ const v=+x.n||0, p=v/mx*84, last=i===raw.length-1; return `<div class="${last?'on':''}"><div class="t6"><b style="bottom:calc(${p}% + 4px)">${fm(v)}</b><i style="height:${Math.max(p,v?2:0)}%"></i></div><span>${raw.length>8&&(raw.length-1-i)%2?'':pl(x.start)}</span></div>`; }).join('')}</div>`:empty6('cols','No calls yet');
   // call to listing: one row per step, rate against goal
   const ck={week:'7',month:'30',quarter:'90'}[k], c=(ov.cohort||{})[ck]||{}, h=+c.homes||0, per=v=>h?Math.round(1000*v/h)/10:0, f1=v=>String(v).replace(/\.0$/,'');
   const steps=[['Answered',+c.reached||0,75],['Appraisals',+c.appraisals||0,5],['Listed',+c.listed||0,3]];
   const fun=h?`<div class="ft6"><span></span><em>Homes</em><em>Per 100</em><em>Goal</em>
-    <span>Called</span><b>${fm(h)}</b><b></b><em></em>${steps.map(([l,v,g])=>{ const p=per(v); return `<span>${l}</span><b>${fm(v)}</b><b class="${p>=g?'ok':''}">${f1(p)}</b><em>${g}</em>`; }).join('')}</div>${h<300?`<p class="ft6n">Early numbers, ${h} of 300 homes</p>`:''}`:none('No calls yet');
+    <span>Called</span><b>${fm(h)}</b><b></b><em></em>${steps.map(([l,v,g])=>{ const p=per(v); return `<span>${l}</span><b>${fm(v)}</b><b class="${p>=g?'ok':''}">${f1(p)}</b><em>${g}</em>`; }).join('')}</div>${h<300?`<p class="ft6n">Early numbers, ${h} of 300 homes</p>`:''}`:empty6('rows','No calls yet');
   // best time: the grid without its chips and key, the best window becomes the panel number
   const tot=(ov.times||[]).reduce((s,t)=>s+(+t.calls||0),0); let heat='', best='';
   if(tot>=100){ const d=document.createElement('div'); d.innerHTML=heatGrid2(ov.times); const bt=d.querySelector('.tags2 .on'); best=bt?bt.textContent.replace(/^Best: weekdays /,''):''; d.querySelector('.tags2')?.remove(); d.querySelector('.leg2')?.remove(); heat=d.innerHTML; }
-  else heat=`<div class="m6"><i style="width:${tot}%"></i></div><div class="m6l"><span>Shows at 100 calls</span><span>${tot} so far</span></div>`;
+  else heat=empty6('grid','Ready at 100 calls',tot/100,`${tot} of 100`);
   const subs=ov.suburbs||[], smax=Math.max(1,...subs.map(s=>s.n));
-  const sub=subs.length?`<div class="sr6">${subs.slice(0,8).map((s,j)=>`<span>${esc(s.suburb)}</span><div><i style="width:${s.n/smax*100}%;${j?'':'background:var(--acc)'}"></i></div><b>${s.n}</b>`).join('')}</div>`:none('None booked in 90 days');
+  const sub=subs.length?`<div class="sr6">${subs.slice(0,8).map((s,j)=>`<span>${esc(s.suburb)}</span><div><i style="width:${s.n/smax*100}%;${j?'':'background:var(--acc)'}"></i></div><b>${s.n}</b>`).join('')}</div>`:empty6('bars','No appraisals in 90 days');
   const live=(ov.versions||[]).find(v=>v.approved);
   const l30=ov.last30||{}, grp=g=>{ const xs=(ov.groups||[]).filter(x=>x.grp===g), cn=xs.reduce((s,x)=>s+(+x.connected||0),0), ap=xs.reduce((s,x)=>s+(+x.appraisals||0),0); return cn?(100*ap/cn).toFixed(1):'0.0'; };
   $("#main").className='v2main';
@@ -2076,7 +2076,7 @@ async function phone6(){ const days=PERIOD_DAYS[S.period||'week'], el=()=>docume
   S.ph6=S.ph6||{}; S.ph6[days]=w; if(!last||JSON.stringify(last)!==JSON.stringify(w)) paintPhone6(w); }
 function paintPhone6(w){ const el=()=>document.getElementById('tphone');
   const x=el(); if(!x) return; const t=w.totals||{}, body=x.querySelector('.p6b'), head=x.querySelector('.p6h b');
-  if(!t.calls){ body.innerHTML='<p class="no6">No calls yet</p>'; return; }
+  if(!t.calls){ body.innerHTML=empty6('time','No calls yet'); return; }
   const noans=t.calls-t.answered, talk=(t.talk_s||0)*t.answered, ring=(t.ring_s||0)*noans+(t.talk_s?0:(t.ring_s||0)*t.answered), betw=((t.prep_s||0)+(t.wrap_s||0))*t.calls, est=talk+ring+betw;
   const act=t.active_s||est, sc=est?act/est:0; head.textContent=hm2(act);   // the parts are typical times, so scale them to the real working time
   if(!est){ body.innerHTML=`<div class="tq6"><div><b>${t.calls}</b><span>Calls</span></div></div>`; return; }
@@ -2090,7 +2090,7 @@ async function refs6(){ const x=document.getElementById('refs2'); if(!x) return;
   try{ if(!DEMO) localStorage.setItem('dp_c6_refs',JSON.stringify(d)); }catch{}
   if(!last||JSON.stringify(last)!==JSON.stringify(d)) paintRefs6(d); }
 function paintRefs6(d){ const y=document.getElementById('refs2'); if(!y) return; const rs=d.referrals||[], ps=d.partners||[]; y.querySelector('.p6h b').textContent=rs.length||'';
-  y.querySelector('.p6b').innerHTML=(rs.length?`<div class="rf6">${rs.slice(0,6).map(r=>`<button onclick="refEdit(${r.id})"><span>${esc(r.person_name||'Someone')} to ${esc(r.partner||'?')}</span><em style="--c:${r.status==='won'?COL.sold:r.status==='lost'?COL.lost:COL.referral}">${esc((RST.find(s=>s[0]===r.status)||[])[1]||r.status)}${r.status==='won'&&r.fee?' $'+fm2(r.fee):''}</em></button>`).join('')}</div>`:'<p class="no6">None yet</p>')
+  y.querySelector('.p6b').innerHTML=(rs.length?`<div class="rf6">${rs.slice(0,6).map(r=>`<button onclick="refEdit(${r.id})"><span>${esc(r.person_name||'Someone')} to ${esc(r.partner||'?')}</span><em style="--c:${r.status==='won'?COL.sold:r.status==='lost'?COL.lost:COL.referral}">${esc((RST.find(s=>s[0]===r.status)||[])[1]||r.status)}${r.status==='won'&&r.fee?' $'+fm2(r.fee):''}</em></button>`).join('')}</div>`:empty6('people','No referrals yet'))
    +(ps.length?`<p class="rp6"><small>Partners</small>${ps.map(p=>`<button onclick="S.rw=null;partnerSheet(S.ref.partners.find(x=>x.id===${p.id}))">${esc(p.name)}</button>`).join('')}</p>`:''); }
 addEventListener('resize',()=>{ clearTimeout(window.__st6); window.__st6=setTimeout(st6Fit,150); });
 
@@ -2428,3 +2428,14 @@ function addMissing7(addr,sub){ addPerson2(); setTimeout(()=>{ const a=$('#ap_ad
   try{ const s=JSON.parse(sessionStorage.getItem(KEY)||'null');
     if(s&&ok(s.tab)&&s.tab!=='calls'&&S.token&&S.token!=='demo'){ S.tab=s.tab; if(s.pst) S.pst=s.pst; document.body.classList.toggle('dwide',s.tab==='drops'); } }catch(e){}
 })();
+
+// Stats empty states (23 Nov): a faint preview of what the panel will show, one line, and progress where there is some
+function empty6(kind,line,prog,progTxt){
+  const g={
+    grid:`<div class="eg6 grid">${Array.from({length:35},(_,i)=>`<i style="opacity:${[.35,.6,.9,.5,.25,.7,.45][i%7]*(.5+((i*7)%5)/8)}"></i>`).join('')}</div>`,
+    bars:`<div class="eg6 bars">${[92,70,54,40,28].map(w=>`<i style="width:${w}%"></i>`).join('')}</div>`,
+    cols:`<div class="eg6 cols">${[30,55,40,70,50,85,60].map(h=>`<i style="height:${h}%"></i>`).join('')}</div>`,
+    rows:`<div class="eg6 rows">${[0,1,2,3].map(()=>'<i></i>').join('')}</div>`,
+    time:`<div class="eg6 time"><i style="flex:1"></i><i style="flex:.3"></i><i style="flex:2.4"></i></div>`,
+    people:`<div class="eg6 people"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.2 3-5 6-5s5.4 1.8 6 5"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2c2.6-.3 4.8 1.2 5.5 4.3"/></svg></div>`}[kind]||'';
+  return `<div class="e6">${g}<div class="e6t"><b>${esc(line)}</b>${prog!=null?`<div class="e6p"><i style="width:${Math.max(2,Math.min(100,prog*100))}%"></i></div><span>${esc(progTxt||'')}</span>`:''}</div></div>`; }
