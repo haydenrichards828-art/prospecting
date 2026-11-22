@@ -542,7 +542,9 @@ window.viewSettings=(function(orig){ return async function(){ await orig();
   m.insertAdjacentHTML('afterbegin',`<div class="ph2"><h1>Settings</h1></div>
    <div class="g2" style="margin-bottom:14px">${row2('var(--cb)','skip','Auto dial next','After No answer or Not selling, ring the next person straight away',`<span class="sw2 ${S.autodial?'on':''}"><i></i></span>`,'toggleAuto()')}${row2('var(--ns)','ban','Taken off the list','Problems reported and do not calls, bring people back',chev2(),'removedSheet()')}${row2('var(--cb)','clock','Booked call backs','Change the time or cancel',chev2(),'upcomingCB()')}${row2('#4b5565','users','Sign out','','','logout()')}</div>`); }; })(window.viewSettings);
 function toggleAuto(){ S.autodial=!S.autodial; try{localStorage.setItem("dp_autodial",S.autodial?"1":"0")}catch{} document.querySelectorAll('.sw2').forEach(s=>s.classList.toggle('on',S.autodial)); toast(S.autodial?"Auto dial is on":"Auto dial is off"); }
+// Card drops page: marks the page for the new styles and drops the area average text
 window.drawDrops=(function(orig){ return function(){ orig(); $("#main").classList.add('drops2'); $("#main").querySelectorAll('.muted').forEach(e=>{ if(/\(area avg \d+\)/.test(e.textContent)) e.textContent=e.textContent.replace(/\s*\(area avg \d+\)/g,''); }); const top=$("#main .top"); if(top&&!top.querySelector('.pt2')) top.insertAdjacentHTML('afterbegin','<h1 class="pt2">Card drops</h1>'); }; })(window.drawDrops);
+// Texts page: page title in the new style
 window.viewMessages=(function(orig){ return async function(){ await orig(); const h=$("#main h2"); if(h){ h.outerHTML='<div class="ph2"><h1>Texts</h1></div>'; } }; })(window.viewMessages);
 
 // ---------- demo data: photos, sales and history so the preview looks real ----------
@@ -769,6 +771,7 @@ function phoneBad(inp,msg){ if(!inp) return; inp.classList.add('bad2'); inp.setA
   const d=inp.closest('#deditor'); if(d) d.hidden=false; inp.focus(); inp.oninput=()=>{ inp.classList.remove('bad2'); inp.removeAttribute('aria-invalid'); n.remove(); }; }
 // Moves a word typed in the phone box onto the end of the name, then clears the phone box
 function phoneToName(){ const p=$('#d_phone'), n=$('#d_name'); if(!p||!n) return; n.value=(n.value.trim()+' '+p.value.trim()).trim(); p.value=''; p.dispatchEvent(new Event('input',{bubbles:true})); n.focus(); }
+// Saving a lead: checks the phone box holds a number, not a name
 window.saveLeadAll=(function(orig){ return async function(id){ const p=$('#d_phone'), e=p&&phoneProblem(p.value);
   if(e){ phoneBad(p,e); if(!/\d/.test(p.value)) p.parentElement.querySelector('.err2').insertAdjacentHTML('beforeend',` <button class="lnk2" onclick="phoneToName()">Move it to the name</button>`);
     const b=$('#lead_save'); if(b){ b.textContent='Fix the phone first'; b.classList.add('err'); } return; }
@@ -782,6 +785,7 @@ window.rejectMatch=(function(){ return async function(leadId,listingId,from){ co
   const prev=l.buy; l.buy=buy; redraw();
   try{ await api("save_lead",{id:leadId,lead:{buy}}); toast(from==='listing'?`${leadTitle(l)} removed from this home`:"Removed. It won't show for them again",()=>{ l.buy=prev; api("save_lead",{id:leadId,lead:{buy:prev||{}}}).catch(()=>{}); redraw(); }); }
   catch(e){ l.buy=prev; redraw(); toast("Couldn't save that. "+e.message); } }; })();
+// Listing matches: shows each buyer's details on the match cards
 window.openListingMatches=(function(orig){ return function(lid){ orig(lid);
   const t=(S.listings||[]).find(x=>x.id===lid); if(!t) return; const by=buyersFor(t);
   [...document.querySelectorAll('#sheet .lsec .mcard')].forEach((c,i)=>{ const x=by[i]; if(!x) return;
@@ -814,8 +818,10 @@ async function saveContact2(id){ const n=$('#ec_name').value.trim(), p=$('#ec_ph
   saveCallsCache(); closeOv();
   if(S.ecFromSearch){ S.ecFromSearch=false; toast(ph?'Saved. They go on the call list on days they rank high enough':'Saved'); if(S.searching&&S.sq) runSearch(S.sq); return; }
   drawList(); toast('Saved'); }
+// Call screen More: adds Edit name and phone
 window.moreSheet2=(function(orig){ return function(id){ S.ecFromSearch=false; S.ecFrom=null; orig(id);
   const g=document.querySelector('#sheet .sb2 .g2'); if(g) g.insertAdjacentHTML('beforeend',row2('#4b5565','users','Edit name and phone','Fix a wrong name or number',chev2(),`editContact2(${id})`)); }; })(window.moreSheet2);
+// Call back sheet: adds Months or years from now
 window.callbackSheet2=(function(orig){ return function(id){ orig(id);
   const gs=document.querySelectorAll('#sheet .sb2 .g2'); const g=gs[gs.length-1]; if(g) g.insertAdjacentHTML('beforeend',row2('#4b5565','clock','Months or years from now','For someone who just sold or bought',chev2(),`laterSheet2(${id})`)); }; })(window.callbackSheet2);
 function laterSheet2(id){ openSheet2('Call back in',`<div class="later2">${LATER.map(([l,m])=>`<button onclick="closeOv();record(${id},'call_back',monthsAhead(${m}))"><b>${l}</b><span>${esc(longLab(monthsAhead(m)))}</span></button>`).join('')}</div>`,`callbackSheet2(${id})`); }
@@ -839,11 +845,14 @@ async function savePerson2(){ const v=k=>$('#ap_'+k).value.trim(), e=phoneProble
 // Booked call backs: reminders added by hand move and cancel on their own record
 window.saveMoveCB=(function(orig){ return async function(i){ const c=S._ucb[i]; if(!c||!c.reminder_id) return orig(i); const v=$('#mcb2').value; if(!v) return toast('Pick a date and time');
   try{ await api("reminder",{id:c.reminder_id,callback_at:sydToISO(v)}); }catch(e){ return toast(e.message); } toast('Call back moved to '+fmt(sydToISO(v))); await loadCallbacks(); upcomingCB(); }; })(window.saveMoveCB);
+// Cancelling a booked call back asks first
 window.cancelCB=(function(orig){ return async function(i){ const c=S._ucb[i]; if(!c||!c.reminder_id) return orig(i);
   if(!(await uiAsk(`Cancel the call back with ${people(c.owner_name)[0]||'them'}?`,{ok:'Cancel call back'}))) return upcomingCB();
   try{ await api("reminder",{id:c.reminder_id,cancel:true}); }catch(e){ return toast(e.message); } toast('Call back cancelled'); await loadCallbacks(); upcomingCB(); }; })(window.cancelCB);
+// Booked call backs: Add a person at the top
 window.upcomingCB=(function(orig){ return async function(){ await orig(); const sb=document.querySelector('#sheet .sb2');
   if(sb&&!sb.querySelector('.addp2')) sb.insertAdjacentHTML('afterbegin',`<div class="g2 addp2">${row2('var(--acc)','lead','Add a person','Someone to ring back months or years from now',chev2(),'addPerson2()')}</div>`); }; })(window.upcomingCB);
+// Call list rail: Add a person button
 window.drawList2=(function(orig){ return function(){ orig(); const r=document.querySelector('.rail2 .cbk'); if(r&&!document.querySelector('.rail2 .addp')) r.insertAdjacentHTML('afterend',`<button class="cbk addp" onclick="addPerson2()">Add a person<span>${ic2('lead',14)}</span></button>`); }; })(window.drawList2);
 // Demo mode keeps the new actions working without a server
 window.demoApi=(function(orig){ return function(action,body){ const D=window.__demo;
@@ -860,6 +869,7 @@ window.openSearchProp=(function(orig){ return function(pid,inList){ orig(pid,inL
   sh.insertAdjacentHTML('beforeend',`<button class="ghost" style="width:100%;margin-top:8px" onclick="S.ecFrom=null;S.ecFromSearch=true;editContact2(${pid})"><i class="ti ti-pencil"></i>${has?'Edit owner name and phone':'Add owner name and phone'}</button>`); }; })(window.openSearchProp);
 // Enquiry call lists (owners near a home buyers are chasing) show as their own group, first in the list
 window.grp=(function(orig){ return function(r){ return r&&r.campaign?r.campaign:orig(r); }; })(window.grp);
+// Call list groups: special lists (call sheets) come before the suburbs
 window.bySuburb=(function(orig){ return function(rows){ const c=rows.filter(r=>r.campaign).sort((a,b)=>a.rank-b.rank); return [...c,...orig(rows.filter(r=>!r.campaign))]; }; })(window.bySuburb);
 
 // A stage change moves the home straight away; the server catches up behind it
@@ -1021,6 +1031,7 @@ function svFill(el,pid,size){ if(!el||el.dataset.sv) return; el.dataset.sv='1';
     if(size==='big'){ el.querySelector('.credit')?.remove(); el.insertAdjacentHTML('beforeend',`<span class="credit" data-s="Google${p.date?' · '+esc(p.date):''}">Google${p.date?' · '+esc(p.date.replace(/^(\d{4})-(\d{2})$/,(m,y,mo)=>MONS[+mo-1]+' '+y)):''}</span>${au?`<button class="svt" onclick="event.stopPropagation();svToggle(this)" data-a="${esc(au)}" data-s="${esc(p.url)}">Aerial</button>`:''}`); } }); }
 function svToggle(b){ const el=b.closest('.photo2'), im=el.querySelector('img'), cr=el.querySelector('.credit'), toA=b.textContent==='Aerial'; im.src=toA?b.dataset.a:b.dataset.s; b.textContent=toA?'Street':'Aerial'; el.classList.toggle('svon',!toA);
   if(cr){ if(!cr.dataset.g) cr.dataset.g=cr.textContent; cr.textContent=toA?'Imagery © NSW Spatial Services':cr.dataset.g; } }
+// Call screen: fills the house photos with Street View when there is no aerial
 window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); if(!r) return;
   const big=document.querySelector('#main .prop2 .photo2'), small=document.querySelector('#main .pidr2 .photo2');
   if(big&&big.offsetParent) svFill(big,r.property_id,'big'); if(small&&small.offsetParent) svFill(small,r.property_id,'small');
@@ -1039,6 +1050,7 @@ window.numBtn=(function(orig){ return function(r,cls){ const a=orig(r,cls); if(!
   const n1=firstName(people(r.owner_name)[0]||''), n2=firstName(r.owner2_name||'');
   const one=n1&&n1!=='them'?a.replace(/(<span style="[^"]*">)/,`$1<em class="who2">${esc(n1)}</em>`):a;
   return `<div class="nums2">${one}<a class="${cls} ph2nd" href="tel:${esc(telOf(r.phone2))}" onclick="if(!hoursOk(event))return false;markDial(${r.property_id})">${ic2('phone',cls==='num2'?24:20,'#fff')}<span${cls==='num2'?' style="flex:1"':''}>${n2&&n2!=='them'?`<em class="who2">${esc(n2)}</em>`:''}${esc(fmtPh2(r.phone2))}</span></a></div>`; }; })(window.numBtn);
+// Call screen: shows the second owner's name when it differs
 window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); if(!r||!r.owner2_name) return;
   const known=people(r.owner_name).map(s=>s.toLowerCase()); if(known.includes(r.owner2_name.toLowerCase())) return;
   document.querySelectorAll('#main .nm2, #main .pidr2 h1').forEach(h=>{ if(h.dataset.two) return; h.dataset.two='1'; h.insertAdjacentHTML('beforeend',`<span class="and2"> &amp; ${esc(firstName(r.owner2_name))}</span>`); });
@@ -1047,6 +1059,7 @@ window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); 
 // Phone boxes tidy themselves into groups when you leave them (0412 345 678, 02 4283 5242)
 document.addEventListener('blur',e=>{ const t=e.target; if(!(t instanceof HTMLInputElement)||!(t.type==='tel'||t.inputMode==='tel'||/phone/i.test(t.id))) return;
   const d=t.value.replace(/\D/g,''); if(/^0\d{9}$/.test(d)) t.value=fmtPh2(d); },true);
+// Marking Listed asks first
 window.record=(function(orig){ return async function(id,o,cb){ if(o==='listed'&&!(await uiAsk('Mark as Listed with Dignam?',{ok:'Yes, listed'}))) return; return orig(id,o,cb); }; })(window.record);
 // Tap the name on the call screen to fix names and numbers straight away
 window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); if(!r) return;
@@ -1150,9 +1163,11 @@ async function saveRef(){ const w=S.rw; if(!S.rfp) return toast('Pick who you’
 // Entry points: lead sheet, call screen More, pipeline sheet, open home list
 window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const l=(S.leads||[]).find(x=>x.id===id); const c=document.querySelector('#sheet .lcta'); if(!l||!c||c.querySelector('.snd2')) return;
   c.insertAdjacentHTML('afterend',`<div class="lcta snd2"><button class="ghost" onclick="sendInfo({name:${esc(JSON.stringify(leadTitle(l)))},phone:${esc(JSON.stringify(l.phone||''))},lead_id:${l.id},property_id:${l.property_id||'null'},lead:(S.leads||[]).find(x=>x.id===${l.id})})">${ic2('msg',18)} Send info</button><button class="ghost" onclick="referSheet({name:${esc(JSON.stringify(leadTitle(l)))},phone:${esc(JSON.stringify(l.phone||''))},lead_id:${l.id},property_id:${l.property_id||'null'}})">${ic2('users',18)} Refer</button></div>`); }; })(window.openLead);
+// Call screen More: adds Refer to a partner
 window.moreSheet2=(function(orig){ return function(id){ orig(id); const r=findRow(id); const g=document.querySelector('#sheet .sb2 .g2'); if(!g||!r) return;
   const who=JSON.stringify({name:people(r.owner_name)[0]||'',phone:r.owner_phone||r.phone||'',property_id:id});
   g.insertAdjacentHTML('afterbegin',row2('var(--acc)','msg','Send info','Recent street sales, a listing, a check in',chev2(),`sendInfo(${esc(who)})`)+row2('#6366f1','users','Refer','To a broker, conveyancer or agent you work with',chev2(),`referSheet(${esc(who)})`)); }; })(window.moreSheet2);
+// Pipeline sheet: adds Refer to a partner
 window.pipeSheet=(function(orig){ return function(id){ orig(id); const x=(S.pipe||[]).find(r=>r.property_id===id); const gs=document.querySelectorAll('#sheet .sb2 .g2'); const g=gs[gs.length-1]; if(!g||!x) return;
   const who=JSON.stringify({name:people(x.owner_name)[0]||'',phone:x.phone||'',property_id:id,lead_id:x.lead_id||null});
   g.insertAdjacentHTML('beforeend',row2('var(--acc)','msg','Send info','',chev2(),`sendInfo(${esc(who)})`)+row2('#6366f1','users','Refer','',chev2(),`referSheet(${esc(who)})`)); }; })(window.pipeSheet);
@@ -1217,6 +1232,7 @@ function sideHTML(){ const nl=(S.leads||[]).filter(l=>newMatches(l).length).leng
    <div class="sh2"><span class="brand2">${LOGO2}</span><span class="bn2">Prospect</span><button class="fold2" onclick="sideFold()" aria-label="Show icons only or icons and names">${ic2('menu',18)}</button></div>
    <div class="sg2">${SIDE.map(([k,l,ic,kids])=>kids?`<div class="grp2${inPipe?' open':''}"><button class="si2${inPipe?' on':''}" onclick="this.parentElement.classList.toggle('open')" aria-expanded="${inPipe}" title="${l}">${ic2(ic,19)}<span class="sl">${l}</span><span class="car2">${ic2('down',14)}</span>${nl?'<i class="dot"></i>':''}</button><div class="kids2">${kids.map(([k2,l2,i2])=>item(k2,l2,i2,true)).join('')}</div></div>`:item(k,l,ic)).join('')}</div>
    <div class="sf2">${item('settings','Settings','gear')}</div></nav>`; }
+// Every render: puts the side bar in
 window.render=(function(orig){ return async function(){ const p=orig(); const sh=document.getElementById('shell');
   if(sh&&S.token&&!sh.querySelector('.side2')) sh.insertAdjacentHTML('afterbegin',sideHTML());
   return p; }; })(window.render);
@@ -1247,6 +1263,7 @@ function lrPick(id,field,val){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) 
   api('lead_note',p).then(()=>{ toast(field==='status'?'Status saved':'Next step saved'); if(S.tab==='leads') drawLeads(); })
    .catch(e=>{ l[field]=prev; toast("Couldn't save that. "+e.message); });
   if(val==='Listing Won'&&l.property_id) api('set_stage',{property_id:l.property_id,stage:'listed'}).catch(()=>{}); }
+// Lead panel: status line and next action
 window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const sh=document.getElementById('sheet'); if(!sh||!id) return;
   const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;
   sh.querySelector('.lstat')?.remove();
@@ -1278,9 +1295,11 @@ function lmenuGo(k){ const m=document.getElementById('lmenu2'); if(m) m.hidden=t
   if(k==='who'){ const d=document.getElementById('deditor'); if(d){ d.hidden=false; d.scrollIntoView({block:'nearest',behavior:'smooth'}); d.querySelector('input')?.focus(); } return; }
   if(k==='buy'){ editWants(true); document.getElementById('weditor')?.scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
   const b=[...document.querySelectorAll('.snd2 button')].find(x=>x.textContent.includes(k==='send'?'Send info':'Refer')); b?.click(); }
+// Lead panel: picking status or next action updates the panel in place
 window.lrPick=(function(orig){ return function(...a){ orig(...a); const rows=document.querySelector('.ldrows4'); if(rows) rows.hidden=true;
   const sub=document.querySelector('.lhead .lsub b'); const l=(S.leads||[]).find(x=>x.id===a[0]); if(a[1]==='status'&&l){ const t=(LST2.find(s=>s[0]===l.status)||[0,l.status])[1]; if(sub) sub.textContent=t; }
   const mb=[...document.querySelectorAll('#lmenu2 button')].find(b=>b.getAttribute('onclick')===`lmenuGo('${a[1]}')`); if(mb&&l){ let em=mb.querySelector('em'); const v=a[1]==='status'?(LST2.find(s=>s[0]===l.status)||[0,l.status])[1]:(l.next_action||''); if(!em&&v){ em=document.createElement('em'); mb.append(em); } if(em) em.textContent=v; } }; })(window.lrPick);
+// Lead panel: details rows start folded
 window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const sh=document.getElementById('sheet'); if(!sh||!id) return;
   const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;
   const rows=sh.querySelector('.ldrows4'); if(rows){ rows.hidden=true;
@@ -1318,21 +1337,25 @@ window.openLead=(function(orig){ return function(id,opts){ opts=opts||{};
     sh.querySelector('.lact')?.setAttribute('onclick','S.fq=null;closeOv();if(S.tab===\'leads\')drawLeads()');
   }
 }; })(window.openLead);
+// Saving a lead from follow ups needs a next follow up date
 window.saveLeadAll=(function(orig){ return async function(id){
   if(id && S.fq && !S.ol.follow_up){ const f=document.getElementById('ln_fu'); f?.classList.add('need2'); setTimeout(()=>f?.classList.remove('need2'),1600); return toast('Pick when to follow up next'); }
   return orig(id); }; })(window.saveLeadAll);
 function fqStart(){ const ids=dueLeads2().map(l=>l.id); if(!ids.length) return toast('No follow ups due'); S.fq={ids,i:0}; openLead(ids[0],{fq:true}); }
 function fqSkip(){ if(!S.fq) return; const nx=S.fq.ids[S.fq.i+1]; if(nx==null){ S.fq=null; closeOv(); if(S.tab==='leads') drawLeads(); return toast('That was the last one'); } S.fq.i++; openLead(nx,{fq:true}); }
+// Leads page: the Call N follow ups button
 window.drawLeads=(function(orig){ return function(){ orig(); if(S.lview==='listings') return; const n=dueLeads2().length; if(!n) return;
   const ph=document.querySelector('#main .ph2'); if(!ph) return; ph.querySelector('.flag2')?.remove();
   ph.querySelector('h1')?.insertAdjacentHTML('afterend',`<button class="fqb2" onclick="fqStart()" title="Call the leads due for a follow up, one after another">${ic2('phone',15)}<span>Call ${n} follow up${n===1?'':'s'}</span></button>`); }; })(window.drawLeads);
 
 // Send info goes back to the lead it came from
 window.swSend=(function(orig){ return async function(ch){ const w=S.sw; await orig(ch); if(ch!=='copy'&&w&&w.lead_id&&S.swBack){ S.swBack=false; setTimeout(()=>openLead(w.lead_id),120); } }; })(window.swSend);
+// Lead menu: remembers to come back to the lead after sending info
 window.lmenuGo=(function(orig){ return function(k){ if(k==='send') S.swBack=true; return orig(k); }; })(window.lmenuGo);
 
 // Appraisal: ask when first, save the time, then offer the confirmation text filled in
 window.act2=(function(orig){ return function(id,o){ if(o==='appraisal'){ document.activeElement?.blur?.(); document.body.classList.remove('typing'); return apptSheet2(id); } return orig(id,o); }; })(window.act2);
+// Appraisal outcome: asks for the appraisal time first
 window.outcome=(function(orig){ return function(id,o){ if(o==='appraisal'&&!(S.appt&&S.appt[id]!==undefined)) return apptSheet2(id); return orig(id,o); }; })(window.outcome);
 function apptPicks2(){ const a=nextCallDay(1), lab=(d,h)=>`${d.k===1?'Tomorrow':d.wd} ${h>12?h-12+'pm':h+'am'}`; let sat=null; for(let k=1;k<9;k++){ const i=sydInfo(new Date(Date.now()+k*864e5)); if(i.dow===6){ sat={k,...i}; break; } }
   const out=[[a.k,10,lab(a,10)],[a.k,16,lab(a,16)]]; if(sat&&sat.k!==a.k) out.push([sat.k,10,`Saturday ${sat.k<=7?'':'week '}10am`]); return out; }
@@ -1368,6 +1391,7 @@ window.dueItems=(function(orig){ return function(){ const out=orig(), now=Date.n
   (S.pipe||[]).forEach(x=>{ if(x.stage!=='appraisal'||!x.appt_at) return; const t=new Date(x.appt_at).getTime(); if(t<now-3600e3||t-now>30*3600e3) return;
     out.push({k:'a'+x.property_id+':'+x.appt_at,title:`Appraisal ${apptTxt2(x.appt_at)}`,sub:[people(x.owner_name)[0],[x.street_address,x.suburb].filter(Boolean).join(', ')].filter(Boolean).join(' · '),act:`S.pst='appraisal';go('pipeline')`,over:false}); });
   return out; }; })(window.dueItems);
+// Reminders: refreshes the pipeline every 30 minutes so appraisal reminders are current
 window.checkReminders=(function(orig){ return async function(){ try{ if(!S.pipe||Date.now()-(S.pipeAt||0)>30*60e3){ const r=await api('pipeline'); S.pipe=r.rows||[]; S.pipeAt=Date.now(); } }catch{} return orig(); }; })(window.checkReminders);
 
 // Quick add lead: who, where (picked from the property register), seller or buyer, when to follow up
@@ -1426,12 +1450,15 @@ const TB2=[['calls','Calls','phone'],['leads','Leads','users'],['pipeline','Pipe
 function tbHTML2(){ return `<nav id="tb2" aria-label="Pages">${TB2.map(([k,l,ic])=>`<button class="${S.tab===k||(k==='more'&&['drops','insights','settings','messages'].includes(S.tab))?'on':''}" onclick="${k==='more'?'tbMore2()':`closeOv();closePop2();go('${k}')`}">${ic2(ic,20)}<span>${l}</span></button>`).join('')}</nav>`; }
 function tbMore2(){ openSheet2('More',`<div class="g2">${[['drops','Card drops','mail'],['insights','Stats','chart'],['settings','Settings','gear']].map(([k,l,ic])=>row2(NAVI[k]?NAVI[k][0]:'#4b5565',ic,l,'',chev2(),`closeOv();go('${k}')`)).join('')}</div>`); }
 function tbPaint2(){ if(desk2()){ document.getElementById('tb2')?.remove(); document.body.classList.remove('hastb2'); return; } document.getElementById('tb2')?.remove(); if(!S.token&&!DEMO) return; document.body.insertAdjacentHTML('beforeend',tbHTML2()); document.body.classList.add('hastb2'); }
+// Every render: phone bottom bar
 window.render=(function(orig){ return async function(...a){ const r=await orig(...a); tbPaint2(); return r; }; })(window.render);
+// Changing page: phone bottom bar follows
 window.go=(function(orig){ return function(...a){ const r=orig(...a); setTimeout(tbPaint2,0); return r; }; })(window.go);
 addEventListener('resize',()=>tbPaint2());
 
 // Card drops: the layer and "how many" filters live behind one Filters button
 try{ localStorage.removeItem('dp_dtop'); }catch{}   // the "how many" control is gone, so any old pick goes back to the automatic default
+// Card drops: layer and how many filters behind one Filters button
 window.drawDrops=(function(orig){ return function(...a){ const r=orig(...a); try{ const m=$('#main'), top=m.querySelector(':scope > .top'), ch=m.querySelector(':scope > .chips'); if(!top||!ch) return r;
   const segs=top.querySelectorAll('.seg'), box=document.createElement('div'); box.className='top dflt2'; box.hidden=!S.dflt; if(segs[1]) box.append(segs[1]);
   ch.remove();
@@ -1440,7 +1467,9 @@ window.drawDrops=(function(orig){ return function(...a){ const r=orig(...a); try
 
 // Stats: the call order suggestion in plain words, and in Settings rather than Stats
 function weightsPlain2(v){ const m=String(v.notes||'').match(/current weights ([\d.]+) per 100.*?proposed ([\d.]+)/i); return m?`Tested on past calls, the new order finds about ${m[2]} appraisals per 100 answered calls, against ${m[1]} now.`:'Tested on past calls, the new order should find more appraisals.'; }
+// Stats: hides the old Better weights found note
 window.paintInsights=(function(orig){ return function(...a){ const r=orig(...a); document.querySelectorAll('#main .warn2').forEach(w=>{ if(/Better weights found/.test(w.textContent)) w.remove(); }); return r; }; })(window.paintInsights);
+// Settings: shows a waiting list version to approve
 window.viewSettings=(function(orig){ return async function(...a){ const r=await orig(...a); try{ const ov=S.ovFull||await api('overview'); const pend=(ov.versions||[]).filter(v=>!v.approved);
   if(pend.length){ const v=pend[0]; document.querySelector('#main .setw2 .ph2')?.insertAdjacentHTML('afterend',`<div class="warn2" style="color:var(--accT);margin-bottom:14px">${ic2('trend',18)}<div style="flex:1"><b>A better call order is ready.</b> <span style="color:var(--t2)">${esc(weightsPlain2(v))}</span>
      <div style="display:flex;gap:8px;margin-top:10px"><button class="b2 pri" style="height:40px" onclick="approve(${v.version})">Use it</button><button class="b2" style="height:40px" onclick="reject(${v.version})">Not now</button></div></div></div>`); } }catch(e){} return r; }; })(window.viewSettings);
@@ -1509,10 +1538,12 @@ function leadsTable3(ls){
   return `<div class="ltab3"><div class="lt3 h"><span>Lead</span><span>Type</span><span>Due</span><span class="c3">Address</span><span class="c3">Last spoke</span><span class="c3"></span></div>${G.map(([g,c,f])=>{ const xs=ls.filter(l=>f(dueIn(l.follow_up))); if(!xs.length) return '';
     return `<div class="lgb3 ${c}"><i></i><b>${g}</b><span>${xs.length}</span></div>`+xs.map(l=>`<div class="lt3${S.ol&&S.ol.id===l.id&&$('#ov').classList.contains('show')?' sel':''}" data-id="${l.id}" onclick="openLead(${l.id})" data-lq="${esc([l.name,l.address,l.suburb,l.phone].join(' ').toLowerCase())}">
       <span class="n3"><b>${esc(leadTitle(l))}</b>${nwm3(l)}</span><span>${ltype3(l)}</span><span>${dueTxt3(l)}</span><span class="c3">${esc(sub(l))}</span><span class="c3">${l.last_contact?esc(dayMon(l.last_contact)):'<i>Never</i>'}</span><span class="c3 b3">${btns(l)}</span></div>`).join(''); }).join('')}</div>`; }
+// Leads page on desktop: the grouped table
 window.drawLeads=(function(orig){ return function(){ orig(); if(S.lview==='listings'||!desk2()) return; const t=document.querySelector('#main .ltab2'); if(!t) return;
   t.outerHTML=leadsTable3((S.leads||[]).slice().sort((a,b)=>(a.follow_up||'9999').localeCompare(b.follow_up||'9999'))); }; })(window.drawLeads);
 // The open lead is marked in the list, which stays in view beside it
 window.openLead=(function(orig){ return function(id,opts){ const r=orig(id,opts); document.querySelectorAll('.lt3[data-id]').forEach(x=>x.classList.toggle('sel',+x.dataset.id===id)); return r; }; })(window.openLead);
+// Closing a sheet clears the selected row
 window.closeOv=(function(orig){ return function(...a){ const r=orig(...a); document.querySelectorAll('.lt3.sel').forEach(x=>x.classList.remove('sel')); return r; }; })(window.closeOv);
 
 // Pipeline board: one column per stage. Click a column name to open that full page, a name to open the person.
@@ -1544,8 +1575,11 @@ async function board3(local){
   const s=document.querySelector('.side2'); if(s) s.outerHTML=sideHTML();
   document.querySelectorAll('.tabbtn').forEach(t=>t.textContent='Pipeline');
 }
+// Pipeline page: the board when Pipeline is picked
 window.viewPipeline=(function(orig){ return async function(local){ if(S.pst==='board') return board3(local); return orig(local); }; })(window.viewPipeline);
+// Side bar: Pipeline opens the board
 window.sideGo=(function(orig){ return function(k){ if(k==='board'){ closePop2(); closeOv(); S.pst='board'; return go('pipeline'); } return orig(k); }; })(window.sideGo);
+// Side bar: the Pipeline heading opens the board too
 window.sideHTML=(function(orig){ return function(){ return orig().replace(`onclick="this.parentElement.classList.toggle('open')"`,`onclick="this.parentElement.classList.add('open');sideGo('board')"`); }; })(window.sideHTML);
 
 // Appraisals and Listings in the same layout as Leads: edge to edge table, a line between every column, a slim strip above
@@ -1564,6 +1598,7 @@ function pipeTable3(local){
   $("#main").innerHTML=`<div class="pg2 pl3"><div class="ph2"><span class="muted" style="font-size:14px">${list.length} ${list.length===1?'person':'people'}</span><button class="b2 pri" onclick="openAddPipe()" aria-label="Add">${ic2('plus',18)}<span>Add</span></button></div>
    ${list.length?`<div class="ltab3">${head}${body}</div>`:`<div class="empty2"><b>No ${P[0].toLowerCase()} yet</b>${S.pst==='appraisal'?'Book one from the call list and it shows up here.':''}</div>`}</div>`;
 }
+// Pipeline page: Appraisals and Listings tables on desktop
 window.viewPipeline=(function(orig){ return async function(local){ const r=await orig(local); if(S.pst!=='board'&&desk2()&&PST[S.pst]) pipeTable3(); return r; }; })(window.viewPipeline);
 
 // Pipeline board: drag a card into another column to move them along. Leads to Appraisals books it, Appraisals to Listings lists it.
@@ -1576,6 +1611,7 @@ async function drop3(e,col){ e.preventDefault(); dragEnd3(); let d; try{ d=JSON.
     if(col==='ap') return setStage(l.property_id,'appraisal'); if(col==='ls') return setStage(l.property_id,'listed'); return; }
   if(col==='ld'){ const x=(S.pipe||[]).find(r=>r.property_id===d.id); return x&&x.lead_id?pipeLead(x.lead_id):pipeMakeLead(d.id); }
   return setStage(d.id,col==='ap'?'appraisal':'listed'); }
+// Pipeline board: cards can be dragged between columns
 window.board3=(function(orig){ return async function(local){ const r=await orig(local);
   const cols=document.querySelectorAll('.bd3 .bc3');
   cols.forEach(c=>{ const k=c.classList.contains('ap')?'ap':c.classList.contains('ls')?'ls':'ld';
@@ -1607,6 +1643,7 @@ async function mapExtras3(){ if(!S.map||S.tab!=='drops'||S.walk) return;
     const last=ds.map(x=>x.dropped_at).sort().pop(), p=(st.paths||[])[0]; if(!p||!p.length) continue; const m=p[Math.floor(p.length/2)];
     L.marker([m[1],m[0]],{icon:L.divIcon({className:'dd3',html:`<span>Dropped ${new Date(last).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</span>`,iconSize:null}),interactive:false}).addTo(g); }
   S.dext=g.addTo(S.map); }
+// Card drop map: our pins, recent sales and dropped dates on top of the layer
 window.drawDropLayer=(function(orig){ return function(...a){ const r=orig(...a); if(S.walk&&S.dlay) S.map.removeLayer(S.dlay); setTimeout(mapExtras3,0); return r; }; })(window.drawDropLayer);
 
 // Walking route along the real footpaths: each street is walked end to end, in the order that keeps the
@@ -1662,12 +1699,14 @@ async function walk3(){ const sub=document.getElementById('wksub')?.value||S.wal
   toast(`${stops.length} streets in ${sub}. Start at the green pin.`);
 }
 function walkClear3(){ if(S.walk) S.map.removeLayer(S.walk); S.walk=null; document.getElementById('wkp3')?.remove(); if(S.dext) S.dext.addTo(S.map); if(S.dlay) S.dlay.addTo(S.map); }
+// Card drops list: the Walk in suburb control (hidden; Plan a walk on the map uses it)
 window.drawBest=(function(orig){ return function(...a){ const r=orig(...a); const b=document.getElementById('best'); const subs=b?walkSubs3():[]; if(b&&subs.length){ const cur=subs.some(o=>o.sub===S.walkSub)?S.walkSub:subs[0].sub;
     b.insertAdjacentHTML('afterbegin',`<div class="wk4"><label for="wksub">Walk in</label><select id="wksub" onchange="S.walkSub=this.value">${subs.map(o=>`<option${o.sub===cur?' selected':''}>${esc(o.sub)}</option>`).join('')}</select><button class="wkb3" onclick="walk3()">${ic2('pin',16)} Plan a walk</button></div>`); } return r; }; })(window.drawBest);
 
 // ---------- Call sheet around a home: pick a distance on a map, then call everyone inside it ----------
 const AREA_DEF=800;
 const blocks3=m=>Math.max(1,Math.round(m/80));
+// Search result: Call sheet around here
 window.openSearchProp=(function(orig){ return function(pid,inList){ orig(pid,inList);
   const sh=$('#sheet'); if(!sh) return;
   sh.insertAdjacentHTML('beforeend',`<button class="ghost ar3b" onclick="areaSheet(${pid})">${ic2('pin',18)}Call sheet around here</button>`); }; })(window.openSearchProp);
@@ -1712,6 +1751,7 @@ async function areaMake3(pid){
     S.type='seller'; go('calls'); await refreshCalls(true); S.lsub=x.name; paintCalls();
   }catch(e){ b.disabled=false; areaDraw3(); toast(e.message); }
 }
+// Closing a sheet tidies up the call sheet map
 window.closeOv=(function(orig){ return function(){ if(S.area3){ try{ S.area3.map?.remove(); }catch{} S.area3=null; } return orig.apply(this,arguments); }; })(window.closeOv);
 // Demo mode: a made up neighbourhood so the screen can be tried without real data
 window.demoApi=(function(orig){ return function(action,body){
@@ -1751,11 +1791,15 @@ function short4(ws){ const all=(ws||[]).map(w=>w[1]).filter(Boolean), d=all.filt
 window.go=(function(orig){ return function(t,...a){ if(t==='enquiry'){ S.ohSel=S.elid||S.ohSel||null; S.view='list'; t='calls'; } return orig(t,...a); }; })(window.go);
 const paintEnquiry0=window.paintEnquiry;
 window.paintEnquiry=function(){ if(S.tab==='calls') return drawList(); return paintEnquiry0(); };
+// Open home lists open inside Calls
 window.viewEnquiry=(function(orig){ return async function(){ if(S.tab==='enquiry'||S.tab==='calls'){ S.tab='calls'; S.view='list'; S.ohSel=S.elid||null; }
   await orig(); if(S.tab==='calls'){ const L=(S.el||[]).find(x=>x.id===S.elid); S.ohSel=L&&!L.archived?L.id:null; drawList(); } }; })(window.viewEnquiry);
 async function loadEl5(){ try{ const r=await api('elists'); const sig=JSON.stringify(r.rows||[]); if(sig===S.elSig) return; S.elSig=sig; S.el=r.rows||[]; if(S.tab==='calls'&&S.view==='list') drawList(); }catch{} }
+// Calls: also loads the open home lists
 window.refreshCalls=(function(orig){ return async function(...a){ const r=await orig(...a); loadEl5(); return r; }; })(window.refreshCalls);
+// Enter does nothing while an open home list is showing
 window.startSub=(function(orig){ return function(){ if(S.ohSel) return; return orig(); }; })(window.startSub);
+// Call list rail: New call sheet button and open home lists
 window.drawList2=(function(orig){ return function(){ orig(); try{
   const rail=document.querySelector('.rail2'); if(!rail) return;
   // New call sheet: the one obvious way to make any list
@@ -1776,6 +1820,7 @@ window.drawList2=(function(orig){ return function(){ orig(); try{
     if(!S.erows||S.erowsFor!==S.ohSel){ const id=S.ohSel; S.erowsFor=id; api('elist',{id}).then(x=>{ if(S.ohSel!==id) return; S.erows=x.rows||[]; drawList(); }).catch(e=>toast(e.message)); }
   }
 }catch(e){ console.error(e); } }; })(window.drawList2);
+// Opening an open home list remembers which one is loaded
 window.openEList=(function(orig){ return async function(id){ S.erowsFor=id; return orig(id); }; })(window.openEList);
 function newSheet5(){ openSheet2('New call sheet',`<div class="g2">${row2('#2563eb','pin','Around an address','Everyone with a number nearby',chev2(),'areaPick5()')}${row2('#0d9488','house','Open home enquiries','Import the CRM export for a listing',chev2(),'ohImport5()')}</div>`); }
 async function ohImport5(){ if(!S.listings){ try{ await loadLeads(); }catch{} } importSheet(); }
@@ -1812,7 +1857,9 @@ function fitDrops5(){ const m=$('#dmap'), s=document.querySelector('.dside'); if
   const h=Math.max(320,innerHeight-m.getBoundingClientRect().top); m.style.height=h+'px'; if(s){ s.style.height=h+'px'; s.style.maxHeight=h+'px'; s.style.overflow='auto'; }
   try{ S.map&&S.map.invalidateSize(); }catch{} }
 addEventListener('resize',()=>{ if(S.tab==='drops') fitDrops5(); });
+// Card drops: tidy toolbar, full screen and map controls
 window.drawDrops=(function(orig){ return function(...a){ const r=orig(...a); dropsTidy5(); mapFsBtn5('dmap',()=>S.map); mapCtl5(); return r; }; })(window.drawDrops);
+// Card drops list: tidy after each redraw
 window.drawBest=(function(orig){ return function(...a){ const r=orig(...a); dropsTidy5(); return r; }; })(window.drawBest);
 // Full screen for any map: the button sits on the map; Esc or the same button comes back
 function mapFsBtn5(id,getMap){ let n=0; const t=setInterval(()=>{ const el=document.getElementById(id); if(!el||++n>40){ clearInterval(t); return; }
@@ -1863,6 +1910,7 @@ function walkPick5(){ if(document.querySelector('.wkp5')) return popClose5(); co
   pop5('wkp5',`<div class="wkp5 dfp5x" role="dialog" aria-label="Plan a walk"><div class="dfh5"><b>Plan a walk</b>${S.walk?'<button class="dfx5" onclick="popClose5();walkClear3()">Clear walk</button>':''}</div>
    <div class="dfs5">Which suburb?</div><div class="dfb5x">${subs.map(o=>`<button class="wkr5${o.sub===S.walkSub?' on':''}" onclick="walkGo5(this.dataset.s)" data-s="${esc(o.sub)}"><span>${esc(o.sub)}</span><em>${Math.min(8,o.n)} streets</em></button>`).join('')||'<p class="emptyline" style="padding:12px">No streets to walk yet</p>'}</div></div>`); }
 function walkGo5(sub){ popClose5(); S.walkSub=sub; const sel=document.getElementById('wksub'); if(sel){ if(![...sel.options].some(o=>o.value===sub)) sel.insertAdjacentHTML('beforeend',`<option>${esc(sub)}</option>`); sel.value=sub; } walk3(); }
+// Card drop map: Filters button shows when something is changed
 window.drawDropLayer=(function(orig){ return function(...a){ const r=orig(...a); dfBtn5(); return r; }; })(window.drawDropLayer);
 // Outside legal calling hours: one warning when you tap any call link, instead of banners on every screen
 document.addEventListener('click',e=>{ const a=e.target.closest('a[href^="tel:"]'); if(!a) return; if(/hoursOk/.test(a.getAttribute('onclick')||'')) return; hoursOk(e); },true);
@@ -1894,6 +1942,7 @@ function lays5(){ if(!S.dlays){ try{ const v=JSON.parse(localStorage.getItem('dp
 function laySave5(){ try{ localStorage.setItem('dp_dlays',JSON.stringify([...lays5()])); }catch{} }
 function layToggle5(v){ const L5=lays5(); L5.has(v)?L5.delete(v):L5.add(v); laySave5(); drawDropLayer(); dfRefresh5(); }
 function layReset5(){ S.dlays=new Set(['pins']); laySave5(); S.stiers=new Set(STREET_KEYS); try{localStorage.removeItem('dp_stiers')}catch{} drawDropLayer(); dfRefresh5(); }
+// Card drop map: Pins, Heat and Streets can be shown together
 window.drawDropLayer=(function(orig){ return function(){
   if(!S.map) return orig();
   if(S.dlay){ try{ S.map.removeLayer(S.dlay); }catch{} S.dlay=null; }
@@ -1935,6 +1984,7 @@ function boardFit5(){ try{ const col=document.querySelector('.bd3 .bc3.ld'); if(
   const avail=innerHeight-first.getBoundingClientRect().top-more.offsetHeight; const n=Math.max(3,Math.floor(avail/84));
   document.querySelector('.bd3').style.setProperty('--cdh',Math.floor(avail/n)+'px');
   if(n!==S.bfit5){ S.bfit5=n; return true; } return false; }catch{ return false; } }
+// Pipeline board: column search and screen fitting
 window.board3=(function(orig){ return async function(local){ const r=await orig(local);
   bqHeads5();
   if(boardFit5()) return board3(true);
