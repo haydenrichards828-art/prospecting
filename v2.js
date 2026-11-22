@@ -2389,3 +2389,42 @@ function addrRank7(q,res,calls){ const A=addrQ7(q); if(!A) return null;
   const label=((A.unit?A.unit+'/':'')+A.no+' '+(street||A.words.join(' '))).replace(/\b[a-z]/g,c=>c.toUpperCase());
   return {props,calls:cl,leads,exact,label,suburb:any?any.suburb:''}; }
 function addMissing7(addr,sub){ addPerson2(); setTimeout(()=>{ const a=$('#ap_addr'),s=$('#ap_sub'); if(a) a.value=addr; if(s&&sub) s.value=sub; $('#ap_name')?.focus(); },60); }
+// Import status (23 Nov): the lines of text under Import a file become a loading animation, then a short result.
+// Every reader still writes its message into #ir; this turns that message into the display.
+(function(){
+  const num=s=>+String(s||'0').replace(/[^0-9]/g,'')||0, fmt=n=>n.toLocaleString();
+  function view(el){
+    const raw=el.dataset.raw||'', txt=raw.replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]+>/g,'').trim(), out=el.nextElementSibling;
+    if(!out||!out.classList.contains('imp8')) return;
+    let m, h='';
+    const bar=(label,p)=>`<div class="imp8l"><span class="sp8" aria-hidden="true"></span><b>${esc(label)}</b>${p!=null?`<em>${Math.round(p*100)}%</em>`:''}</div><div class="pb8${p==null?' ind':''}"><i style="width:${p==null?40:Math.max(3,p*100)}%"></i></div>`;
+    if(!txt){ out.hidden=true; out.innerHTML=''; return; }
+    if((m=txt.match(/Imported ([\d,]+) of ([\d,]+)/))){ const a=num(m[1]),b=num(m[2]); h=bar(a>=b?'Finishing':'Importing',b?a/b:null); }
+    else if(/^Reading/.test(txt)){ m=txt.match(/Reading (\d+) of (\d+)/)||txt.match(/page (\d+) of (\d+)/); h=bar('Reading',m?num(m[1])/num(m[2]):null); }
+    else if((m=txt.match(/^([\d,]+) files, ([\d,]+) houses, ([\d,]+) with a number/))) h=done(num(m[2]),'houses',num(m[3]),`from ${m[1]} files`);
+    else if((m=txt.match(/([\d,]+) (?:house|houses) found, ([\d,]+) with a number/))) h=done(num(m[1]),'houses',num(m[2]));
+    else if((m=txt.match(/^([\d,]+) rows found, ([\d,]+) with a usable address/))) h=done(num(m[2]),'ready to import',null,num(m[1])>num(m[2])?`${fmt(num(m[1])-num(m[2]))} without an address`:'');
+    else if((m=txt.match(/^([\d,]+) notes found/))) h=done(num(m[1]),'notes');
+    else h=`<div class="imp8e">${esc(txt.split('\n')[0])}</div>`;
+    out.innerHTML=h; out.hidden=false;
+  }
+  function done(n,what,ph,extra){ return `<div class="imp8d"><span class="ok8" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div><b>${fmt(n)}</b> ${esc(what)}${ph!=null?`<span>${fmt(ph)} with a number</span>`:''}${extra?`<span>${esc(extra)}</span>`:''}</div></div>`; }
+  function wire(){
+    const el=document.getElementById('ir'); if(!el||el.dataset.w8) return; el.dataset.w8=1;
+    el.insertAdjacentHTML('afterend','<div class="imp8" hidden aria-live="polite"></div>'); el.classList.add('irsrc8');
+    new MutationObserver(()=>{ el.dataset.raw=el.innerHTML; view(el); }).observe(el,{childList:true,characterData:true,subtree:true});
+  }
+  window.setImport=(function(o){ return function(...a){ const r=o(...a); wire(); return r; }; })(window.setImport);
+  // the Import button spins while rows go up
+  window.importCSV=(function(o){ return async function(...a){ const b=document.querySelector('#sheet .wide2b'); if(b){ b.disabled=true; b.classList.add('busy8'); }
+    try{ const r=await o(...a); const el=document.getElementById('ir'), out=el&&el.nextElementSibling, m=el&&el.textContent.match(/Imported ([\d,]+) of [\d,]+$/);
+      if(out&&m&&!S.pending) out.innerHTML=done(num(m[1]),'imported');
+      return r; } finally{ if(b){ b.disabled=false; b.classList.remove('busy8'); } } }; })(window.importCSV);
+})();
+// Reload keeps you where you were (23 Nov): the open tab is remembered for this window and reopened after a refresh.
+(function(){
+  const KEY='dp_tab8', ok=t=>TABS2.some(x=>x[0]===t)||t==='messages';
+  window.go=(function(o){ return function(t,...a){ const r=o(t,...a); try{ sessionStorage.setItem(KEY,JSON.stringify({tab:S.tab,pst:S.pst||null})); }catch(e){} return r; }; })(window.go);
+  try{ const s=JSON.parse(sessionStorage.getItem(KEY)||'null');
+    if(s&&ok(s.tab)&&s.tab!=='calls'&&S.token&&S.token!=='demo'){ S.tab=s.tab; if(s.pst) S.pst=s.pst; document.body.classList.toggle('dwide',s.tab==='drops'); } }catch(e){}
+})();

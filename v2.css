@@ -1390,3 +1390,22 @@ header.top2 .hc5{display:inline-grid;place-items:center;min-width:24px;height:24
 #sheet .bud7 label{display:flex;flex-direction:column;gap:4px;min-width:0}
 #sheet .bud7 label>span{font-size:12px;color:var(--t2,#9aa4b2)}
 #sheet .bud7 input{width:100%;margin:0}
+/* Import status (23 Nov): loading animation and short result instead of lines of text */
+.irsrc8{display:none!important}
+.imp8{margin:14px 0 4px;padding:14px 16px;border:1px solid var(--line2);border-radius:10px;background:var(--sub)}
+.imp8l{display:flex;align-items:center;gap:10px;font-size:14px}.imp8l b{font-weight:600}.imp8l em{margin-left:auto;font-style:normal;color:var(--t2);font-variant-numeric:tabular-nums}
+.sp8{width:18px;height:18px;border-radius:50%;border:2px solid var(--line2);border-top-color:var(--acc);animation:sp8 .8s linear infinite;flex:none}
+.pb8{height:6px;margin-top:12px;border-radius:999px;background:var(--line2);overflow:hidden}
+.pb8 i{display:block;height:100%;border-radius:999px;background:var(--acc);transition:width .3s ease}
+.pb8.ind i{animation:pb8 1.2s ease-in-out infinite}
+.imp8d{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--t2)}.imp8d b{font-size:22px;font-weight:700;color:var(--t1);margin-right:2px}
+.imp8d span:not(.ok8){display:block;font-size:13px;margin-top:2px}
+.ok8{width:30px;height:30px;border-radius:50%;background:#16a34a22;display:flex;align-items:center;justify-content:center;flex:none;animation:ok8 .35s ease-out}
+.ok8 svg{width:18px;height:18px;fill:none;stroke:var(--ok);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:0;animation:tick8 .4s .1s ease-out backwards}
+.imp8e{font-size:14px;color:var(--nsT)}
+.b2.busy8{opacity:.75;pointer-events:none}.b2.busy8 svg{animation:sp8 .8s linear infinite}
+@keyframes sp8{to{transform:rotate(360deg)}}
+@keyframes pb8{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
+@keyframes ok8{from{transform:scale(.6);opacity:0}}
+@keyframes tick8{from{stroke-dashoffset:24}}
+@media (prefers-reduced-motion:reduce){.sp8,.pb8.ind i,.ok8,.ok8 svg,.b2.busy8 svg{animation:none}}
