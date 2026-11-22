@@ -1,0 +1,54 @@
+{
+ "desktop: Log a no answer and move to the next call": {
+  "effort": 2,
+  "screens": 1
+ },
+ "desktop: Log a call with a note": {
+  "effort": 3,
+  "screens": 1
+ },
+ "desktop: Book an appraisal from a call": {
+  "effort": 4,
+  "screens": 3
+ },
+ "desktop: Book a call back": {
+  "effort": 3,
+  "screens": 2
+ },
+ "desktop: Find a person and open them": {
+  "effort": 2,
+  "screens": 3
+ },
+ "desktop: Add a lead by hand": {
+  "effort": 4,
+  "screens": 2
+ },
+ "desktop: Plan a card drop walk": {
+  "effort": 2,
+  "screens": 1
+ },
+ "phone: Log a no answer and move to the next call": {
+  "effort": 2,
+  "screens": 1
+ },
+ "phone: Log a call with a note": {
+  "effort": 3,
+  "screens": 1
+ },
+ "phone: Book an appraisal from a call": {
+  "effort": 4,
+  "screens": 3
+ },
+ "phone: Book a call back": {
+  "effort": 3,
+  "screens": 2
+ },
+ "phone: Find a person and open them": {
+  "effort": 2,
+  "screens": 3
+ },
+ "phone: Add a lead by hand": {
+  "effort": 4,
+  "screens": 2
+ }
+}

@@ -2072,3 +2072,29 @@ async function refs6(){ const x=document.getElementById('refs2'); if(!x) return;
   y.querySelector('.p6b').innerHTML=(rs.length?`<div class="rf6">${rs.slice(0,6).map(r=>`<button onclick="refEdit(${r.id})"><span>${esc(r.person_name||'Someone')} to ${esc(r.partner||'?')}</span><em style="--c:${r.status==='won'?COL.sold:r.status==='lost'?COL.lost:COL.referral}">${esc((RST.find(s=>s[0]===r.status)||[])[1]||r.status)}${r.status==='won'&&r.fee?' $'+fm2(r.fee):''}</em></button>`).join('')}</div>`:'<p class="no6">None yet</p>')
    +(ps.length?`<p class="rp6"><small>Partners</small>${ps.map(p=>`<button onclick="S.rw=null;partnerSheet(S.ref.partners.find(x=>x.id===${p.id}))">${esc(p.name)}</button>`).join('')}</p>`:''); }
 addEventListener('resize',()=>{ clearTimeout(window.__st6); window.__st6=setTimeout(st6Fit,150); });
+
+// ---------- Speed and usability tracking, added 22 Nov: how long each job takes, whether it gets finished, how fast taps respond ----------
+// A job is anything done in a sheet: it starts when the sheet opens and ends when it closes; done means something was saved meanwhile.
+(function(){
+  const READS=new Set('list callbacks overview today work_stats leads search list_health upcoming_callbacks removed_list elists elist pipeline recent_sales area_preview area_list drops templates preview_message messages settings referrals'.split(' '));
+  const wrap=name=>{ const orig=window[name]; if(typeof orig!=='function') return; window[name]=async function(action,...rest){ const t0=performance.now();
+      if(UX.job&&!READS.has(action)) UX.job.saved=true;
+      try{ return await orig.call(this,action,...rest); } finally{ const ms=Math.round(performance.now()-t0); if(!DEMO) uxPush('api',{g:String(action).slice(0,40),dt:ms}); } }; };
+  wrap('api'); wrap('api2');
+  const ov=document.getElementById('ov'); let open=false;
+  new MutationObserver(()=>{ const now=ov.classList.contains('show');
+    if(now&&!open){ UX.job={name:uxScreen(),at:Date.now(),taps:0,saved:false}; }
+    if(!now&&open&&UX.job){ const j=UX.job; UX.job=null; uxPush('task',{g:j.name.slice(0,80),dt:Date.now()-j.at,m:{taps:j.taps,done:j.saved}}); }
+    open=now; }).observe(ov,{attributes:true,attributeFilter:['class']});
+  document.addEventListener('click',()=>{ if(UX.job) UX.job.taps++; },true);
+  // tap response: the time from a tap or key press to the screen updating, per interaction
+  UX.resp=[]; UX.slowN=0;
+  try{ new PerformanceObserver(list=>{ const seen=new Map();
+      for(const e of list.getEntries()){ if(!e.interactionId) continue; const p=seen.get(e.interactionId); if(!p||e.duration>p.duration) seen.set(e.interactionId,e); }
+      for(const e of seen.values()){ UX.resp.push(Math.round(e.duration)); if(e.duration>=200){ UX.slowN++; const el=e.target&&e.target.closest?e.target.closest(UX_INTER):null; uxPush('slow',{g:el?uxLabel(el):uxDeadLabel(e.target),dt:Math.round(e.duration)}); } }
+    }).observe({type:'event',durationThreshold:16,buffered:true}); }catch(e){}
+  // a summary of every response time since the last send, so the typical figure can be worked out
+  const sum=()=>{ if(!UX.resp.length) return; const r=UX.resp.splice(0).sort((a,b)=>a-b), q=f=>r[Math.min(r.length-1,Math.floor(f*r.length))];
+    uxPush('resp',{dt:q(.75),m:{n:r.length,p50:q(.5),p75:q(.75),max:r[r.length-1]}}); };
+  setInterval(sum,14000); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') sum(); });
+})();

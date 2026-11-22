@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="preload" href="v2.js?v=158" as="script">
+<link rel="preload" href="v2.js?v=159" as="script">
 <link rel="stylesheet" href="v2.css?v=165">
 </head>
 <body>
@@ -254,7 +254,7 @@ function demoApi(action, body){
     case "undo_outcome": D.calls=Math.max(0,D.calls-1); return {ok:true};
     case "templates": return {rows:D.templates};
     case "preview_message": case "schedule_message": { const t=D.templates.find(x=>x.id===body.template_id)||D.templates[0], r=D.rows.find(x=>x.property_id===body.property_id)||(body.property_id===201?{owner_name:"Tony Marino",street_address:"22 Hill St",suburb:"Bulli",phone:"0400555666"}:{});
-      const txt=t.body.replace("{first_name}",first(r.owner_name)).replace("{street}",(r.street_address||"").replace(/^\S+\s/,"")).replace("{appt_date}",body.appt_date||"").replace("{callback_date}",body.callback_date||"");
+      const txt=t.body.replace("{first_name}",first(r.owner_name)).replace("{street}",(r.street_address||"").replace(/^\S+\s/,"")).replace("{address}",r.street_address||"").replace("{suburb}",r.suburb||"").replace("{appt_date}",body.appt_date||"").replace("{callback_date}",body.callback_date||"");
       if(action==="schedule_message") D.msgs.unshift({id:Date.now(),body:txt,send_at:new Date().toISOString(),status:"scheduled",properties:{owner_name:r.owner_name,phone:r.phone,house_number:"",street:r.street_address,suburb:r.suburb}});
       return {body:txt,phone:r.phone,send_at:new Date().toISOString()}; }
     case "messages": return {rows:D.msgs};
@@ -1619,7 +1619,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=158"></script>
+<script src="v2.js?v=159"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

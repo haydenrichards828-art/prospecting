@@ -9,5 +9,6 @@ echo "1. Code is valid";      node --check v2.js && echo "   v2.js ok" || ok=0
 echo "2. Style name clashes"; python3 tools/class_clash.py | tail -2 || ok=0
 echo "3. Every screen";       rm -rf "$NOW"; node tools/screens.js "$NOW" $( [ -d "$BASE" ] && echo "$BASE" ) || ok=0
 echo "4. Design numbers";     node tools/design_check.js 2>/dev/null | grep -E "distinct|fails|under 24|cut off" | sed 's/ rgb.*//'
-echo "5. Version numbers";    grep -o 'v2\.\(js\|css\)?v=[0-9]*' index.html | sort | uniq -c
+echo "5. Main jobs: taps, typing, screens, response"; node tools/tasks.js | sed 's/^/   /' || ok=0
+echo "6. Version numbers";    grep -o 'v2\.\(js\|css\)?v=[0-9]*' index.html | sort | uniq -c
 [ $ok = 1 ] && echo "All checks passed." || { echo "Something failed above."; exit 1; }
