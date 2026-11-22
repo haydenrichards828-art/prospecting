@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="preload" href="v2.js?v=181" as="script">
+<link rel="preload" href="v2.js?v=182" as="script">
 <link rel="stylesheet" href="v2.css?v=182">
 </head>
 <body>
@@ -690,10 +690,10 @@ function rpAddress(addr,suburb,pc){ let w=String(addr||"").replace(/,.*$/,"").tr
   const sub=titleCase(suburb), code=pc||POSTCODES[sub]||"";
   return `${titleCase(w.join(" "))}${sub?`, ${sub}`:""} NSW${code?" "+code:""}`.replace(/\s+/g," ").trim(); }
 function rpSlug(full){ return full.toLowerCase().replace(/[\/,]/g," ").replace(/[^a-z0-9 ]/g,"").trim().replace(/\s+/g,"-"); }
-function rpUrl(addr,suburb,saved,pc){ if(saved&&/rpp\.corelogic\.com\.au\/property\//.test(saved)) return saved;
+function rpUrl(addr,suburb,saved,pc){ if(saved&&/^https:\/\/rpp\.corelogic\.com\.au\/property\//.test(saved)) return saved;
   return `https://rpp.corelogic.com.au/search/address/${rpSlug(rpAddress(addr,suburb,pc))}`; }
 // The RP button: works anywhere, never triggers the card or row it sits on
-function rpBtn(addr,suburb,saved,cls="rpb",pc){ if(!addr&&!suburb) return ""; const exact=saved&&/rpp\.corelogic\.com\.au\/property\//.test(saved);
+function rpBtn(addr,suburb,saved,cls="rpb",pc){ if(!addr&&!suburb) return ""; const exact=saved&&/^https:\/\/rpp\.corelogic\.com\.au\/property\//.test(saved);
   return `<a class="${cls}${exact?" exact":""}" href="${esc(rpUrl(addr,suburb,saved,pc))}" target="_blank" rel="noopener" title="${exact?"Open in RP Data":"Search RP Data (address copied)"}" data-addr="${esc(rpAddress(addr,suburb,pc))}" onclick="event.stopPropagation();rpCopy(this)">RP</a>`; }
 function listingBtn(addr,suburb,pc){ if(!addr) return ""; const q=encodeURIComponent(rpAddress(addr,suburb,pc)+" for sale");
   return `<a class="lsb" href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener" title="Check it isn't listed with another agent (no login)" onclick="event.stopPropagation()">Listing</a>`; }
@@ -1624,7 +1624,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=181"></script>
+<script src="v2.js?v=182"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

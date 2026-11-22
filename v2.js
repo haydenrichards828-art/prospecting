@@ -1263,7 +1263,7 @@ document.addEventListener('visibilitychange',()=>{ if(document.hidden||!S.tm||!S
 
 // Lead panel bottom: one clean list. Each row shows its current value; tap to change it right there. Status and next step save straight away.
 const LST2=[['Lead','Lead'],['Appraisal Booked','Appraisal booked'],['Appraisal','Appraisal'],['Listed','Listed'],['Sold','Sold'],['Listed Elsewhere','Listed elsewhere'],['Not Ready','Not ready'],['Do Not Contact','Do not contact']];
-function lrowHTML(k,ic,label,val,on){ return `<button class="ldr4" data-k="${k}" onclick="${on}"><span class="lri2">${ic2(ic,17)}</span><span class="lrt2"><span>${label}</span><b class="${val?'':'none'}">${val||'Not set'}</b></span>${chev2()}</button><div class="lrx2" id="lrx_${k}" hidden></div>`; }
+function lrowHTML(k,ic,label,val,on){ return `<button class="ldr4" data-k="${k}" onclick="${on}"><span class="lri2">${ic2(ic,17)}</span><span class="lrt2"><span>${esc(label)}</span><b class="${val?'':'none'}">${esc(val||'Not set')}</b></span>${chev2()}</button><div class="lrx2" id="lrx_${k}" hidden></div>`; }
 function lrToggle(k,html){ const x=document.getElementById('lrx_'+k); if(!x) return; const open=x.hidden; document.querySelectorAll('.lrx2').forEach(e=>{ e.hidden=true; e.innerHTML=''; }); document.querySelectorAll('.ldr4').forEach(e=>e.classList.remove('open')); if(!open) return; x.innerHTML=html; x.hidden=false; x.previousElementSibling.classList.add('open'); }
 function lrPick(id,field,val){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;
   const sel=document.getElementById(field==='status'?'ln_status':'ln_next'); if(sel) sel.value=val;
