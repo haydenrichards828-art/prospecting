@@ -1217,3 +1217,5 @@ header.top2 .hadd5{height:36px!important;border-radius:4px!important}
 header.top2 .lift5.fqb2{margin-left:auto!important}
 header.top2 .lift5.fqb2~.tsearch{margin-left:8px!important}
 .fqb2 span{background:none!important;color:inherit!important;padding:0!important;margin:0!important;border-radius:0!important}
+/* Appraisals and Listings: an empty slot where a row has no phone, so the buttons line up */
+.pt3 .ac3 .clx{display:inline-block;width:32px;height:32px;flex:none;border:0!important}
