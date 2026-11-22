@@ -204,7 +204,7 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="preload" href="v2.js?v=177" as="script">
+<link rel="preload" href="v2.js?v=178" as="script">
 <link rel="stylesheet" href="v2.css?v=181">
 </head>
 <body>
@@ -360,18 +360,20 @@ async function runSearch(q, pre){
   let calls=[...(S.callbacks||[]),...(S.rows||[])].filter((r,i,a)=>a.findIndex(x=>x.property_id===r.property_id)===i)
     .filter(r=>isAddr||sHit(words,sHay(r.owner_name,r.phone,r.street_address,r.suburb))).slice(0,isAddr?100000:15);
   let res={leads:[],props:[],listings:[]};
-  if (pre) res=pre; else try { res=await api("search",{q}); } catch(e){ if(seq!==searchSeq) return; $("#main").innerHTML=`<div class="empty"><i class="ti ti-wifi-off"></i>${esc(e.message)}</div>`; return; }
+  if (pre) res=pre; else try { res=await searchApi7(q); } catch(e){ if(seq!==searchSeq) return; $("#main").innerHTML=`<div class="empty"><i class="ti ti-wifi-off"></i>${esc(e.message)}</div>`; return; }
   if (seq!==searchSeq || !S.searching) return;
   let calls2=calls, miss=""; const AR=typeof addrRank7==="function"?addrRank7(q,res,calls):null;
-  if(AR){ res={...res,props:AR.props,leads:AR.leads}; calls2=AR.calls; if(!AR.exact) miss=`<div class="card lead srow miss7" onclick="addMissing7('${esc(AR.label).replace(/'/g,"\\'")}','${esc(AR.suburb).replace(/'/g,"\\'")}')"><div class="lname" style="font-size:16px">${esc(AR.label)}${AR.suburb?", "+esc(AR.suburb):""} isn't on file</div><div class="addr">Tap to add it${AR.props.length||AR.calls.length?". Other homes at this address are below":""}</div></div>`; }
+  if(AR){ res={...res,props:AR.props,leads:AR.leads}; calls2=AR.calls; AR.top=[...AR.calls.filter(r=>addrScore7(addrQ7(q),r.street_address,r.suburb)===0).map(r=>({c:r})),...AR.props.filter(p=>addrScore7(addrQ7(q),p.street_address,p.suburb)===0&&!AR.calls.some(c=>c.property_id===p.id)).map(p=>({p}))]; if(!AR.exact) miss=`<div class="card lead srow miss7" onclick="addMissing7('${esc(AR.label).replace(/'/g,"\\'")}','${esc(AR.suburb).replace(/'/g,"\\'")}')"><div class="lname" style="font-size:16px">${esc(AR.label)}${AR.suburb?", "+esc(AR.suburb):""} isn't on file</div><div class="addr">Tap to add it${AR.props.length||AR.calls.length?". Other homes at this address are below":""}</div></div>`; }
   S.sres={...res,calls:calls2}; const callsAll=calls; calls=calls2;
   const fmtPh=p=>esc(fmtPh2(p));
   const row=(title,sub,tap,phone,tag)=>`<div class="card lead srow" onclick="${tap}"><div style="display:flex;gap:10px;align-items:center"><div style="flex:1;min-width:0"><div class="lname" style="font-size:16px">${esc(title)}${tag?` <span class="stag">${tag}</span>`:""}</div><div class="addr" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(sub)}</div></div>${phone?`<a class="lcall" href="tel:${esc(telOf(phone))}" onclick="event.stopPropagation()" aria-label="Call"><i class="ti ti-phone"></i></a>`:""}</div></div>`;
   const sec=(t,n,html)=>n?`<h2 style="margin:14px 0 6px">${t} <span class="muted" style="font-weight:400">${n}</span></h2>${html}`:"";
   const leadIds=new Set(res.leads.map(l=>l.id));
-  const props=res.props.filter(p=>!calls.some(c=>c.property_id===p.id));
+  const topIds=new Set((AR&&AR.top||[]).map(({c,p})=>c?c.property_id:p.id)); calls=calls.filter(r=>!topIds.has(r.property_id));
+  const props=res.props.filter(p=>!calls.some(c=>c.property_id===p.id)&&!topIds.has(p.id));
   const total=res.leads.length+calls.length+res.listings.length+props.length;
   $("#main").innerHTML=`<p class="muted" style="margin:12px 0 0;font-size:13px">${total?`Results for "${esc(q)}"`:miss?"":`Nothing found for "${esc(q)}"`}</p>`+miss
+   + (AR&&AR.top&&AR.top.length?sec("This home",AR.top.length,AR.top.map(({c,p})=>c?row(c.owner_name||"Owner unknown",[c.street_address,c.suburb,c.today_outcome?LABEL[c.today_outcome]:null].filter(Boolean).join(" · "),`openSearchProp(${c.property_id},true)`,c.phone,c.callback?"callback":""):row(p.owner_name||`${p.street_address}`,[p.owner_name?p.street_address:null,p.suburb,p.phone?fmtPh(p.phone):null].filter(Boolean).join(" · "),`openSearchProp(${p.id})`,p.phone,p.is_lead?"lead":"")).join("")):"")
    + sec("Leads",res.leads.length,res.leads.map(l=>row(l.name||l.address||l.phone,[l.name?l.address:null,l.suburb,l.phone?fmtPh(l.phone):null,l.status!=="Lead"?l.status:null].filter(Boolean).join(" · "),`openSearchLead(${l.id})`,l.phone)).join(""))
    + sec("Today's calls",calls.length,calls.map(r=>row(r.owner_name||"Owner unknown",[r.street_address,r.suburb,r.today_outcome?LABEL[r.today_outcome]:null].filter(Boolean).join(" · "),`openSearchProp(${r.property_id},true)`,r.phone,r.callback?"callback":"")).join(""))
    + sec("Listings",res.listings.length,res.listings.map(t=>row(t.address,[t.suburb,t.price_text].filter(Boolean).join(" · "),`openSearchListing(${t.id})`)).join(""))
@@ -1622,7 +1624,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=177"></script>
+<script src="v2.js?v=178"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>

@@ -1505,7 +1505,7 @@ window.hSearch=function(v){ S.sq=v; clearTimeout(searchT); const q=v.trim();
   if(!pre){ let k=key; while(k.length>1&&!SC2.has(k)) k=k.slice(0,-1); const b=SC2.get(k); pre=sLocal2(q,b&&key.startsWith(k)?b:null); }
   runSearch(q,pre);
   if(SC2.has(key)) return;
-  searchT=setTimeout(async()=>{ try{ const A7=addrQ7(q), r=await api('search',{q:A7&&A7.unit?A7.no+' '+A7.words.join(' '):q}); SC2.set(key,r); if(SC2.size>200) SC2.delete(SC2.keys().next().value); if(S.searching&&S.sq.trim()===q) runSearch(q,r); }catch(e){} },70); };
+  searchT=setTimeout(async()=>{ try{ const A7=addrQ7(q), r=await searchApi7(q); SC2.set(key,r); if(SC2.size>200) SC2.delete(SC2.keys().next().value); if(S.searching&&S.sq.trim()===q) runSearch(q,r); }catch(e){} },70); };
 
 // ---------- More tracking: errors and slowness, undos and backtracks, search success, calls with no result ----------
 // Same rules as the rest: labels, counts and timings only, never anything typed or read off the screen.
@@ -2446,3 +2446,9 @@ function closeWants8(){ const e=document.getElementById('weditor'); if(e) e.hidd
 window.openLead=(function(o){ return function(...a){ const r=o(...a);
   try{ const w=document.querySelector('#weditor .wlabel'); if(w&&!w.querySelector('.wx8')) w.insertAdjacentHTML('beforeend','<button type="button" class="wx8" onclick="closeWants8()" aria-label="Close" title="Close"><i class="ti ti-x"></i></button>'); }catch(e){}
   return r; }; })(window.openLead);
+
+// Unit searches (23 Nov): ask for the exact unit and for the whole building, then merge, so the unit is never cut off a big block
+async function searchApi7(q){ const A=addrQ7(q); if(!A||!A.unit) return api('search',{q});
+  const [a,b]=await Promise.all([api('search',{q:A.unit+'/'+A.no+' '+A.words.join(' ')}),api('search',{q:A.no+' '+A.words.join(' ')})]);
+  const u=(x,y,k)=>[...(x||[]),...(y||[])].filter((r,i,arr)=>arr.findIndex(z=>z[k]===r[k])===i);
+  return {...b,props:u(a.props,b.props,'id'),leads:u(a.leads,b.leads,'id'),listings:u(a.listings,b.listings,'id')}; }
