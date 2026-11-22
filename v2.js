@@ -379,9 +379,9 @@ function drawList2(){
     const d=dignamLast(r); if(d&&d.when) return two('Dignam','#5eead4',d.when+(d.by?' · '+d.by:''));
     return '<span class="nc3">Not contacted</span>'; };
   $("#main").innerHTML=failStrip()+`<div class="list2">
-   <nav class="rail2" aria-label="Suburbs"><div class="seg2 mini lt5"><button class="${S.type==='seller'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button>${subs.some(x=>x[0]===SOL_GROUP)?`<button class="${S.lsub===SOL_GROUP?'on':''}" onclick="S.lsub=SOL_GROUP;drawList()">Solicitors <span style="opacity:.7">${(subs.find(x=>x[0]===SOL_GROUP)||[])[1]}</span></button>`:''}</div><button class="cbk" onclick="upcomingCB()">Booked call backs<span>${ic2('chev',14)}</span></button>${cbs.length?`<button class="cbk ${S.lsub==='Call backs'?'on':''}" onclick="S.lsub='Call backs';drawList()">Call backs<span>${cbs.filter(r=>!r.today_outcome).length}</span></button>`:''}${subs.filter(([s])=>s!==SOL_GROUP).map(([s,n])=>`<button class="${s===S.lsub?'on':''}" onclick="S.lsub=this.dataset.s;drawList()" data-s="${esc(s)}">${esc(s)}<span>${n}</span></button>`).join('')}</nav>
+   <nav class="rail2" aria-label="Suburbs"><div class="seg2 mini lt5"><button class="${S.type==='seller'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button><button class="${S.lsub===SOL_GROUP?'on':''}" onclick="solGo6()">Solicitors${solN6(subs)?` <span style="opacity:.7">${solN6(subs)}</span>`:''}</button></div><button class="cbk" onclick="upcomingCB()">Booked call backs<span>${ic2('chev',14)}</span></button>${cbs.length?`<button class="cbk ${S.lsub==='Call backs'?'on':''}" onclick="S.lsub='Call backs';drawList()">Call backs<span>${cbs.filter(r=>!r.today_outcome).length}</span></button>`:''}${subs.filter(([s])=>s!==SOL_GROUP).map(([s,n])=>`<button class="${s===S.lsub?'on':''}" onclick="S.lsub=this.dataset.s;drawList()" data-s="${esc(s)}">${esc(s)}<span>${n}</span></button>`).join('')}</nav>
    <div class="lm2">
-    <div class="lh2 lh4"><div class="seg2 mini lt4"><button class="${S.type==='seller'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button>${subs.some(x=>x[0]===SOL_GROUP)?`<button class="${S.lsub===SOL_GROUP?'on':''}" onclick="S.lsub=SOL_GROUP;drawList()">Solicitors <span style="opacity:.7">${(subs.find(x=>x[0]===SOL_GROUP)||[])[1]}</span></button>`:''}</div></div>
+    <div class="lh2 lh4"><div class="seg2 mini lt4"><button class="${S.type==='seller'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='seller';S.lsub=null;render()">Sellers</button><button class="${S.type==='landlord'&&S.lsub!==SOL_GROUP?'on':''}" onclick="S.type='landlord';S.lsub=null;render()">Landlords</button><button class="${S.lsub===SOL_GROUP?'on':''}" onclick="solGo6()">Solicitors${solN6(subs)?` <span style="opacity:.7">${solN6(subs)}</span>`:''}</button></div></div>
     <div class="lr2" id="lrows2">${rows.length?rows.map((r,ix)=>{ const div=r.today_outcome&&(ix===0||!rows[ix-1].today_outcome)?'<div class="div3">Called today</div>':''; const y=yrsSince(r.last_sale_date), id=r.property_id, ws=r.callback?[['cal','Call back '+dayMon(r.callback_at),'Note']]:whyRows(r).slice(0,3);
       const ph=(r.signals||[]).includes('probate')&&!(r.solicitor&&r.phone)?null:r.phone, u=aerialUrl(r,PH_SMALL[0],PH_SMALL[1]);
       const rooms=[r.bedrooms>0?r.bedrooms+' bd':'',r.baths>0?r.baths+' ba':'',r.cars>0?r.cars+' car':''].filter(Boolean).join(' · ');
@@ -1261,9 +1261,14 @@ function lrPick(id,field,val){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) 
   const p={id,body:'',status:field==='status'?val:(document.getElementById('ln_status')?.value||l.status||'Active'),next_action:field==='next_action'?(val||null):(document.getElementById('ln_next')?.value||null)};
   const r=document.querySelector(`.ldr4[data-k="${field}"] b`); if(r){ r.textContent=field==='status'?(LST2.find(s=>s[0]===val)||[0,val])[1]:(val||'Not set'); r.classList.toggle('none',!val); }
   lrToggle(field);
-  api('lead_note',p).then(()=>{ toast(field==='status'?'Status saved':'Next step saved'); if(S.tab==='leads') drawLeads(); })
-   .catch(e=>{ l[field]=prev; toast("Couldn't save that. "+e.message); });
-  if(val==='Listing Won'&&l.property_id) api('set_stage',{property_id:l.property_id,stage:'listed'}).catch(()=>{}); }
+  api('lead_note',p).then(()=>{ if(field==='status'&&MOVE6[val]) return statusMoved6(id,val); toast(field==='status'?'Status saved':'Next step saved'); if(S.tab==='leads') drawLeads(); })
+   .catch(e=>{ l[field]=prev; toast("Couldn't save that. "+e.message); }); }
+// 22 Nov: a status that moves someone (the database moves them along the pipeline) now shows the move:
+// the list reloads without them and says where they went. With no address to make a house from, the add form opens filled in.
+const MOVE6={'Appraisal Booked':['appraisal','Moved to Appraisals'],'Appraisal Done':['appraisal','Moved to Appraisals'],'Listing Won':['listed','Moved to Listings'],'Listing Lost':[null,'Marked as listed elsewhere'],'Closed':[null,'Closed'],'Do Not Contact':[null,'Marked do not contact']};
+async function statusMoved6(id,val){ const [stage,msg]=MOVE6[val]; S.leads=null; await loadLeads().catch(()=>{}); const still=(S.leads||[]).find(x=>x.id===id);
+  if(still&&stage){ if(!still.property_id) toast('Status saved. Add the address to move them'); return leadMove6(id,stage); }   // the database could not move them: do it here
+  closeOv(); toast(msg); render(); }
 // Lead panel: status line and next action
 window.openLead=(function(orig){ return function(id,opts){ orig(id,opts); const sh=document.getElementById('sheet'); if(!sh||!id) return;
   const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;
@@ -1347,7 +1352,7 @@ function fqSkip(){ if(!S.fq) return; const nx=S.fq.ids[S.fq.i+1]; if(nx==null){ 
 // Leads page: the Call N follow ups button
 window.drawLeads=(function(orig){ return function(){ orig(); if(S.lview==='listings') return; const n=dueLeads2().length; if(!n) return;
   const ph=document.querySelector('#main .ph2'); if(!ph) return; ph.querySelector('.flag2')?.remove();
-  ph.querySelector('h1')?.insertAdjacentHTML('afterend',`<button class="fqb2" onclick="fqStart()" title="Call the leads due for a follow up, one after another">${ic2('phone',15)}<span>Call ${n} follow up${n===1?'':'s'}</span></button>`); }; })(window.drawLeads);
+  ph.querySelector('h1')?.insertAdjacentHTML('afterend',`<button class="fqb2" data-n="${n}" onclick="fqStart()" title="Call the leads due for a follow up, one after another">${ic2('phone',15)}<span>Call ${n} follow up${n===1?'':'s'}</span></button>`); }; })(window.drawLeads);
 
 // Send info goes back to the lead it came from
 window.swSend=(function(orig){ return async function(ch){ const w=S.sw; await orig(ch); if(ch!=='copy'&&w&&w.lead_id&&S.swBack){ S.swBack=false; setTimeout(()=>openLead(w.lead_id),120); } }; })(window.swSend);
@@ -2124,9 +2129,14 @@ async function leadMove6(id,stage){ const l=(S.leads||[]).find(x=>x.id===id); if
   document.querySelectorAll('#ap_source button').forEach(b=>b.classList.toggle('on',(b.getAttribute('onclick')||'').includes(`'${source}'`)));
   const t=$('#sheet .sh2 b'); if(t) t.textContent=`Move ${l.name||'this lead'} to ${where}`; const g=$('#ap_go'); if(g) g.textContent='Move to '+where;
   setTimeout(()=>{ const f=['#ap_no','#ap_st','#ap_sub'].map(s=>$(s)).find(i=>i&&!i.value); (f||$('#ap_go'))?.focus(); },80); }
-function leadMenu6(id){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;
-  const row=(go,t,sub)=>`<button class="mm6" onclick="${go}"><span><b>${t}</b><em>${sub}</em></span>${ic2('chev',16)}</button>`;
-  openSheet2(esc(l.name||'Lead'),`<div class="mm6s">${row(`leadMove6(${id},'appraisal')`,'Move to Appraisals','They booked an appraisal')}${row(`leadMove6(${id},'listed')`,'Move to Listings','They listed with us')}${row(`closeOv();openLead(${id})`,'Open lead','Notes, follow up and details')}</div>`); }
+function leadMenu6(id){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) return;   // the ⋯ menu is the status list: picking one moves them
+  const where={'Appraisal Booked':'Moves to Appraisals','Appraisal Done':'Moves to Appraisals','Listing Won':'Moves to Listings','Listing Lost':'Leaves Leads','Do Not Contact':'Leaves Leads','Closed':'Leaves Leads'};
+  openSheet2(esc(l.name||'Lead'),`<div class="mm6s">${LST2.map(([v,t])=>`<button class="mm6${(l.status||'Active')===v?' on':''}" onclick="leadStatus6(${id},'${v}')"><span><b>${t}</b>${where[v]?`<em>${where[v]}</em>`:''}</span>${(l.status||'Active')===v?ic2('check',16):''}</button>`).join('')}
+   <button class="mm6" onclick="closeOv();openLead(${id})"><span><b>Open lead</b><em>Notes, follow up and details</em></span>${ic2('chev',16)}</button></div>`); }
+async function leadStatus6(id,val){ const l=(S.leads||[]).find(x=>x.id===id); if(!l) return closeOv();
+  if(val===(l.status||'Active')){ if(MOVE6[val]&&MOVE6[val][0]) return leadMove6(id,MOVE6[val][0]); return closeOv(); }   // already that status but not moved yet: move them now
+  try{ await api('lead_note',{id,body:'',status:val,next_action:l.next_action||null}); l.status=val; }catch(e){ return toast("Couldn't save that. "+e.message); }
+  if(MOVE6[val]) return statusMoved6(id,val); closeOv(); toast('Status saved'); render(); }
 // dragging a lead onto Appraisals or Listings goes through the same steps
 window.drop3=(function(orig){ return async function(e,col){ let d; try{ d=JSON.parse(e.dataTransfer.getData('text/plain')); }catch{ return orig(e,col); }
   if(d.kind==='ld'&&(col==='ap'||col==='ls')){ e.preventDefault(); dragEnd3(); return leadMove6(d.id,col==='ap'?'appraisal':'listed'); } return orig(e,col); }; })(window.drop3);
@@ -2200,3 +2210,17 @@ window.act2=(function(orig){ return function(...a){ hint6done(); return orig.app
   // sign out clears the saved answers
   window.logout=(function(o){ return function(...a){ try{ Object.keys(localStorage).filter(x=>x.startsWith('dp_c6_')).forEach(x=>localStorage.removeItem(x)); }catch{} return o.apply(this,a); }; })(window.logout);
 })();
+
+// Solicitors stays in the Sellers, Landlords, Solicitors switch on every list (22 Nov): deceased estates are on the sellers list,
+// so on Landlords the button used to vanish. Tapping it from Landlords switches to the sellers list's solicitor group.
+function solN6(){ if(S.type==='seller') S.solN6=queue().filter(r=>!r.callback&&grp(r)===SOL_GROUP&&!r.today_outcome).length; return S.solN6||0; }   // left to call; kept from the sellers list while on Landlords
+function solGo6(){ if(S.type!=='seller'){ S.type='seller'; S.lsub=SOL_GROUP; S.focusSub=SOL_GROUP; render(); } else { S.lsub=SOL_GROUP; drawList(); } }
+// On a computer the rail is too narrow for three words in the switch, so Solicitors sits under Lists like Call backs
+window.drawList2=(function(orig){ return function(...a){ const r=orig.apply(this,a); const rail=document.querySelector('.rail2'); if(!rail) return r;
+  rail.querySelectorAll('.lt5 button[onclick^="solGo6"]').forEach(b=>b.remove());
+  if(!rail.querySelector('.sol6')){ const n=solN6()||'', on=S.lsub===SOL_GROUP;
+    const b=document.createElement('button'); b.className='sol6'+(on?' on':''); b.setAttribute('onclick','solGo6()'); b.innerHTML=`<em class="rn5">Solicitors</em><span>${n}</span>`;
+    let h=[...rail.querySelectorAll('.rh5')].find(x=>/Lists/.test(x.textContent));
+    if(!h){ h=document.createElement('div'); h.className='rh5'; h.textContent='Lists'; const sub=[...rail.querySelectorAll('.rh5')].find(x=>/Suburbs/.test(x.textContent)); rail.insertBefore(h,sub||null); }
+    let after=h; while(after.nextElementSibling&&after.nextElementSibling.tagName==='BUTTON') after=after.nextElementSibling; after.insertAdjacentElement('afterend',b); }
+  return r; }; })(window.drawList2);

@@ -830,7 +830,8 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 .lt3 .b3{justify-content:center;gap:4px;padding:0 8px}
 .b3 a{display:grid;place-items:center;width:30px;height:30px;border-radius:4px;color:#a3acb9}.b3 a.call{color:#93c0ff}.b3 a:hover{background:#272d37}
 .lt3.sel{background:#162544;box-shadow:inset 2px 0 0 #2563eb}
-@media(min-width:900px){
+/* the lead panel docks beside the page only where the page keeps enough room (from 1200 wide); narrower, it opens over the page */
+@media(min-width:1200px){
  body:has(.ltab3):has(#ov.show #sheet.lsheet) #main{margin-right:460px}
  body:has(.ltab3):has(#ov.show #sheet.lsheet) .lt3{grid-template-columns:minmax(200px,1.6fr) 96px 170px}
  body:has(.ltab3):has(#ov.show #sheet.lsheet) .lt3 .c3{display:none}
@@ -1339,3 +1340,26 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline-offset:-
   .pg2.st6pg>div{flex:1 0 auto;display:flex;flex-direction:column}
   .st6pg .st6{flex:1 1 auto;min-height:440px;height:auto!important}
 }
+.rail2 .lt5{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+/* cut off buttons (22 Nov) */
+/* the top bar makes room for the lead panel too, not just the page under it */
+@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2{margin-right:460px}}
+@media (max-width:1279px){ body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2 .tsearch{display:none} }
+/* narrower screens: drop the least needed columns so the buttons on the right fit */
+@media (min-width:900px) and (max-width:1279px){
+  .lt3{grid-template-columns:minmax(180px,1.6fr) 90px 140px minmax(150px,1.4fr) 92px}
+  .lt3>:nth-child(5){display:none}
+  .ltab3:has(.pt3){grid-template-columns:minmax(130px,1.2fr) minmax(130px,1.4fr) minmax(100px,.9fr) max-content}
+  .ltab3 .pt3>:nth-child(4),.ltab3 .pt3>:nth-child(5){display:none!important}
+}
+/* phone: the round add button sits above the bottom bar, not behind it */
+@media (max-width:899px){ .pph2 .b2.pri{bottom:calc(env(safe-area-inset-bottom,0px) + 72px)!important} }
+/* lead panel open: the top bar keeps everything inside the space left beside the panel */
+@media (max-width:1499px){ body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2 .tsearch{display:none} }
+@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2 .fqb2{gap:0!important;padding:0 10px!important}}
+@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2 .fqb2 span{display:none}}
+@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2 .fqb2 svg{width:18px;height:18px}}
+@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2 .fqb2::after{content:attr(data-n);font-size:14px;font-weight:700;margin-left:6px}}
+@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2{min-width:0;overflow:hidden}}
+@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) .lt3{grid-template-columns:minmax(120px,1.5fr) 72px minmax(110px,1fr)!important}}
+@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) .lt3>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
