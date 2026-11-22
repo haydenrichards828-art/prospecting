@@ -2439,3 +2439,10 @@ function empty6(kind,line,prog,progTxt){
     time:`<div class="eg6 time"><i style="flex:1"></i><i style="flex:.3"></i><i style="flex:2.4"></i></div>`,
     people:`<div class="eg6 people"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.2 3-5 6-5s5.4 1.8 6 5"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2c2.6-.3 4.8 1.2 5.5 4.3"/></svg></div>`}[kind]||'';
   return `<div class="e6">${g}<div class="e6t"><b>${esc(line)}</b>${prog!=null?`<div class="e6p"><i style="width:${Math.max(2,Math.min(100,prog*100))}%"></i></div><span>${esc(progTxt||'')}</span>`:''}</div></div>`; }
+// What they want to buy (23 Nov): an X closes the editor if it was opened by mistake
+function closeWants8(){ const e=document.getElementById('weditor'); if(e) e.hidden=true;
+  const v=document.getElementById('wview_box'), b=readBuy(); if(v){ v.innerHTML=wantsView(b); v.hidden=!hasCriteria(b); }
+  document.querySelectorAll('#sheet [onclick*="editWants(true)"]').forEach(x=>{ if(x.style.display==='none') x.style.display=''; }); }
+window.openLead=(function(o){ return function(...a){ const r=o(...a);
+  try{ const w=document.querySelector('#weditor .wlabel'); if(w&&!w.querySelector('.wx8')) w.insertAdjacentHTML('beforeend','<button type="button" class="wx8" onclick="closeWants8()" aria-label="Close" title="Close"><i class="ti ti-x"></i></button>'); }catch(e){}
+  return r; }; })(window.openLead);
