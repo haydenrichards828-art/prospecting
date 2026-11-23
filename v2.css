@@ -1660,3 +1660,6 @@ body.typing .nbox8.nb8p{border-color:var(--acc)}
   .s9 .hm9{height:260px;flex:none;grid-template-columns:30px repeat(10,1fr);gap:2px;font-size:10px}.s9 .hm9 i{font-size:9px;min-height:0}
   .s9 .sc9{padding-left:32px}
 }
+
+/* Note boxes grow with their text without script (23 Nov) */
+.fs14 textarea[data-grow]{field-sizing:content;max-height:50vh;overflow-y:auto}

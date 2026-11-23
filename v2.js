@@ -1046,8 +1046,8 @@ window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); 
 
 // Note boxes grow with what you type (up to half the screen, then they scroll), so a long note never runs off the edge
 function growTA(t){ if(!t||!t.matches('textarea[data-grow]')) return; t.style.height='auto'; t.style.height=Math.min(t.scrollHeight+2,innerHeight*0.5)+'px'; t.style.overflowY=t.scrollHeight+2>innerHeight*0.5?'auto':'hidden'; }
-document.addEventListener('input',e=>growTA(e.target),true);
-new MutationObserver(ms=>{ for(const m of ms) m.addedNodes.forEach(n=>{ if(n.nodeType!==1) return; (n.matches?.('textarea[data-grow]')?[n]:[...n.querySelectorAll('textarea[data-grow]')]).forEach(t=>requestAnimationFrame(()=>growTA(t))); }); }).observe(document.body,{childList:true,subtree:true});
+document.addEventListener('input',e=>window.growTA(e.target,e),true);
+new MutationObserver(ms=>{ for(const m of ms) m.addedNodes.forEach(n=>{ if(n.nodeType!==1) return; (n.matches?.('textarea[data-grow]')?[n]:[...n.querySelectorAll('textarea[data-grow]')]).forEach(t=>requestAnimationFrame(()=>window.growTA(t))); }); }).observe(document.body,{childList:true,subtree:true});
 
 // Two people, two numbers (23 Nov): a capital letter for each person sits inside their number's button, so C 0412 345 678 is Charlie's
 function names7(a,b){ const split=n=>String(n||'').replace(/^Solicitor:.*$/,'').split(/\s*(?:&|\band\b|\/|;|,)\s*/i).map(x=>x.replace(/^(mr|mrs|ms|miss|dr)\.?\s+/i,'').trim()).filter(x=>/[a-z]/i.test(x));
@@ -2872,3 +2872,17 @@ let st9rz; addEventListener('resize',()=>{ clearTimeout(st9rz); st9rz=setTimeout
 function noSave11(id){ if(!id) return; const sv=document.getElementById('lead_save'); if(!sv) return; const row=sv.closest('.lsave');
   if(row&&!row.classList.contains('fqrow2')) row.remove(); }
 window.openLead=(function(o){ return function(id,...a){ const r=o(id,...a); try{ noSave11(id); Promise.resolve(r).then(()=>setTimeout(()=>noSave11(id),0)); }catch(e){} return r; }; })(window.openLead);
+
+// ---------- Typing without lag (23 Nov) ----------
+// 1. Note boxes grow by themselves in browsers that can size a box to its text, so typing never makes the page
+//    re-measure everything (the old way measured the whole page twice a keystroke). Others keep the old way,
+//    but only shrink the box when text is deleted.
+const FS14=typeof CSS!=='undefined'&&CSS.supports&&CSS.supports('field-sizing','content');
+if(FS14) document.documentElement.classList.add('fs14');
+window.growTA=function(t,e){ if(FS14||!t||!t.matches||!t.matches('textarea[data-grow]')) return;
+  const cap=innerHeight*0.5, del=e&&/^delete/.test(e.inputType||'');
+  if(del||!t.style.height){ t.style.height='auto'; }
+  const h=t.scrollHeight+2; if(del||h>t.clientHeight+2||!t.style.height||t.style.height==='auto'){ t.style.height=Math.min(h,cap)+'px'; t.style.overflowY=h>cap?'auto':'hidden'; } };
+// 2. Search shows results once per screen refresh however fast you type, instead of rebuilding the page on every key
+window.runSearch=(function(o){ let raf14=0, last14=null; return function(q,pre,...a){ last14=[q,pre,...a];
+  if(raf14) return; raf14=requestAnimationFrame(()=>{ raf14=0; const x=last14; last14=null; o(...x); }); }; })(window.runSearch);
