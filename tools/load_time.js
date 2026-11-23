@@ -5,19 +5,19 @@
 // Usage: PW=... node tools/load_time.js [cold_ms] [warm_ms]
 const {chromium}=require(process.env.PW||'playwright'); const fs=require('fs'), os=require('os'), path=require('path');
 const URL='http://localhost:8765/index.html', COLD=+(process.argv[2]||2000), WARM=+(process.argv[3]||400);
-const CONTENT={calls:'a.num2:visible, a.pnum2:visible', board:'.cd3', leads:'.lt3:not(.h), .r2', insights:'.p6 .p6h b', appraisal:'.pt3:not(.h), .cd3'};
+const CONTENT={calls:'a.num2:visible, a.pnum2:visible', board:'.cd3', leads:'.lt3:not(.h), .r2', insights:'.s9 .tot9', appraisal:'.pt3:not(.h), .cd3'};
 const SWITCH={board:"sideGo('board')", leads:"sideGo('leads')", insights:"go('insights')", appraisal:"sideGo('appraisal')"};
 (async()=>{
   const b0=await chromium.launch(); const p0=await b0.newPage(); await p0.goto(URL+'#demo'); await p0.waitForTimeout(1200);
-  const rec=await p0.evaluate(()=>{ const out={}; for(const a of ['list','today','callbacks','upcoming_callbacks','leads','pipeline','overview','work_stats','settings','templates','messages','elists']){ try{ out[a]=JSON.parse(JSON.stringify(demoApi(a,{type:'seller',days:7}))); }catch(e){} } out.referrals={partners:[],referrals:[]}; return out; });
+  const rec=await p0.evaluate(()=>{ const out={}; for(const a of ['list','today','callbacks','upcoming_callbacks','leads','pipeline','overview','work_stats','settings','templates','messages','elists']){ try{ out[a]=JSON.parse(JSON.stringify(demoApi(a,{type:'seller',days:7}))); }catch(e){} } out.referrals={partners:[],referrals:[]}; try{ const [a,b]=st9Range('week',0); out.stats=JSON.parse(JSON.stringify(st9Demo('week',a,b))); }catch(e){} return out; });
   await b0.close();
   const rows=[];
   for(const temp of ['cold','warm']){
     const ms=temp==='cold'?COLD:WARM;
     const dir=fs.mkdtempSync(path.join(os.tmpdir(),'lt-')); const ctx=await chromium.launchPersistentContext(dir,{viewport:{width:1213,height:720}});
-    await ctx.route(/supabase\.co\/functions\/v1\/(api|extra|ux)/,async r=>{ const q=r.request(); const h={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type, x-session','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Max-Age':'7200','Content-Type':'application/json'};
+    await ctx.route(/supabase\.co\/functions\/v1\/(api|extra|ux|boot)/,async r=>{ const q=r.request(); const h={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type, x-session','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Max-Age':'7200','Content-Type':'application/json'};
       await new Promise(s=>setTimeout(s,ms)); if(q.method()==='OPTIONS') return r.fulfill({status:204,headers:h});
-      let a='?'; try{ a=JSON.parse(q.postData()||'{}').action; }catch{} r.fulfill({status:200,headers:h,body:JSON.stringify(rec[a]||{ok:true,rows:[]})}); });
+      let a='?'; try{ a=JSON.parse(q.postData()||'{}').action; }catch{} if(/\/boot/.test(q.url())&&!a) return r.fulfill({status:200,headers:h,body:JSON.stringify({list:rec.list,today:{...rec.today,holidays:[]},callbacks:rec.callbacks})}); r.fulfill({status:200,headers:h,body:JSON.stringify(rec[a]||{ok:true,rows:[]})}); });
     await ctx.route(/tile|arcgis|openstreetmap|google|routing|nsw\.gov|unpkg|jsdelivr|fonts\./,r=>r.abort());
     await ctx.addInitScript(()=>{ try{ localStorage.setItem('dp_token','test-token-123456789'); }catch{} });
     const until=async(p,sel,t0)=>{ for(let i=0;i<200;i++){ if(await p.locator(sel).first().isVisible().catch(()=>false)) return Date.now()-t0; await p.waitForTimeout(25); } return null; };

@@ -59,7 +59,7 @@ window.drawList=(function(o){ return function(...a){ const r=o(...a); try{ if(S.
 window.upcomingCB=(function(o){ return function(...a){ if(ucbN===0){ toast('No call backs booked'); return; } return o(...a); }; })(window.upcomingCB);
 
 // ---- Opening the app: on the first open of the day the call list, today's numbers and call backs come back in one trip
-const BOOT=API.replace(/\/api$/,'/boot'); let primed=null;
+const BOOT=API.replace(/\/api$/,'/boot'); let primed=null; window.BOOT=BOOT;   // Stats and Needs a number use it from outside this block
 window.api=(function(o){ return async function(action,body={},...rest){
   if(primed&&(action==='list'||action==='today'||action==='callbacks')&&primed[action]&&(action!=='list'||primed.type===((body&&body.type)||'seller'))){ const v=primed[action]; primed[action]=null; return JSON.parse(JSON.stringify(v)); }
   return o.call(this,action,body,...rest); }; })(window.api);
