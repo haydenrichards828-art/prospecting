@@ -95,7 +95,7 @@ function drawCall2(){
    </div>
    <div class="pf2">${barHTML2(id)}<div class="ends2"><button onclick="skip2(${id})">${ic2('skip',16)}Skip</button><button onclick="moreSheet2(${id})">${ic2('more',16)}More</button></div></div>
   </div>`;
-  const acc=$("#acc2"); if(acc) acc.innerHTML=`${barHTML2(id,true)}<button class="done" onmousedown="event.preventDefault()" onclick="document.activeElement.blur()">Done</button>`;
+  const acc=$("#acc2"); if(acc) acc.innerHTML=`${barHTML2(id,true)}<div class="accr2"><button class="askip" onmousedown="event.preventDefault()" onclick="document.activeElement.blur();document.body.classList.remove('typing');skip2(${id})">${ic2('skip',16)}Skip</button><button class="done" onmousedown="event.preventDefault()" onclick="document.activeElement.blur()">Done</button></div>`;
   markShown(id); prefetchPhotos(id);
 }
 // Load the next few people's photos in the background so they are already there when the card comes up
