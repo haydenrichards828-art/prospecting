@@ -1341,7 +1341,7 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline-offset:-
   .pg2.st6pg>div{flex:1 0 auto;display:flex;flex-direction:column}
   .st6pg .st6{flex:1 1 auto;min-height:440px;height:auto!important}
 }
-.rail2 .lt5{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.rail2 .lt5{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 /* cut off buttons (22 Nov) */
 /* the top bar makes room for the lead panel too, not just the page under it */
 @media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2{margin-right:460px}}
@@ -1587,3 +1587,14 @@ body.typing .nbox8.nb8p{border-color:var(--acc)}
 .nbox8 .phr8 button.used8{background:#162544!important;color:#93c0ff!important}
 .nbox8 .phr8 button.used8::before{content:"✓";color:#93c0ff}
 .nbox8.more8::after{content:"";position:absolute;right:0;bottom:0;width:40px;height:46px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--sub));border-radius:0 0 4px 0}
+
+/* Lists in the rail are blue, suburbs grey (23 Nov) */
+.rail2>button.ls9,.rail2>button.ls9.cbk,.rail2>button.ls9.oh5:not(.on),.rail2>button.ls9.cmp5{color:#93c0ff!important;gap:8px;justify-content:flex-start}
+.rail2>button.ls9 svg{flex:none;stroke:#6ea8ff}
+.rail2>button.ls9 .rn5{flex:1 1 auto;min-width:0}
+.rail2>button.ls9>span{background:#16223a!important;color:#93c0ff!important}
+@media (hover:hover){.rail2>button.ls9:not(.on):hover{background:#141c2b!important;color:#c3dbff!important}}
+.rail2>button.ls9.on{background:#162544!important;color:#fff!important}
+.rail2>button.ls9.on svg{stroke:#fff}
+.rail2>button.ls9.on>span{background:#2563eb!important;color:#fff!important}
+@media (max-width:899px){.rail2>button.ls9{background:#141c2b!important}.rail2>button.ls9.on{background:#1d3a6e!important}}

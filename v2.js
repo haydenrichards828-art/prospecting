@@ -2226,15 +2226,7 @@ window.act2=(function(orig){ return function(...a){ hint6done(); return orig.app
 // so on Landlords the button used to vanish. Tapping it from Landlords switches to the sellers list's solicitor group.
 function solN6(){ if(S.type==='seller') S.solN6=queue().filter(r=>!r.callback&&grp(r)===SOL_GROUP&&!r.today_outcome).length; return S.solN6||0; }   // left to call; kept from the sellers list while on Landlords
 function solGo6(){ if(S.type!=='seller'){ S.type='seller'; S.lsub=SOL_GROUP; S.focusSub=SOL_GROUP; render(); } else { S.lsub=SOL_GROUP; drawList(); } }
-// On a computer the rail is too narrow for three words in the switch, so Solicitors sits under Lists like Call backs
-window.drawList2=(function(orig){ return function(...a){ const r=orig.apply(this,a); const rail=document.querySelector('.rail2'); if(!rail) return r;
-  rail.querySelectorAll('.lt5 button[onclick^="solGo6"]').forEach(b=>b.remove());
-  if(!rail.querySelector('.sol6')){ const n=solN6()||'', on=S.lsub===SOL_GROUP;
-    const b=document.createElement('button'); b.className='sol6'+(on?' on':''); b.setAttribute('onclick','solGo6()'); b.innerHTML=`<em class="rn5">Solicitors</em><span>${n}</span>`;
-    let h=[...rail.querySelectorAll('.rh5')].find(x=>/Lists/.test(x.textContent));
-    if(!h){ h=document.createElement('div'); h.className='rh5'; h.textContent='Lists'; const sub=[...rail.querySelectorAll('.rh5')].find(x=>/Suburbs/.test(x.textContent)); rail.insertBefore(h,sub||null); }
-    let after=h; while(after.nextElementSibling&&after.nextElementSibling.tagName==='BUTTON') after=after.nextElementSibling; after.insertAdjacentElement('afterend',b); }
-  return r; }; })(window.drawList2);
+// Solicitors sits in the Sellers, Landlords, Solicitors switch at the top of the rail (23 Nov: moved back up from Lists)
 
 // ---------- One way to message someone (22 Nov) ----------
 // The text icons used to open the phone's Messages with a blank text, and Send info was a separate button for the same job.
@@ -2768,3 +2760,14 @@ window.drawCall2=(function(o){ return function(...a){ const r=o(...a); try{ for(
     const w=document.createElement('div'); w.className='nbox8 '+(id==='note2'?'nb8d':'nb8p'); t.before(w); w.append(t,ph);
     w.addEventListener('mousedown',e=>{ if(e.target===w){ e.preventDefault(); t.focus(); } });
     const fade=()=>w.classList.toggle('more8',ph.scrollLeft+ph.clientWidth<ph.scrollWidth-4); ph.addEventListener('scroll',fade,{passive:true}); requestAnimationFrame(fade); } }catch(e){} return r; }; })(window.drawCall2);
+
+// ---------- Lists in the rail are blue (23 Nov) ----------
+// Everything under Lists (call backs, call sheets, open homes, Needs a number) reads blue with an icon; suburbs stay plain grey
+window.drawList2=(function(orig){ return function(...a){ const r=orig.apply(this,a); try{
+  const rail=document.querySelector('#main .rail2'); if(!rail) return r;
+  const h=[...rail.querySelectorAll(':scope>.rh5')].find(x=>/Lists/.test(x.textContent)); if(!h) return r;
+  for(let b=h.nextElementSibling; b&&b.tagName==='BUTTON'; b=b.nextElementSibling){
+    b.classList.add('ls9');
+    if(!b.querySelector(':scope>svg')){ const i=b.classList.contains('cbk')?'clock':b.classList.contains('nn8b')?'phone':b.classList.contains('ohf5')?null:'pin'; if(i) b.insertAdjacentHTML('afterbegin',ic2(i,14)); }
+  }
+}catch(e){} return r; }; })(window.drawList2);
