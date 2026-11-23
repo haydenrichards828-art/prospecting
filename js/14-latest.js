@@ -51,3 +51,17 @@ window.record=(function(orig){ return async function(id,o,cb){ const r=await ori
     .observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   sync();
 })();
+
+// National public holidays named in the Telemarketing Standard, by their actual date (24 Nov). The holiday feed only lists
+// the day off in lieu, so Boxing Day on Saturday 26 Dec 2026 would have been treated as a normal Saturday. No calls on either.
+(function(){
+  const easter = y => { const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3),
+    h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+    mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1; return Date.UTC(y, mo - 1, da); };
+  const iso = t => new Date(t).toISOString().slice(0, 10);
+  const fixed = key => { const y = +key.slice(0, 4), md = key.slice(5), e = easter(y);
+    return ['01-01', '01-26', '04-25', '12-25', '12-26'].includes(md) || key === iso(e - 2 * 864e5) || key === iso(e + 864e5); };
+  const orig = window.callDayOk;
+  window.callDayOk = function(i){ return orig(i) && !fixed(i.key); };
+  window.nationalHoliday = fixed;
+})();

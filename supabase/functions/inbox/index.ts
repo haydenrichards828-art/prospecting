@@ -70,6 +70,11 @@ async function ingest(st: St, m: BBMsg, ls: Lead[], notes = true) {
   const { data: had } = await db.from("ib_msgs").select("guid").eq("guid", m.guid).maybeSingle();
   const { error } = await db.from("ib_msgs").upsert(msgRow(m, c.guid, lead?.id ?? null), { onConflict: "guid" }); if (error) throw new Error(error.message);
   if (lead && notes && !had) await toLead(lead.id).catch(() => {});
+  // Spam Act: someone replying STOP is opted out. They go on the do not call list, which also keeps them off call lists.
+  if (!m.isFromMe && !group && !had && /^\s*(stop|unsubscribe|opt ?out|remove me)\b/i.test(m.text ?? "")) {
+    const ph = digits(members[0] ?? m.handle?.address ?? "");
+    if (ph.length >= 8) await db.from("do_not_call").upsert({ phone: ph, reason: "Replied STOP to a text" }, { onConflict: "phone", ignoreDuplicates: true });
+  }
 }
 
 // names from the Contacts app on her Mac (BlueBubbles only gives numbers for one to one chats)
