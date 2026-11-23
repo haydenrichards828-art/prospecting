@@ -57,7 +57,7 @@ async function undoToday(pid,callId){ try{ await api("undo_outcome",{call_id:cal
   const row=S.rows.find(x=>x.property_id===pid), cb=(S.callbacks||[]).find(x=>x.property_id===pid);
   if(row){ row.today_outcome=null; row.history=(row.history||[]).filter(h=>h.id!==callId); } if(cb){ cb.today_outcome=null; cb.done=false; }
   if(S.ov) S.ov.today_calls=Math.max(0,(S.ov.today_calls||0)-1);
-  toast("Undone. They're back on your list"); S.pick=pid; drawList(); drawProg(); }
+  toast("Cleared. Pick what happened"); S.pick=pid; drawList(); drawProg(); }
 async function upcomingCB(){
   openSheet2('Booked call backs','<p class="emptyline">Loading</p>');
   let rows=[]; try{ rows=(await api("upcoming_callbacks")).rows||[]; }catch(e){ openSheet2('Booked call backs',`<p class="emptyline">${esc(e.message)}</p>`); return; }

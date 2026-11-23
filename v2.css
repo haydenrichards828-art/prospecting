@@ -1607,7 +1607,7 @@ body.typing .nbox8.nb8p{border-color:var(--acc)}
 .rail2 .lt5.xs9 button{font-size:11px!important;padding:0 2px!important;letter-spacing:-.01em}
 
 /* Bottom bar: four buttons, four equal slots (it was split into five, leaving a gap on the right) */
-@media (max-width:899px){ body.hastb2 #tb2{grid-template-columns:repeat(4,1fr)} #tb2 button svg path[d^="M5 12h.01"]{stroke-width:3.2} }
+@media (max-width:899px){ body.hastb2 #tb2{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:1fr} #tb2 button svg path[d^="M5 12h.01"]{stroke-width:3.2} }
 
 /* Stats, one screen (23 Nov) */
 #main.st9main{padding:0!important;max-width:none!important}
@@ -1672,3 +1672,5 @@ body.typing .nbox8.nb8p{border-color:var(--acc)}
   #acc2 .accr2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   #acc2 .accr2 button{height:40px!important;min-height:0!important;border:0!important;border-radius:8px!important;background:var(--btn)!important;color:#fff!important;font-size:14px!important;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}
 }
+.ct14{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 4px;color:var(--good,#5ee08f);font-size:15px}
+.ct14 .b2{height:38px;padding:0 14px;flex:none}
