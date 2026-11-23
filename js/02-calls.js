@@ -6,7 +6,10 @@ function drawProg(){
   const t=$("#tstats"); if(t) t.innerHTML=pl+`<div><b>${c}</b><span>/ ${tg} calls</span></div><div><b>${cn}</b><span>connected</span></div><div><b style="color:var(--ok)">${a}</b><span>appraisals</span></div>${pace?`<div><b>${pace}</b><span>an hour</span></div>`:''}`;
   const p=$("#pstats"); if(p) p.innerHTML=`<span><b>${c}</b> / ${tg}</span><span><b style="color:var(--ok)">${a}</b> appr</span>`;
 }
-function curCall(){ const all=queue(); if(S.pick){ const p=all.find(r=>r.property_id===S.pick); if(p) return p; S.pick=null; } return all.find(r=>!r.today_outcome&&!S.skipped.has(r.property_id)); }
+// The call screen stays inside the group you started from (a suburb, a call sheet, Solicitors or Call backs) and never moves on to another one
+function grpOf(r){ return r.callback?'Call backs':(grp(r)||'Suburb unknown'); }
+function callQ(){ const all=queue(), f=S.lsub||S.focusSub; if(!f) return all; const g=all.filter(r=>grpOf(r)===f); return g.length||f===S.focusSub?g:all; }
+function curCall(){ const all=callQ(); if(S.pick){ const p=all.find(r=>r.property_id===S.pick); if(p) return p; S.pick=null; } return all.find(r=>!r.today_outcome&&!S.skipped.has(r.property_id)); }
 function drawList(){ if(S.tab!=='calls'||S.searching||!$("#main")) return; $("#main").className='v2main'; if(S.view==='list') return drawList2(); drawCall2(); }
 function hoursStrip(){ return ''; // outside hours is now a warning when you tap call, not a banner
   if(callingAllowed()) return ''; return `<div class="hline2">${ic2('clock',16)}Outside legal calling hours. Next window ${nextWindowText()}. Only call if they asked you to call at this time.</div>`; }
@@ -40,10 +43,10 @@ function extraRows(r){
   return out.length?`<div class="xg2">${out.slice(0,4).map(([l,v,s,hot])=>`<div class="xr2"><span>${esc(l)}</span><b>${esc(v)}</b>${s?`<em class="${hot?'hot':''}">${esc(s)}</em>`:''}</div>`).join('')}</div>`:'';
 }
 function drawCall2(){
-  const all=queue();
+  const all=callQ();
   if(!S.rows.length&&!all.length){ $("#main").innerHTML=`<div class="empty2">${ic2('search',30)}<b>No list yet for today</b>It builds itself at 4:30am. To build it now, go to Settings.</div>`; return; }
   const r=curCall();
-  if(!r){ $("#main").innerHTML=hoursStrip()+`<div class="empty2">${ic2('check',30,'var(--ok)')}<b>That's everyone for today</b>${S.skipped.size?`<button class="b2" onclick="S.skipped.clear();drawList()">Go back to ${S.skipped.size} skipped</button>`:''}<button class="b2" onclick="setView('list')">Open the list</button></div>`; return; }
+  if(!r){ $("#main").innerHTML=hoursStrip()+`<div class="empty2">${ic2('check',30,'var(--ok)')}<b>${(()=>{ const f=S.lsub||S.focusSub; return f&&(f===S.focusSub||queue().some(x=>grpOf(x)===f))?`That's everyone in ${esc(f)}`:"That's everyone for today"; })()}</b>${S.skipped.size?`<button class="b2" onclick="S.skipped.clear();drawList()">Go back to ${S.skipped.size} skipped</button>`:''}<button class="b2" onclick="setView('list')">Open the list</button></div>`; return; }
   const id=r.property_id, R=reasonOf(r), note=notes[id]||'', ppl=people(r.owner_name), nm=ppl[0]||'Owner unknown';
   const addr=`${esc(r.street_address||'')}${r.suburb?', '+esc(r.suburb):''}`, rpu=r.street_address||r.suburb?rpUrl(r.street_address,r.suburb,r.rp_link,r.postcode):null;
   const yrs=yrsSince(r.last_sale_date), why=whyRows(r), hist=histRows(r), g=callGroups(r);
@@ -102,7 +105,7 @@ function drawCall2(){
 const _pf=new Set();
 function prefetchPhotos(curId){
   const sz=desk2()?PH_BIG:PH_SMALL;
-  const next=queue().filter(x=>!x.today_outcome&&!S.skipped.has(x.property_id)&&x.property_id!==curId);
+  const next=callQ().filter(x=>!x.today_outcome&&!S.skipped.has(x.property_id)&&x.property_id!==curId);
   const load=x=>{ const u=aerialUrl(x,sz[0],sz[1]); if(!u||_pf.has(u)) return; _pf.add(u); const im=new Image(); im.decoding='async'; im.src=u; };
   next.slice(0,6).forEach(load);
   // the rest of the next 30 load quietly when the phone is idle, and the phone keeps them, so they show instantly later
@@ -204,8 +207,8 @@ function bigPhoto(id){ const r=queue().find(x=>x.property_id===id); if(!r) retur
   openSheet2(esc(r.street_address||'House'),`<div class="photo2" style="aspect-ratio:4/3;width:100%">${u?`<img src="${u}" alt="" onerror="this.remove()"><span class="pinm"></span><span class="credit">Imagery © NSW Spatial Services</span>`:''}</div>
    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><a class="b2 pri" href="${svUrl(r)}" target="_blank" rel="noopener">${ic2('eye',18)}Street View</a><button class="b2" onclick="copyAddr(${id})">Copy address</button></div>`);
   $("#sheet").classList.add('wide2'); }
-function open2(id){ S.pick=id; S.view='call'; S.dialer=true; try{localStorage.setItem("dp_view","call")}catch{} render(); }
-function startSub(){ S.focusSub=S.lsub==='Call backs'?null:S.lsub; S.pick=null; S.skipped.clear(); setView('call'); }
+function open2(id){ const r=queue().find(x=>x.property_id===id); if(r){ S.focusSub=(S.lsub==='Call backs'&&r.callback)?'Call backs':grpOf(r); S.lsub=S.focusSub; } S.pick=id; S.view='call'; S.dialer=true; try{localStorage.setItem("dp_view","call")}catch{} render(); }
+function startSub(){ S.focusSub=S.lsub; S.pick=null; S.skipped.clear(); setView('call'); }
 
 // ---------- keys ----------
 document.addEventListener('keydown',e=>{

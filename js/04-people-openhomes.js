@@ -242,7 +242,7 @@ function svToggle(b){ const el=b.closest('.photo2'), im=el.querySelector('img'),
 window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); if(!r) return;
   const big=document.querySelector('#main .prop2 .photo2'), small=document.querySelector('#main .pidr2 .photo2');
   if(big&&big.offsetParent) svFill(big,r.property_id,'big'); if(small&&small.offsetParent) svFill(small,r.property_id,'small');
-  const nx=queue().find(x=>x.property_id!==r.property_id&&!x.today_outcome&&!S.skipped.has(x.property_id)); if(nx) svGet(nx.property_id,big&&big.offsetParent?'big':'small'); }; })(window.drawCall2);
+  const nx=callQ().find(x=>x.property_id!==r.property_id&&!x.today_outcome&&!S.skipped.has(x.property_id)); if(nx) svGet(nx.property_id,big&&big.offsetParent?'big':'small'); }; })(window.drawCall2);
 
 // Small street photos on list and pipeline rows, loaded only as they scroll into view
 // Rows keep the free aerial; a paid street photo loads only for the person you open

@@ -217,9 +217,9 @@ window.openLead=(function(orig){ return function(id,opts){ const r=orig(id,opts)
   return r; }; })(window.openLead);
 
 // Keep an open app on the newest version (22 Nov): fixes were going live but a tab left open all day kept running the old code.
-(function(){ const mine=+(([...document.scripts].map(x=>x.src).join(' ').match(/v2\.js\?v=(\d+)/)||[])[1]||0); if(!mine||window.DEMO_ON&&location.hostname==='localhost') return;
+(function(){ const mine=+(([...document.scripts].map(x=>x.src).join(' ').match(/01-base\.js\?v=(\d+)/)||[])[1]||0); if(!mine||window.DEMO_ON&&location.hostname==='localhost') return;
   let busy=false; const check=async()=>{ if(busy||document.hidden) return; busy=true;
-    try{ const t=await (await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'})).text(); const v=+((t.match(/v2\.js\?v=(\d+)/)||[])[1]||0);
+    try{ const t=await (await fetch(location.pathname+'?vc='+Date.now(),{cache:'no-store'})).text(); const v=+((t.match(/01-base\.js\?v=(\d+)/)||[])[1]||0);
       if(v>mine){ const typing=document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName), open=document.querySelector('#ov.show');
         if(!typing&&!open) location.reload(); else if(!document.querySelector('.upd6')) document.body.insertAdjacentHTML('beforeend','<button class="upd6" onclick="location.reload()">New version ready. Tap to update</button>'); } }catch(e){}
     busy=false; };
