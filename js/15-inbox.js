@@ -30,7 +30,8 @@ const t15 = v => { const m = hm15(v), h = Math.floor(m / 60), mm = m % 60; retur
 function focus15(){ const u = +(ls15('dp_focus') || 0); if (u && u < Date.now()){ ls15('dp_focus', 0); return 0; } return u; }
 function focusStart15(mins){ const m = mins || ms15().focusLen; ls15('dp_focus', m === 'end' || m >= 9999 ? Date.now() + 864e5 : Date.now() + m * 60e3); }
 function focusEnd15(){ ls15('dp_focus', 0); }
-const clock15 = ms => { const d = new Date(ms); return t15(`${d.getHours()}:${d.getMinutes()}`); };
+const clock15 = ms => { const d = new Date(ms), t = t15(`${d.getHours()}:${d.getMinutes()}`), n = new Date(), days = Math.round((new Date(n.getFullYear(), n.getMonth(), n.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+  return days <= 0 ? t : days === 1 ? 'Yesterday ' + t : days < 7 ? d.toLocaleDateString('en-AU', { weekday: 'short' }) + ' ' + t : d.getDate() + ' ' + d.toLocaleDateString('en-AU', { month: 'short' }) + ' ' + t; };
 
 // ---------- who a message is for ----------
 function forMe15(m, th){
@@ -173,7 +174,7 @@ async function view15(){
     `<h2>Connect your Mac to see your messages here</h2><p>Prospect reads and sends your iMessages and texts through your own Mac, for free. It takes about 15 minutes, once.</p>
      <ol><li>On your Mac, install BlueBubbles from bluebubbles.app and sign in with your Apple ID.</li><li>On your iPhone, open Settings, Apps, Messages, Text Message Forwarding, and turn on your Mac. That lets texts to Android phones go through too.</li>
      <li>In BlueBubbles, set a password and turn on the free Cloudflare link. Copy the address it shows.</li><li>Set your Mac to never sleep (System Settings, Energy).</li><li>Paste the address and password into Prospect.</li></ol>
-     <button class="b2 pri" onclick="set15Mac()">Paste the address</button> <button class="b2" onclick="go('messages');S.msgOld=1">Scheduled texts</button>`}</div></div>`; return; }
+     <button class="b2 pri" onclick="set15Mac()">Paste the address</button> <button class="b2" onclick="S.msgOld=1;go('messages')">Scheduled texts</button>`}</div></div>`; return; }
   const ib = S.ib, f = focus15(), s = ms15();
   const all = th.map(t => Object.assign({ t }, info15(t)));
   const byId = Object.fromEntries(all.map(x => [x.t.id, x]));
@@ -190,7 +191,7 @@ async function view15(){
   const sec = (k, title, list) => list.length ? `<div class="sec"><button onclick="S.ib.open.${k}=!S.ib.open.${k};render()" aria-expanded="${!ib.open[k]}">${ic2(ib.open[k] ? 'chev' : 'down', 14)}${title}</button>${ib.open[k] ? '' : list.map(row).join('')}</div>` : '';
   const left = `<div class="il"><div class="dbox${f ? ' fo' : ''}" style="flex-direction:row;align-items:center;justify-content:space-between"><b>${dTitle}</b>${dBtn}</div>
    <button class="rw${ib.view === 'needs' ? ' on' : ''} b" onclick="S.ib.view='needs';render()">${i15('at')}<span class="nm">Needs you</span>${!f && acts.length ? `<span class="bd">${acts.length}</span>` : ''}</button>
-   ${sec('g', 'Group chats', all.filter(x => x.t.group))}${sec('a', 'Agents', all.filter(x => x.t.kind === 'agent'))}${sec('l', 'Leads', all.filter(x => x.t.kind === 'lead'))}${sec('p', 'Other people', all.filter(x => x.t.kind === 'person'))}</div>`;
+   ${sec('g', 'Group chats', all.filter(x => x.t.group))}${sec('a', 'Agents', all.filter(x => x.t.kind === 'agent'))}${sec('l', 'Leads', all.filter(x => x.t.kind === 'lead'))}${sec('p', 'Other people', all.filter(x => x.t.kind === 'person'))}<div class="sec"><button onclick="S.msgOld=1;render()">${ic2('clock', 14)}Scheduled texts</button></div></div>`;
   let mid = '', side = '';
   if (!sel){
     mid = `<div class="hd"><h2>Needs you</h2></div>
