@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Writes tools/PATCHES.md: every place v2.js adds to an existing function, with its line and what it is for.
+"""Writes tools/PATCHES.md: every place the js/ files add to an existing function, with its line and what it is for.
 Run after adding or removing a patch: python3 tools/patch_map.py"""
 import re, collections
-lines = open('v2.js').read().split('\n')
+lines = (''.join(open('js/'+f).read() for f in sorted(__import__('os').listdir('js')))).split('\n')   # js/ files joined in load order
 found = collections.defaultdict(list)
 for i, l in enumerate(lines):
     m = re.match(r'\s*window\.(\w+)=\(function\(orig\)', l)
@@ -13,8 +13,8 @@ for i, l in enumerate(lines):
         if c.startswith('//'): why = c.lstrip('/ ').strip(); break
         if c: break
     found[m.group(1)].append((i + 1, why))
-out = ['# Patch map for v2.js', '',
-       'Prospect started as one page (index.html). v2.js adds the new design and features by wrapping existing functions:',
+out = ['# Patch map for js/', '',
+       'Prospect started as one page (index.html). the js/ files (loaded in number order) add the new design and features by wrapping existing functions:',
        '`window.f=(function(orig){ return function(...){ ... orig(...) ... } })(window.f)`.',
        'A wrapper runs around every wrapper before it, so the last one in the file runs first.',
        'Before changing what a function does, read every line listed for it here.', '',

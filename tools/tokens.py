@@ -98,10 +98,10 @@ def main():
     html = open('index.html').read()
     new_html = re.sub(r'(<style(?![^>]*id="icons")[^>]*>)(.*?)(</style>)', lambda m: m.group(1) + css_pass(m.group(2)) + m.group(3), html, flags=re.S)
     new_html = inline_pass(new_html)
-    js = open('v2.js').read(); new_js = inline_pass(js)
+    jsf = sorted(__import__('os').listdir('js')); js = {f: open('js/'+f).read() for f in jsf}; new_js = {f: inline_pass(t) for f, t in js.items()}
     print(changes)
     if write:
-        open('v2.css', 'w').write(new_css); open('index.html', 'w').write(new_html); open('v2.js', 'w').write(new_js)
+        open('v2.css', 'w').write(new_css); open('index.html', 'w').write(new_html); [open('js/'+f, 'w').write(t) for f, t in new_js.items()]
         print('written')
 
 

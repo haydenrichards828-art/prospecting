@@ -24,7 +24,7 @@ def funcs(js):
 
 
 def main():
-    js = open('v2.js').read()
+    js = ''.join(open('js/'+f).read() for f in sorted(__import__('os').listdir('js')))   # the new design lives in js/, in load order
     css = open('v2.css').read()
     users = defaultdict(set)
     for name, src in funcs(js):
