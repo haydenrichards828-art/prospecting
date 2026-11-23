@@ -1,6 +1,6 @@
 // Messages inbox (24 Nov). BlueBubbles on Marlowe's Mac posts every new message here (webhook, ?hook=<key>),
 // so the app reads chats from the database: quick on any device, set up once, and the Mac password never leaves the server.
-// Sending goes through here too. Texts with a lead are added to that lead's notes. The Mac's link can change after a
+// Sending goes through here too. Texts with a lead count as contact that day (they are not copied into notes). The Mac's link can change after a
 // restart: BlueBubbles sends a new-server event and the stored link follows it. Two weeks of messages are kept.
 // App actions need a signed in session (x-session): load, send, setup, disconnect, sync, prefs, done.
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -51,10 +51,8 @@ function msgRow(m: BBMsg, chat: string, leadId: number | null) {
   return { guid: m.guid, chat_guid: chat, from_me: !!m.isFromMe, handle: m.handle?.address ?? null, body: m.text || (m.attachments?.length ? "Sent a photo or file" : ""),
     at: new Date(m.dateCreated ?? Date.now()).toISOString(), reply_to: m.threadOriginatorGuid ?? null, attach: !!m.attachments?.length, lead_id: leadId };
 }
-// a text to or from a lead goes on that lead's notes, and counts as contact today
-async function toLead(leadId: number, m: BBMsg, name: string) {
-  const body = (m.isFromMe ? "You texted: " : `Text from ${name.split(" ")[0] || "them"}: `) + (m.text || "a photo or file");
-  await db.from("lead_notes").insert({ lead_id: leadId, body: body.slice(0, 2000) });
+// a text to or from a lead counts as contact today. Texts stay in Messages and never go into the lead's notes.
+async function toLead(leadId: number) {
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Australia/Sydney" });
   await db.from("leads").update({ last_contact: today }).eq("id", leadId);
 }
@@ -71,7 +69,7 @@ async function ingest(st: St, m: BBMsg, ls: Lead[], notes = true) {
   const lead = group ? null : leadByPhone(ls, members[0] ?? m.handle?.address ?? "");
   const { data: had } = await db.from("ib_msgs").select("guid").eq("guid", m.guid).maybeSingle();
   const { error } = await db.from("ib_msgs").upsert(msgRow(m, c.guid, lead?.id ?? null), { onConflict: "guid" }); if (error) throw new Error(error.message);
-  if (lead && notes && !had) await toLead(lead.id, m, lead.name).catch(() => {});
+  if (lead && notes && !had) await toLead(lead.id).catch(() => {});
 }
 
 // names from the Contacts app on her Mac (BlueBubbles only gives numbers for one to one chats)

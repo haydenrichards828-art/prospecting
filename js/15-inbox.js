@@ -3,7 +3,7 @@
 // New messages are held back until the next delivery time she picks in Settings (every hour, three set times, or live).
 // Focus sessions hide every alert while messages keep arriving quietly underneath.
 // Live messages come from BlueBubbles running on her Mac (free). The Mac posts each new message to the inbox function on the
-// server, the app reads from there, sends through there, and texts with a lead are added to that lead's notes (24 Nov).
+// server, the app reads from there, sends through there, and texts with a lead count as contact that day but stay out of the lead's notes (24 Nov).
 // Settings and Mark done are kept on the server so the phone and laptop match. #demo shows example chats.
 
 const MS15_KEY = 'dp_msgset';
