@@ -43,7 +43,7 @@ const clock15 = ms => { const d = new Date(ms), t = t15(`${d.getHours()}:${d.get
 
 // ---------- who a message is for ----------
 function forMe15(m, th){
-  if (m.mine) return false; if (!th.group) return true;
+  if (m.mine || th.kind === 'auto') return false; if (!th.group) return true;
   const s = ms15(), mode = s.groups[th.id] || 'needs'; if (mode === 'never') return false; if (mode === 'every') return true;
   const t = (m.text || '').toLowerCase(), names = (s.names || []).map(n => n.toLowerCase()).filter(Boolean);
   const tagged = names.some(n => t.includes('@' + n));
@@ -86,7 +86,10 @@ function leadFor15(id){ const l = (S.leads || []).find(x => x.id === id); if (!l
   return { id: l.id, name: l.name || '', address: [l.address, l.suburb].filter(Boolean).join(', '), stage: l.status || 'Lead', next: l.next_action || (l.follow_up ? 'Follow up ' + dayMon(l.follow_up) : ''), phone: l.phone || '' }; }
 const nice15 = a => { const d = digits15(a); return /^04\d{8}$/.test(d) ? d.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 $3') : a; };
 // a name for a phone number: a lead, or someone in today's list, else the number
-function who15(addr){ const d = digits15(addr); if (!d) return addr || 'Someone';
+const key15 = a => { const t = String(a || '').trim(); return t.includes('@') ? t.toLowerCase() : digits15(t); };
+// verification codes, bank alerts and marketing come from short numbers or names, never a real phone
+const auto15 = a => { const t = String(a || '').trim(); if (!t || t.includes('@')) return false; const d = digits15(t); return /[a-z]/i.test(t) || d.length < 8; };
+function who15(addr){ const nm = S.ib?.srv?.names?.[key15(addr)]; if (nm) return nm; const d = digits15(addr); if (!d) return addr || 'Someone';
   const l = (S.leads || []).find(x => digits15(x.phone) === d); if (l) return l.name;
   const r = (S.rows || []).find(x => digits15(x.phone) === d); if (r && r.owner_name) return people(r.owner_name)[0] || r.owner_name; return nice15(addr); }
 async function live15(){ if (!S.leads) await loadLeads().catch(() => {});
@@ -98,11 +101,11 @@ async function live15(){ if (!S.leads) await loadLeads().catch(() => {});
   const by = {}; (d.msgs || []).forEach(m => (by[m.chat_guid] = by[m.chat_guid] || []).push(m));
   return (d.chats || []).filter(c => by[c.guid]?.length).map(c => { const mine = new Set(by[c.guid].filter(m => m.from_me).map(m => m.guid)), mem = c.members || [];
     const lead = c.lead_id ? leadFor15(c.lead_id) : null;
-    const name = c.name || (lead && lead.name) || (c.is_group ? mem.map(who15).join(', ') : who15(mem[0]));
-    return { id: c.guid, group: c.is_group, name, members: c.is_group ? (mem.length + 1) + ' people' : '', kind: c.is_group ? '' : (lead ? 'lead' : 'person'), lead, via: c.service || 'iMessage',
+    const name = c.name || (lead && lead.name) || (c.is_group ? mem.map(a => who15(a).split(' ')[0]).join(', ') : who15(mem[0]));
+    return { id: c.guid, group: c.is_group, name, members: c.is_group ? (mem.length + 1) + ' people' : '', kind: c.is_group ? '' : (lead ? 'lead' : auto15(mem[0]) ? 'auto' : 'person'), lead, via: c.service || 'iMessage',
       msgs: by[c.guid].slice().reverse().map(m => ({ who: m.from_me ? 'me' : (c.is_group ? who15(m.handle) : name), mine: m.from_me, text: m.body || '', at: Date.parse(m.at), replyMine: m.reply_to && mine.has(m.reply_to) ? 'your message' : '' })) }; });
 }
-async function load15(force){ S.ib = S.ib || { view: 'needs', sel: null, all: false, open: {}, draft: '', done: DEMO ? JSON.parse(ls15('dp_ibdone') || '{}') : {} };
+async function load15(force){ S.ib = S.ib || { view: 'needs', sel: null, all: false, open: { c: true }, draft: '', done: DEMO ? JSON.parse(ls15('dp_ibdone') || '{}') : {} };
   if (!force && S.ib.th && Date.now() - S.ib.at < 60e3) return S.ib.th;
   if (DEMO) S.ib.th = S.ib.th || demo15(); else S.ib.th = await live15();
   S.ib.at = Date.now(); return S.ib.th; }
@@ -201,7 +204,7 @@ async function view15(){
   const sec = (k, title, list) => list.length ? `<div class="sec"><button onclick="S.ib.open.${k}=!S.ib.open.${k};render()" aria-expanded="${!ib.open[k]}">${ic2(ib.open[k] ? 'chev' : 'down', 14)}${title}</button>${ib.open[k] ? '' : list.map(row).join('')}</div>` : '';
   const left = `<div class="il"><div class="dbox${f ? ' fo' : ''}" style="flex-direction:row;align-items:center;justify-content:space-between"><b>${dTitle}</b>${dBtn}</div>
    <button class="rw${ib.view === 'needs' ? ' on' : ''} b" onclick="S.ib.view='needs';render()">${i15('at')}<span class="nm">Needs you</span>${!f && acts.length ? `<span class="bd">${acts.length}</span>` : ''}</button>
-   ${sec('g', 'Group chats', all.filter(x => x.t.group))}${sec('a', 'Agents', all.filter(x => x.t.kind === 'agent'))}${sec('l', 'Leads', all.filter(x => x.t.kind === 'lead'))}${sec('p', 'Other people', all.filter(x => x.t.kind === 'person'))}<div class="sec"><button onclick="S.msgOld=1;render()">${ic2('clock', 14)}Scheduled texts</button></div></div>`;
+   ${sec('g', 'Group chats', all.filter(x => x.t.group))}${sec('a', 'Agents', all.filter(x => x.t.kind === 'agent'))}${sec('l', 'Leads', all.filter(x => x.t.kind === 'lead'))}${sec('p', 'People', all.filter(x => x.t.kind === 'person'))}${sec('c', 'Codes and alerts', all.filter(x => x.t.kind === 'auto'))}<div class="sec"><button onclick="S.msgOld=1;render()">${ic2('clock', 14)}Scheduled texts</button></div></div>`;
   let mid = '', side = '';
   if (!sel){
     mid = `<div class="hd"><h2>Needs you</h2></div>
