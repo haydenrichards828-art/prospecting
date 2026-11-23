@@ -2760,3 +2760,11 @@ function nnNone8(id){ const r=(S.nn8rows||[]).find(x=>x.property_id===id); if(!r
 async function nnCopy8(id){ const r=(S.nn8rows||[]).find(x=>x.property_id===id); if(!r) return; const t=[r.street_address,r.suburb].filter(Boolean).join(', ');
   try{ await navigator.clipboard.writeText(t); }catch{ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy')}catch{} ta.remove(); }
   toast('Copied: '+t); }
+
+// ---------- Quick notes live inside the note box (23 Nov) ----------
+// One box: what you type on top, the quick notes along its bottom edge, fading out at the right instead of being cut off
+window.drawCall2=(function(o){ return function(...a){ const r=o(...a); try{ for(const id of ['note2','pnote2']){ const t=document.getElementById(id), ph=t&&t.nextElementSibling;
+    if(!t||!ph||!ph.classList.contains('phr8')||t.parentElement.classList.contains('nbox8')) continue;
+    const w=document.createElement('div'); w.className='nbox8 '+(id==='note2'?'nb8d':'nb8p'); t.before(w); w.append(t,ph);
+    w.addEventListener('mousedown',e=>{ if(e.target===w){ e.preventDefault(); t.focus(); } });
+    const fade=()=>w.classList.toggle('more8',ph.scrollLeft+ph.clientWidth<ph.scrollWidth-4); ph.addEventListener('scroll',fade,{passive:true}); requestAnimationFrame(fade); } }catch(e){} return r; }; })(window.drawCall2);

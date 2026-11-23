@@ -1571,3 +1571,19 @@ button.cbk.none8{opacity:.6}
 .cl2 .nw2 .h{margin-bottom:4px}
 .bar2x button svg{flex:none}
 @media (min-width:900px) and (max-width:1180px){.cl2 .bar2x{gap:4px}.cl2 .bar2x button{height:66px!important;min-height:66px!important;font-size:13px!important;line-height:15px;gap:4px}}
+
+/* Quick notes inside the note box (23 Nov) */
+.nbox8{display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid #2c333e;border-radius:4px;background:var(--sub);cursor:text;position:relative;transition:border-color .15s}
+.nbox8:focus-within{border-color:var(--acc)}
+.nbox8 textarea.note2,.nbox8 textarea.pnote2{border:0!important;background:transparent!important;border-radius:0!important;flex:1;min-height:44px!important}
+body.typing .nbox8 textarea.pnote2{border:0!important}
+body.typing .nbox8.nb8p{border-color:var(--acc)}
+.nbox8 .phr8,.cl2 .nbox8 .phr8,.pf2 .nbox8 .phr8{margin:0!important;padding:8px 12px 10px;gap:6px;cursor:default;border-top:1px solid #232933}
+.nbox8 .phr8 button{height:28px!important;min-height:0!important;padding:0 10px!important;border:0!important;border-radius:14px!important;background:#232933!important;color:var(--t2)!important;font-size:13px!important;font-weight:600}
+.nbox8 .phr8 button::before{content:"+";margin-right:5px;color:var(--t3);font-weight:700}
+.nbox8 .phr8 .phre8{width:28px!important;padding:0!important;background:none!important;color:var(--t3)!important}
+.nbox8 .phr8 .phre8::before{content:none}
+@media (hover:hover){.nbox8 .phr8 button:hover{background:#2c333e!important;color:var(--t1)!important}}
+.nbox8 .phr8 button.used8{background:#162544!important;color:#93c0ff!important}
+.nbox8 .phr8 button.used8::before{content:"✓";color:#93c0ff}
+.nbox8.more8::after{content:"";position:absolute;right:0;bottom:0;width:40px;height:46px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--sub));border-radius:0 0 4px 0}
