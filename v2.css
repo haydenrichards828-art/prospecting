@@ -1545,3 +1545,20 @@ button.cbk.none8{opacity:.6}
 /* the lead panel's Call is the same solid blue as every other main button (the old pale blue came from an older colour name) */
 .lcta a.call,.lcta .call{background:var(--acc)!important;color:#fff!important}
 @media (hover:hover){.lcta a.call:hover{background:#1d4fd8!important}}
+
+/* Needs a number (23 Nov): homes to find a number for */
+.nn8{display:grid;grid-template-columns:64px minmax(0,1fr) minmax(0,1.3fr) auto;gap:16px;align-items:center;padding:12px 28px;border-bottom:1px solid var(--line2)}
+.nn8 .th3{width:64px;height:64px}
+.nn8 .act8{display:flex;gap:8px;justify-content:flex-end}
+.nn8 .act8 .b2{height:36px;min-height:0!important;box-sizing:border-box;padding:0 14px!important;font-size:14px!important;white-space:nowrap}
+.nn8 .act8 .nnx8{background:none!important;color:var(--t2)!important;border:1px solid #2c333e!important}
+.nn8 .act8 .nnx8:hover{color:var(--t1)!important;border-color:#3a4350!important}
+.nnh8{display:flex;flex-direction:column;gap:2px;min-width:0;padding:16px 28px 12px;border-bottom:1px solid var(--line2)}.nnh8 b{font-size:16px}.nnh8 span{font-size:13px;color:var(--t2)}
+.rail2>button.nn8b:not(.on){color:#93c0ff!important}
+@media (max-width:1250px){.nnh8{padding-left:20px;padding-right:20px}.nn8{grid-template-columns:52px minmax(0,1fr) minmax(0,1fr) auto;padding:12px 20px}.nn8 .th3{width:52px;height:52px}}
+@media (max-width:899px){
+  .nn8{grid-template-columns:56px minmax(0,1fr);grid-template-areas:"th nm" "th why" "ac ac";gap:3px 12px;padding:12px 0}
+  .nn8 .th3{grid-area:th;width:56px;height:56px;align-self:start}.nn8 .nm3{grid-area:nm}.nn8 .why3{grid-area:why}
+  .nn8 .act8{grid-area:ac;margin-top:8px;justify-content:stretch}.nn8 .act8 .b2{flex:1;height:40px;padding:0 8px!important}
+  .nnh8{padding:4px 0 12px}
+}
