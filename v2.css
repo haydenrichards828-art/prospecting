@@ -833,11 +833,11 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 .lt3.sel{background:#162544;box-shadow:inset 2px 0 0 #2563eb}
 /* the lead panel docks beside the page only where the page keeps enough room (from 1200 wide); narrower, it opens over the page */
 @media(min-width:1200px){
- body:has(.ltab3):has(#ov.show #sheet.lsheet) #main{margin-right:460px}
- body:has(.ltab3):has(#ov.show #sheet.lsheet) .lt3{grid-template-columns:minmax(200px,1.6fr) 96px 170px}
- body:has(.ltab3):has(#ov.show #sheet.lsheet) .lt3 .c3{display:none}
- body:has(.ltab3) #ov.show:has(#sheet.lsheet){left:auto;width:460px;background:none;align-items:stretch;justify-content:stretch}
- body:has(.ltab3) #ov.show #sheet.lsheet{position:static;width:460px;max-width:none!important;height:100dvh;max-height:none;border-radius:0!important;border:0;border-left:1px solid #363e4b}
+ body.h-ltab.h-lsheet #main{margin-right:460px}
+ body.h-ltab.h-lsheet .lt3{grid-template-columns:minmax(200px,1.6fr) 96px 170px}
+ body.h-ltab.h-lsheet .lt3 .c3{display:none}
+ body.h-ltab.h-lsheet #ov.show{left:auto;width:460px;background:none;align-items:stretch;justify-content:stretch}
+ body.h-ltab #ov.show #sheet.lsheet{position:static;width:460px;max-width:none!important;height:100dvh;max-height:none;border-radius:0!important;border:0;border-left:1px solid #363e4b}
 }
 .bd3{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px}
 .bc3{flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:8px;background:#171b21;border:1px solid #232831}
@@ -863,18 +863,18 @@ h1,.nm2,.pname2{letter-spacing:-.02em}
 .bh3 .ad3{padding:0!important;width:28px!important;height:24px!important}
 .pg2.bp3{padding-top:16px}
 @media(min-width:900px){
- .pg2:has(.ltab3),.pg2.bp3{padding:12px 16px 24px!important;max-width:none!important}
- .pg2:has(.ltab3) .ph2{margin-bottom:12px}
- .pg2:has(.ltab3) .ph2 h1{font-size:20px}
+ body.h-ltab .pg2,.pg2.bp3{padding:12px 16px 24px!important;max-width:none!important}
+ body.h-ltab .pg2 .ph2{margin-bottom:12px}
+ body.h-ltab .pg2 .ph2 h1{font-size:20px}
 }
-@media(min-width:900px){.pg2:has(.ltab3) .ph2 h1{display:none}.pg2:has(.ltab3) .ph2{justify-content:flex-end}}
+@media(min-width:900px){body.h-ltab .pg2 .ph2 h1{display:none}body.h-ltab .pg2 .ph2{justify-content:flex-end}}
 /* Leads edge to edge, like the mockup: the table runs to the sides, the controls sit in one slim strip above it */
 @media(min-width:900px){
- .pg2:has(.ltab3){padding:0 0 24px!important}
- .pg2:has(.ltab3) .ph2{margin:0;padding:10px 20px;min-height:60px;box-sizing:border-box;border-bottom:1px solid #363e4b}
- .pg2:has(.ltab3) .ltab3{border:0;border-radius:0}
- .pg2:has(.ltab3) .lt3>*:first-child,.pg2:has(.ltab3) .lgb3{padding-left:20px}
- .pg2:has(.ltab3) .fqb2,.pg2:has(.ltab3) .seg2,.pg2:has(.ltab3) .b2.pri{height:36px!important;min-height:0!important}
+ body.h-ltab .pg2{padding:0 0 24px!important}
+ body.h-ltab .pg2 .ph2{margin:0;padding:10px 20px;min-height:60px;box-sizing:border-box;border-bottom:1px solid #363e4b}
+ body.h-ltab .pg2 .ltab3{border:0;border-radius:0}
+ body.h-ltab .pg2 .lt3>*:first-child,body.h-ltab .pg2 .lgb3{padding-left:20px}
+ body.h-ltab .pg2 .fqb2,body.h-ltab .pg2 .seg2,body.h-ltab .pg2 .b2.pri{height:36px!important;min-height:0!important}
 }
 /* Folded sidebar: an invisible bridge over the gap so the menu stays open while the pointer moves across to it */
 .side2.fold .grp2 .kids2::before{content:"";position:absolute;left:-26px;top:-8px;bottom:-8px;width:26px}
@@ -1101,7 +1101,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea,
 .prop2 .pcol2 .photo2{flex:1 1 auto;height:auto!important}
 #main .prop2 .pcol2 .photo2{flex:1 1 0!important;height:auto!important;min-height:270px!important;max-height:none!important}
 /* Pipeline board, flush: columns meet edge to edge split by lines, cards are rows split by lines, no gaps */
-.pg2:has(.bd3){padding:0!important}
+body.h-bd3 .pg2{padding:0!important}
 .bd3{gap:0!important;align-items:stretch!important;border-top:1px solid #232831}
 .bc3{gap:0!important;padding:0!important;border-radius:0!important;border:0!important;border-right:1px solid #232831!important;background:#111419!important}
 .bc3:last-child{border-right:0!important}
@@ -1116,7 +1116,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea,
 @media (min-width:900px){.bd3{min-height:calc(100dvh - 85px)}}
 /* ---------- No gaps between components ---------- */
 /* Stats: tiles become one strip split by lines, sections run edge to edge */
-.pg2:has(.res2){padding:0!important}
+body.h-res2 .pg2{padding:0!important}
 .pg2 .res2{gap:0!important;margin:0!important;border-bottom:1px solid #232831}
 .pg2 .res2 .rs2{border-radius:0!important;border:0!important;border-right:1px solid #232831!important;margin:0!important;padding:14px 20px!important}
 .pg2 .res2 .rs2:last-child{border-right:0!important}
@@ -1137,7 +1137,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea,
 #sheet.lsheet>.lcta{padding-top:0!important}
 #sheet.lsheet .lcta a,#sheet.lsheet .lcta button,#sheet.lsheet .fu4 button,#sheet.lsheet textarea,#sheet.lsheet .ldrows4 *{border-radius:4px!important}
 #sheet.lsheet .ldrows4{border-radius:0!important}
-#main:has(.setw2){padding:0!important}
+body.h-setw #main{padding:0!important}
 #sheet.lsheet .wcard{border-radius:0!important;border:0!important;background:none!important;padding:0!important;margin:0!important;box-shadow:none!important}
 #sheet.lsheet>*:has(>.wcard){padding:12px 16px!important}
 #sheet.lsheet button,#sheet.lsheet .lmenu2{border-radius:4px!important}
@@ -1152,9 +1152,9 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea,
 .dsh5{position:sticky;top:0;z-index:2;background:#111419;border-bottom:1px solid #232831;padding:8px 12px}
 .dsh5 .dgrp5{margin:0!important;display:flex;width:100%}.dsh5 .dgrp5 button{flex:1}
 header.top2 .dvw5{margin-left:8px}
-@media (min-width:1000px){body:has(#main.drops2 .dsplit){overflow:hidden}#main.drops2:has(.dsplit){overflow:hidden;padding-bottom:0!important;height:calc(100dvh - 85px)}}
+@media (min-width:1000px){body.h-dsplit{overflow:hidden}body.h-dsplit #main.drops2{overflow:hidden;padding-bottom:0!important;height:calc(100dvh - 85px)}}
 #main.drops2>.dflt2{display:none!important}
-#main.drops2:not(:has(.dsplit)){padding:8px 20px 40px!important}
+body:not(.h-dsplit) #main.drops2{padding:8px 20px 40px!important}
 header.top2 .dic5{width:36px;height:36px;min-height:0!important;padding:0!important;display:grid;place-items:center;border-radius:4px!important;background:#1a1f26!important;border:1px solid #363e4b!important;color:#a3acb9!important}
 header.top2 .dic5:first-of-type{margin-left:auto}
 header.top2 .dic5~.tsearch{margin-left:0}
@@ -1167,9 +1167,9 @@ header.top2 .dic5~.tsearch{margin-left:0}
 .bd3 .ca3:empty::before{content:'No address';color:#636d7e}
 .bd3 .cb3{align-self:center!important}
 /* Card drops list view, flush: suburb bands, streets split by lines */
-#main.drops2:not(:has(.dsplit)){padding:0 0 40px!important}
-#main.drops2:not(:has(.dsplit))>h3{margin:0!important;padding:9px 16px;background:#1a1f26;border-bottom:1px solid #232831;font-size:13px;color:#a3acb9}
-#main.drops2:not(:has(.dsplit))>.card{margin:0!important;border-radius:0!important;border:0!important;border-bottom:1px solid #232831!important;background:none!important;box-shadow:none!important}
+body:not(.h-dsplit) #main.drops2{padding:0 0 40px!important}
+body:not(.h-dsplit) #main.drops2>h3{margin:0!important;padding:9px 16px;background:#1a1f26;border-bottom:1px solid #232831;font-size:13px;color:#a3acb9}
+body:not(.h-dsplit) #main.drops2>.card{margin:0!important;border-radius:0!important;border:0!important;border-bottom:1px solid #232831!important;background:none!important;box-shadow:none!important}
 /* Board: a search icon in each column header opens a thin search line; cards share the screen height exactly */
 .bh3 .bs5{width:28px!important;height:24px!important;min-height:0!important;padding:0!important;display:grid;place-items:center;border-radius:4px!important;border:1px solid #363e4b!important;background:none!important;color:#a3acb9!important;margin-left:auto}
 .bh3 .bs5.on{border-color:#2563eb!important;color:#93c0ff!important;background:#162544!important}
@@ -1181,8 +1181,8 @@ header.top2 .dic5~.tsearch{margin-left:0}
 @media (min-width:900px){.bd3 .cd3{height:var(--cdh,92px)!important}}
 /* Stats dashboard: one screen, three columns of panels split by lines, tighter type */
 @media (min-width:1100px){
-  .pg2:has(.sg5) .res2 .rs2{padding:10px 18px!important}
-  .pg2:has(.sg5) .res2 .rs2 b,.pg2:has(.sg5) .res2 .rs2 .n,.pg2:has(.sg5) .res2 .rs2 strong{font-size:28px!important;line-height:30px!important}
+  body.h-sg5 .pg2 .res2 .rs2{padding:10px 18px!important}
+  body.h-sg5 .pg2 .res2 .rs2 b,body.h-sg5 .pg2 .res2 .rs2 .n,body.h-sg5 .pg2 .res2 .rs2 strong{font-size:28px!important;line-height:30px!important}
   .sg5{display:grid;grid-template-columns:1.45fr 1fr 1fr;align-items:stretch;border-bottom:1px solid #232831}
   .sc5{display:flex;flex-direction:column;border-right:1px solid #232831;min-width:0}.sc5:last-child{border-right:0}
   .sc5 .sec2{padding:14px 18px!important;gap:8px!important;border-bottom:1px solid #232831}
@@ -1196,8 +1196,8 @@ header.top2 .dic5~.tsearch{margin-left:0}
   .sc5 .srow2{font-size:13px}
   .sc5 .meter2{height:6px!important}
 }
-@media (min-width:1100px){.pg2:has(.sg5) details.sec{margin:0!important;border-radius:0!important;border:0!important;border-bottom:1px solid #232831!important;background:none!important}
-.pg2:has(.sg5) details.sec>summary{padding:12px 18px!important}}
+@media (min-width:1100px){body.h-sg5 .pg2 details.sec{margin:0!important;border-radius:0!important;border:0!important;border-bottom:1px solid #232831!important;background:none!important}
+body.h-sg5 .pg2 details.sec>summary{padding:12px 18px!important}}
 .vbk5{height:32px;min-height:0!important;padding:0 12px 0 8px!important;display:flex;align-items:center;gap:6px;border-radius:4px!important;background:#1a1f26!important;border:1px solid #363e4b!important;color:#f2f4f7!important;font-size:14px!important;font-weight:600;flex:none}
 .vbk5:hover{background:#272d37!important}
 /* Leads top bar: page name and its switch on the left; follow ups, search and Add on the right; one height and shape */
@@ -1344,8 +1344,8 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline-offset:-
 .rail2 .lt5{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 /* cut off buttons (22 Nov) */
 /* the top bar makes room for the lead panel too, not just the page under it */
-@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2{margin-right:460px}}
-@media (max-width:1279px){ body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2 .tsearch{display:none} }
+@media(min-width:1200px){body.h-ltab.h-lsheet header.top2{margin-right:460px}}
+@media (max-width:1279px){ body.h-ltab.h-lsheet header.top2 .tsearch{display:none} }
 /* narrower screens: drop the least needed columns so the buttons on the right fit */
 @media (min-width:900px) and (max-width:1279px){
   .lt3{grid-template-columns:minmax(180px,1.6fr) 90px 140px minmax(150px,1.4fr) 92px}
@@ -1356,14 +1356,14 @@ input:focus-visible,textarea:focus-visible,select:focus-visible{outline-offset:-
 /* phone: the round add button sits above the bottom bar, not behind it */
 @media (max-width:899px){ .pph2 .b2.pri{bottom:calc(env(safe-area-inset-bottom,0px) + 72px)!important} }
 /* lead panel open: the top bar keeps everything inside the space left beside the panel */
-@media (max-width:1499px){ body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2 .tsearch{display:none} }
-@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2 .fqb2{gap:0!important;padding:0 10px!important}}
-@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2 .fqb2 span{display:none}}
-@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2 .fqb2 svg{width:18px;height:18px}}
-@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2 .fqb2::after{content:attr(data-n);font-size:14px;font-weight:700;margin-left:6px}}
-@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) header.top2{min-width:0;overflow:hidden}}
-@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) .lt3{grid-template-columns:minmax(120px,1.5fr) 72px minmax(110px,1fr)!important}}
-@media(min-width:1200px){body:has(.ltab3):has(#ov.show #sheet.lsheet) .lt3>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+@media (max-width:1499px){ body.h-ltab.h-lsheet header.top2 .tsearch{display:none} }
+@media(min-width:1200px){body.h-ltab.h-lsheet header.top2 .fqb2{gap:0!important;padding:0 10px!important}}
+@media(min-width:1200px){body.h-ltab.h-lsheet header.top2 .fqb2 span{display:none}}
+@media(min-width:1200px){body.h-ltab.h-lsheet header.top2 .fqb2 svg{width:18px;height:18px}}
+@media(min-width:1200px){body.h-ltab.h-lsheet header.top2 .fqb2::after{content:attr(data-n);font-size:14px;font-weight:700;margin-left:6px}}
+@media(min-width:1200px){body.h-ltab.h-lsheet header.top2{min-width:0;overflow:hidden}}
+@media(min-width:1200px){body.h-ltab.h-lsheet .lt3{grid-template-columns:minmax(120px,1.5fr) 72px minmax(110px,1fr)!important}}
+@media(min-width:1200px){body.h-ltab.h-lsheet .lt3>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 /* the count after a page title: the number in a small box, like the counts in the rail and the board (it used to read "1 person") */
 header.top2 .hc5{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 8px;margin-left:-12px!important;background:#1a1f26;border-radius:4px;font-size:13px!important;font-weight:600;color:#a3acb9!important}
 
@@ -1455,8 +1455,8 @@ header.top2 .hc5{display:inline-grid;place-items:center;min-width:24px;height:24
 .overlay.show{animation:ovf8 .16s ease-out}
 .overlay.show>#sheet{animation:up8 .18s cubic-bezier(.2,.8,.2,1)}
 @media (max-width:899px){.overlay.show>#sheet{animation:bot8in .22s cubic-bezier(.2,.8,.2,1)}}
-body:has(.ltab3) .overlay.show:has(#sheet.lsheet){animation:none}
-@media (min-width:900px){body:has(.ltab3) .overlay.show>#sheet.lsheet{animation:side8in .2s cubic-bezier(.2,.8,.2,1)}}
+body.h-ltab.h-lsheet .overlay.show{animation:none}
+@media (min-width:900px){body.h-ltab .overlay.show>#sheet.lsheet{animation:side8in .2s cubic-bezier(.2,.8,.2,1)}}
 @keyframes ovf8{from{background-color:transparent}}
 @keyframes up8{from{opacity:0;transform:translateY(8px) scale(.985)}}
 @keyframes bot8in{from{transform:translateY(40px);opacity:.4}}

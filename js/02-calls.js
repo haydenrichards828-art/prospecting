@@ -8,7 +8,7 @@ function drawProg(){
 }
 // The call screen stays inside the group you started from (a suburb, a call sheet, Solicitors or Call backs) and never moves on to another one
 function grpOf(r){ return r.callback?'Call backs':(grp(r)||'Suburb unknown'); }
-function callQ(){ const all=queue(), f=S.lsub||S.focusSub; if(!f) return all; const g=all.filter(r=>grpOf(r)===f); return g.length||f===S.focusSub?g:all; }
+function callQ(){ const all=queue(), f=S.lsub||S.focusSub; if(!f) return all; const g=all.filter(r=>grpOf(r)===f); if(g.length) return g; return f===S.focusSub&&f==='Call backs'?g:(f===S.focusSub&&S.focusType===S.type?g:all); }
 function curCall(){ const all=callQ(); if(S.pick){ const p=all.find(r=>r.property_id===S.pick); if(p) return p; S.pick=null; } return all.find(r=>!r.today_outcome&&!S.skipped.has(r.property_id)); }
 function drawList(){ if(S.tab!=='calls'||S.searching||!$("#main")) return; $("#main").className='v2main'; if(S.view==='list') return drawList2(); drawCall2(); }
 function hoursStrip(){ return ''; // outside hours is now a warning when you tap call, not a banner
@@ -207,8 +207,8 @@ function bigPhoto(id){ const r=queue().find(x=>x.property_id===id); if(!r) retur
   openSheet2(esc(r.street_address||'House'),`<div class="photo2" style="aspect-ratio:4/3;width:100%">${u?`<img src="${u}" alt="" onerror="this.remove()"><span class="pinm"></span><span class="credit">Imagery © NSW Spatial Services</span>`:''}</div>
    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><a class="b2 pri" href="${svUrl(r)}" target="_blank" rel="noopener">${ic2('eye',18)}Street View</a><button class="b2" onclick="copyAddr(${id})">Copy address</button></div>`);
   $("#sheet").classList.add('wide2'); }
-function open2(id){ const r=queue().find(x=>x.property_id===id); if(r){ S.focusSub=(S.lsub==='Call backs'&&r.callback)?'Call backs':grpOf(r); S.lsub=S.focusSub; } S.pick=id; S.view='call'; S.dialer=true; try{localStorage.setItem("dp_view","call")}catch{} render(); }
-function startSub(){ S.focusSub=S.lsub; S.pick=null; S.skipped.clear(); setView('call'); }
+function open2(id){ const r=queue().find(x=>x.property_id===id); if(r){ S.focusSub=(S.lsub==='Call backs'&&r.callback)?'Call backs':grpOf(r); S.lsub=S.focusSub; S.focusType=S.type; } S.pick=id; S.view='call'; S.dialer=true; try{localStorage.setItem("dp_view","call")}catch{} render(); }
+function startSub(){ S.focusSub=S.lsub; S.focusType=S.type; S.pick=null; S.skipped.clear(); setView('call'); }
 
 // ---------- keys ----------
 document.addEventListener('keydown',e=>{

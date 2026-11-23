@@ -202,12 +202,12 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media print{.dmap,#best{display:none}}
 .pager{display:flex;justify-content:center;gap:8px;margin:16px 0}
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
-.wrap:has(.dialer){padding-bottom:16px!important}
+body.h-dialer .wrap{padding-bottom:16px!important}
 </style>
-<link rel="preload" href="js/01-base.js?v=200" as="script">
-<link rel="preload" href="js/02-calls.js?v=200" as="script">
-<link rel="preload" href="js/03-leads-pipeline-settings.js?v=200" as="script">
-<link rel="stylesheet" href="v2.css?v=200">
+<link rel="preload" href="js/01-base.js?v=201" as="script">
+<link rel="preload" href="js/02-calls.js?v=201" as="script">
+<link rel="preload" href="js/03-leads-pipeline-settings.js?v=201" as="script">
+<link rel="stylesheet" href="v2.css?v=201">
 </head>
 <body>
 <div id="app"></div>
@@ -1627,21 +1627,21 @@ window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 <!-- The new design, in load order. Each file wraps functions from the ones before it, so the order matters. -->
-<script src="js/01-base.js?v=200"></script>
-<script src="js/02-calls.js?v=200"></script>
-<script src="js/03-leads-pipeline-settings.js?v=200"></script>
-<script src="js/04-people-openhomes.js?v=200"></script>
-<script src="js/05-messages-sidebar.js?v=200"></script>
-<script src="js/06-fixes-20nov.js?v=200"></script>
-<script src="js/07-crm-callsheets.js?v=200"></script>
-<script src="js/08-card-drops.js?v=200"></script>
-<script src="js/09-tracking-instant.js?v=200"></script>
-<script src="js/10-feel.js?v=200"></script>
-<script src="js/11-tracking-review.js?v=200"></script>
-<script src="js/12-needs-number-rail.js?v=200"></script>
-<script src="js/13-stats.js?v=200"></script>
-<script src="js/14-latest.js?v=200"></script>
-<script src="js/15-inbox.js?v=200"></script>
+<script src="js/01-base.js?v=201"></script>
+<script src="js/02-calls.js?v=201"></script>
+<script src="js/03-leads-pipeline-settings.js?v=201"></script>
+<script src="js/04-people-openhomes.js?v=201"></script>
+<script src="js/05-messages-sidebar.js?v=201"></script>
+<script src="js/06-fixes-20nov.js?v=201"></script>
+<script src="js/07-crm-callsheets.js?v=201"></script>
+<script src="js/08-card-drops.js?v=201"></script>
+<script src="js/09-tracking-instant.js?v=201"></script>
+<script src="js/10-feel.js?v=201"></script>
+<script src="js/11-tracking-review.js?v=201"></script>
+<script src="js/12-needs-number-rail.js?v=201"></script>
+<script src="js/13-stats.js?v=201"></script>
+<script src="js/14-latest.js?v=201"></script>
+<script src="js/15-inbox.js?v=201"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>
