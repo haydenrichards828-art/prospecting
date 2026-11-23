@@ -2865,3 +2865,10 @@ window.viewInsights=async function(){ ST9.cache={}; return st9Show(); };
 window.paintInsights=function(){ if(S.tab==='insights') st9Show(); };
 window.render=(function(o){ return function(...a){ const m=$("#main"); if(m&&S.tab!=='insights') m.classList.remove('st9main'); return o.apply(this,a); }; })(window.render);
 let st9rz; addEventListener('resize',()=>{ clearTimeout(st9rz); st9rz=setTimeout(()=>{ if(S.tab==='insights'){ const [a]=st9Range(ST9.per,ST9.off), d=ST9.cache[ST9.per+'|'+st9Iso(a)]; if(d) st9Dots(d); } },120); });
+
+// ---------- No Save button on a lead that already exists (23 Nov) ----------
+// Notes and details save themselves when the panel closes. Save stays for a brand new lead ("Add lead")
+// and in the follow up queue, where it is "Save and next".
+function noSave11(id){ if(!id) return; const sv=document.getElementById('lead_save'); if(!sv) return; const row=sv.closest('.lsave');
+  if(row&&!row.classList.contains('fqrow2')) row.remove(); }
+window.openLead=(function(o){ return function(id,...a){ const r=o(id,...a); try{ noSave11(id); Promise.resolve(r).then(()=>setTimeout(()=>noSave11(id),0)); }catch(e){} return r; }; })(window.openLead);
