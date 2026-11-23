@@ -178,44 +178,41 @@ async function view15(){
   const all = th.map(t => Object.assign({ t }, info15(t)));
   const byId = Object.fromEntries(all.map(x => [x.t.id, x]));
   const waiting = all.reduce((n, x) => n + x.waiting, 0);
-  const acts = []; all.forEach(x => x.forMe.forEach(mm => acts.push({ th: x.t, m: mm, why: x.t.group ? forMe15(mm, x.t) : (x.t.via === 'SMS' ? 'Text' : 'Direct message') })));
+  const acts = []; all.forEach(x => !x.t.read && x.forMe.forEach(mm => acts.push({ th: x.t, m: mm, why: x.t.group ? forMe15(mm, x.t) : (x.t.via === 'SMS' ? 'Text' : 'Direct message') })));
   acts.sort((a, b) => b.m.at - a.m.at);
   const quiet = all.reduce((n, x) => n + x.hidden, 0);
   const nxt = nextSlot15();
-  const dTitle = f ? `Focus on until ${clock15(f)}` : waiting ? (nxt ? `Next delivery ${nxt}` : 'New messages') : 'All delivered';
-  const dSub = f ? 'Messages still come in quietly. Nothing shows until you end it.' : waiting ? `${waiting} new message${waiting > 1 ? 's are' : ' is'} waiting.${s.urgent ? ' Urgent lead messages come straight through.' : ''}` : (nxt ? `Next delivery ${nxt}.` : 'Messages show as they arrive.');
-  const dBtn = f ? `<button class="sm" onclick="focusEnd15();render()">End focus</button>` : waiting ? `<button class="sm" onclick="ls15('dp_deliv',Date.now());render()">Deliver now</button>` : `<button class="sm" onclick="focusStart15();render()">Start focus</button>`;
+  const dTitle = f ? `Focus until ${clock15(f)}` : waiting ? `${waiting} waiting${nxt ? ', next ' + nxt : ''}` : (nxt ? `Next delivery ${nxt}` : 'Live');
+  const dBtn = f ? `<button class="sm" onclick="focusEnd15();render()">End</button>` : waiting ? `<button class="sm" onclick="ls15('dp_deliv',Date.now());render()">Show</button>` : `<button class="sm" onclick="focusStart15();render()">Focus</button>`;
   const sel = ib.view === 'chat' ? byId[ib.sel] : null;
   const row = x => { const t = x.t, mode = t.group ? (s.groups[t.id] || 'needs') : '', mu = mode === 'never', on = sel && sel.t.id === t.id, b = !f && x.badge > 0;
     return `<button class="rw${on ? ' on' : ''}${b ? ' b' : ''}${mu ? ' mu' : ''}" onclick="open15('${esc(t.id)}')"${on ? ' aria-current="true"' : ''}>${t.group ? i15('grp') : `<span class="av${t.kind === 'agent' ? ' ag' : ''}" aria-hidden="true">${ini15(t.name)}</span>`}<span class="nm">${esc(t.name)}</span>${mu ? `<span role="img" aria-label="Muted">${i15('mute', 14)}</span>` : ''}${b ? `<span class="bd">${x.badge}</span>` : ''}</button>`; };
   const sec = (k, title, list) => list.length ? `<div class="sec"><button onclick="S.ib.open.${k}=!S.ib.open.${k};render()" aria-expanded="${!ib.open[k]}">${ic2(ib.open[k] ? 'chev' : 'down', 14)}${title}</button>${ib.open[k] ? '' : list.map(row).join('')}</div>` : '';
-  const left = `<div class="il"><div class="dbox${f ? ' fo' : ''}"><b>${dTitle}</b><span>${dSub}</span><div>${dBtn}<button class="ln" onclick="go('settings');setTimeout(set15When,300)">Change times</button></div></div>
+  const left = `<div class="il"><div class="dbox${f ? ' fo' : ''}" style="flex-direction:row;align-items:center;justify-content:space-between"><b>${dTitle}</b>${dBtn}</div>
    <button class="rw${ib.view === 'needs' ? ' on' : ''} b" onclick="S.ib.view='needs';render()">${i15('at')}<span class="nm">Needs you</span>${!f && acts.length ? `<span class="bd">${acts.length}</span>` : ''}</button>
-   <button class="rw" onclick="S.msgOld=1;render()">${ic2('clock', 16)}<span class="nm">Scheduled texts</span></button>
    ${sec('g', 'Group chats', all.filter(x => x.t.group))}${sec('a', 'Agents', all.filter(x => x.t.kind === 'agent'))}${sec('l', 'Leads', all.filter(x => x.t.kind === 'lead'))}${sec('p', 'Other people', all.filter(x => x.t.kind === 'person'))}</div>`;
   let mid = '', side = '';
   if (!sel){
-    mid = `<div class="hd"><div><h2>Needs you</h2><p>Everything that is actually for you, newest first. Group chatter stays out.</p></div></div>
-     <div class="ms" style="padding:20px 24px">${f ? `<p class="note">Focus is on. ${acts.length} thing${acts.length === 1 ? '' : 's'} will be here when it ends.</p>` : acts.length ? acts.map(a => `<button class="act" onclick="open15('${esc(a.th.id)}')"><span class="av big" aria-hidden="true">${ini15(a.m.who)}</span><span style="min-width:0;flex:1"><span><span class="k">${esc(a.why)}</span><span class="w">${esc(a.th.group ? a.th.name : a.th.via)}, ${clock15(a.m.at)}</span></span><b style="display:block">${esc(a.m.who)}</b><span class="x">${esc(a.m.text)}</span></span></button>`).join('') : `<p class="note" style="margin-top:40px">All caught up.${nxt ? ` Next delivery ${nxt}.` : ''}</p>`}
-     <div class="quiet"><span><b style="display:block">${quiet} group message${quiet === 1 ? '' : 's'} kept quiet</b><span style="font-size:13px;color:var(--t2)">They’re still in each group if you want to skim.</span></span><button class="ln" style="font-size:14px" onclick="go('settings');setTimeout(set15Groups,300)">Change rules</button></div></div>`;
+    mid = `<div class="hd"><h2>Needs you</h2></div>
+     <div class="ms" style="padding:20px 24px">${f ? `<p class="note">${acts.length} waiting until focus ends</p>` : acts.length ? acts.map(a => `<button class="act" onclick="open15('${esc(a.th.id)}')"><span style="min-width:0;flex:1"><span><b>${esc(a.m.who)}</b><span class="w">${a.th.group ? esc(a.th.name) + ', ' : ''}${clock15(a.m.at)}</span>${a.th.group ? `<span class="k" style="margin-left:8px">${esc(a.why)}</span>` : ''}</span><span class="x">${esc(a.m.text)}</span></span></button>`).join('') : `<p class="note" style="margin-top:40px">All caught up</p>`}
+     ${quiet ? '' : '<!--'}<p class="note" style="margin-top:12px">${quiet} group message${quiet === 1 ? '' : 's'} kept quiet</p>${quiet ? '' : '-->'}</div>`;
   } else {
     const t = sel.t, mode = t.group ? (s.groups[t.id] || 'needs') : '', filt = t.group && !ib.all && mode !== 'every';
-    let out = [], hid = 0; const flush = () => { if (hid){ out.push(`<div class="fold"><i></i><button onclick="S.ib.all=true;render()">${hid} message${hid > 1 ? 's' : ''} that don’t need you</button><i></i></div>`); hid = 0; } };
+    let out = [], hid = 0; const flush = () => { if (hid){ out.push(`<div class="fold"><i></i><button onclick="S.ib.all=true;render()">${hid} hidden</button><i></i></div>`); hid = 0; } };
     sel.vis.forEach(mm => { const why = t.group ? forMe15(mm, t) : false; if (filt && !mm.mine && !why){ hid++; return; } flush();
       out.push(`<div class="m${why ? ' me4' : ''}"><span class="av big${mm.mine ? ' ag' : ''}" aria-hidden="true">${mm.mine ? 'M' : ini15(mm.who)}</span><div style="min-width:0;flex:1"><div><span class="who">${mm.mine ? 'You' : esc(mm.who)}</span><span class="tm">${clock15(mm.at)}</span>${why ? `<span class="tg">${esc(why)}</span>` : ''}</div>${mm.replyMine ? `<div class="rp">Replying to your message: “${esc(mm.replyMine)}”</div>` : ''}<div class="tx">${parts15(mm.text)}</div></div></div>`); });
     flush();
-    if (sel.waiting) out.push(`<p class="note" style="margin-top:12px">${sel.waiting} newer message${sel.waiting > 1 ? 's' : ''} arrive at the next delivery.</p>`);
+    if (sel.waiting) out.push(`<p class="note" style="margin-top:12px">${sel.waiting} more at the next delivery</p>`);
     const tps = (S.templates || []).map(x => ({ n: x.name, b: x.body })).concat([{ n: 'Running late', b: 'Sorry, running about 10 minutes late. Marlowe' }, { n: 'On it', b: 'On it, I will let you know by lunch.' }]);
     const d = ib.draft || '', menu = d[0] === '/' && !d.includes(' '), q = d.slice(1).toLowerCase(), hits = menu ? tps.filter(x => !q || x.n.toLowerCase().includes(q)) : [];
     S.ib.tps = hits;
-    mid = `<div class="hd"><div>${desk2() ? '' : `<button class="ln" style="font-size:14px;margin-bottom:6px" onclick="S.ib.view='needs';render()">Back</button>`}<h2>${esc(t.name)}</h2><p>${t.group ? esc(t.members) + ', group' : esc((t.kind === 'lead' ? 'Lead' : t.kind === 'agent' ? 'Agent' : 'Contact') + ', ' + t.via)}</p></div>
-     <div style="display:flex;gap:8px;flex-wrap:wrap">${t.group && mode !== 'every' ? `<div class="seg" role="group" aria-label="Show"><button class="${filt ? 'on' : ''}" aria-pressed="${filt}" onclick="S.ib.all=false;render()">What needs you</button><button class="${filt ? '' : 'on'}" aria-pressed="${!filt}" onclick="S.ib.all=true;render()">Everything</button></div>` : ''}
-     ${t.group ? `<button class="ob" onclick="mode15('${esc(t.id)}')" aria-label="Notifications for this group: ${MODES15[mode]}. Click to change.">${i15('bell')}${MODES15[mode]}</button>` : ''}
+    mid = `<div class="hd"><div>${desk2() ? '' : `<button class="ln" style="font-size:14px;margin-bottom:6px" onclick="S.ib.view='needs';render()">Back</button>`}<h2>${esc(t.name)}</h2><p>${t.group ? esc(t.members) : esc(t.via)}</p></div>
+     <div style="display:flex;gap:8px;flex-wrap:wrap">${t.group ? `<button class="ob" onclick="mode15('${esc(t.id)}')" aria-label="Notifications for this group: ${MODES15[mode]}. Click to change.">${i15('bell')}${MODES15[mode]}</button>` : ''}
      ${sel.badge ? `<button class="ob" onclick="done15('${esc(t.id)}')">Mark done</button>` : ''}</div></div>
-     <div class="ms" id="ms15">${filt ? `<p class="note">Showing what needs you. ${sel.hidden} other message${sel.hidden === 1 ? '' : 's'} didn’t notify you.</p>` : ''}${out.join('')}</div>
+     <div class="ms" id="ms15">${out.join('')}</div>
      <div class="cp">${menu ? `<div class="menu"><b style="display:block;padding:4px 8px;font-size:12px;color:var(--t2)">Templates</b>${hits.length ? hits.map((x, i) => `<button onclick="tp15(${i})"><b>${esc(x.n)}</b><small>${esc(x.b)}</small></button>`).join('') : '<p style="margin:6px 8px;color:var(--t2)">No template called that.</p>'}</div>` : ''}
-      <div class="box"><label for="ib15d" class="sr15" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Message to ${esc(t.name)}</label><textarea id="ib15d" placeholder="Message ${esc(t.name)}. Type / for templates." oninput="draft15(this.value)" onkeydown="if(event.key==='Enter'&&(event.metaKey||event.ctrlKey)){event.preventDefault();send15()}">${esc(d)}</textarea>
-      <div class="cb15"><span><button class="sm" onclick="draft15('/',1)">/ Templates</button> &nbsp;${t.group ? 'To the group' : 'As ' + (t.via === 'SMS' ? 'a text' : 'an iMessage')} from your Mac</span><button class="b2 pri" style="height:34px" onclick="send15()">${ic2('send', 16)}Send</button></div></div></div>`;
+      <div class="box"><label for="ib15d" class="sr15" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Message to ${esc(t.name)}</label><textarea id="ib15d" placeholder="Message ${esc(t.name)}" oninput="draft15(this.value)" onkeydown="if(event.key==='Enter'&&(event.metaKey||event.ctrlKey)){event.preventDefault();send15()}">${esc(d)}</textarea>
+      <div class="cb15"><span>/ for templates</span><button class="b2 pri" style="height:34px" onclick="send15()">${ic2('send', 16)}Send</button></div></div></div>`;
     if (t.kind === 'lead' && t.lead){ const l = t.lead;
       side = `<aside class="ip" aria-label="Lead details"><div style="display:flex;gap:12px;align-items:center;margin-bottom:20px"><span class="av big" aria-hidden="true" style="flex-basis:48px;height:48px;line-height:48px;font-size:16px">${ini15(l.name || t.name)}</span><div><b style="font-size:16px">${esc(l.name || t.name)}</b><div style="font-size:13px;color:var(--t2)">${esc(l.stage)}</div></div></div>
        <dl>${[['Address', l.address], ['Next step', l.next], ['Phone', l.phone], ['OK to message', l.ok]].filter(x => x[1]).map(x => `<div><dt>${x[0]}</dt><dd>${esc(x[1])}</dd></div>`).join('')}</dl>
