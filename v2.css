@@ -1674,3 +1674,10 @@ body.typing .nbox8.nb8p{border-color:var(--acc)}
 }
 .ct14{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 4px;color:var(--good,#5ee08f);font-size:15px}
 .ct14 .b2{height:38px;padding:0 14px;flex:none}
+/* Follow ups popup: rows were squashed by the general button height, so names and dates overlapped the edges */
+#rem2{padding:18px 18px 16px;gap:14px}
+#rem2 .rl{gap:8px}
+#rem2 .ri{height:auto!important;min-height:0!important;padding:12px 14px!important;gap:4px;line-height:20px;flex:none}
+#rem2 .ri b{line-height:20px}#rem2 .ri span{line-height:18px}
+#rem2 .rmore{padding:4px 4px 0}
+#rem2 .rf .b2{height:44px!important}
