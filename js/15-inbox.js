@@ -2,14 +2,22 @@
 // Group chats only count when something is for Marlowe (tagged, her name, a reply to her, @all, her words).
 // New messages are held back until the next delivery time she picks in Settings (every hour, three set times, or live).
 // Focus sessions hide every alert while messages keep arriving quietly underneath.
-// Live messages come from BlueBubbles running on her Mac (free). Without it, Messages shows how to connect; #demo shows example chats.
+// Live messages come from BlueBubbles running on her Mac (free). The Mac posts each new message to the inbox function on the
+// server, the app reads from there, sends through there, and texts with a lead are added to that lead's notes (24 Nov).
+// Settings and Mark done are kept on the server so the phone and laptop match. #demo shows example chats.
 
 const MS15_KEY = 'dp_msgset';
 const MS15_DEF = { deliver: 'three', times: ['09:00', '12:30', '16:00'], urgent: true, focusLen: 60, autoFocus: true, focusUrgent: true,
   rules: { tag: true, name: true, reply: true, all: true, words: false }, names: ['Marlowe', 'Marl'], words: ['appraisal', 'listing', 'urgent'],
-  groups: {}, bbUrl: '', bbPass: '' };
+  groups: {} };
+// the Mac password used to be kept in the browser; it now lives on the server only
+try { const o = JSON.parse(localStorage.getItem('dp_msgset') || '{}'); if (o.bbPass || o.bbUrl){ delete o.bbPass; delete o.bbUrl; localStorage.setItem('dp_msgset', JSON.stringify(o)); } } catch {}
 function ms15(){ let o = {}; try { o = JSON.parse(localStorage.getItem(MS15_KEY) || '{}'); } catch {} return Object.assign({}, MS15_DEF, o, { rules: Object.assign({}, MS15_DEF.rules, o.rules || {}) }); }
-function ms15Save(patch){ const o = Object.assign(ms15(), patch); try { localStorage.setItem(MS15_KEY, JSON.stringify(o)); } catch {} return o; }
+function ms15Save(patch){ const o = Object.assign(ms15(), patch); delete o.bbUrl; delete o.bbPass; try { localStorage.setItem(MS15_KEY, JSON.stringify(o)); } catch {}
+  if (!DEMO) ib15('prefs', { prefs: o }).catch(() => {}); return o; }
+const INBOX15 = API.replace(/\/api$/, '/inbox');
+async function ib15(action, body){ const r = await fetch(INBOX15, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-session': S.token || '' }, body: JSON.stringify(Object.assign({ action }, body || {})) });
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'Messages had a problem'); return j; }
 function ls15(k, v){ try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, String(v)); } catch {} return null; }
 
 // ---------- delivery times and focus ----------
@@ -73,28 +81,30 @@ function demo15(){ const d = new Date(), at = (h, m, back = 0) => { const x = ne
     { id: 'p5', name: 'Tom Reid', kind: 'lead', via: 'SMS', lead: { name: 'Tom Reid', address: '9 Demo Rd, Thirroul', stage: 'Appraisal booked', next: 'Tomorrow, 2pm with Kate', phone: '0491 570 158', ok: 'Yes, on the call' },
       msgs: [msg('Tom Reid', 'Hi Marlowe, can we reschedule tomorrow? Something came up', Date.now() - 6e5)] }
   ]; }
-// BlueBubbles server on her Mac: chats and messages over its REST API, password in the address
-async function bb15(path, body){ const s = ms15(); const u = s.bbUrl.replace(/\/$/, '') + '/api/v1/' + path + (path.includes('?') ? '&' : '?') + 'password=' + encodeURIComponent(s.bbPass);
-  let r; try { r = await fetch(u, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }); }
-  catch { throw new Error('Can’t reach your Mac. Check it’s on and BlueBubbles is open.'); }
-  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.message || j.error?.message || 'Your Mac said no. Check the password in Settings.'); return j.data; }
 const digits15 = p => String(p || '').replace(/\D/g, '').replace(/^61/, '0');
-function leadFor15(addr){ const d = digits15(addr); if (!d) return null; const l = (S.leads || []).find(x => digits15(x.phone || x.owner_phone || x.mobile) === d); if (!l) return null;
-  return { id: l.id, name: l.name || l.owner_name || '', address: [l.street_address || l.address, l.suburb].filter(Boolean).join(', '), stage: l.status || 'Lead', next: l.follow_up || l.next_step || '', phone: l.phone || l.owner_phone || '', ok: l.consent ? 'Yes' : 'Check before marketing' }; }
+function leadFor15(id){ const l = (S.leads || []).find(x => x.id === id); if (!l) return null;
+  return { id: l.id, name: l.name || '', address: [l.address, l.suburb].filter(Boolean).join(', '), stage: l.status || 'Lead', next: l.next_action || (l.follow_up ? 'Follow up ' + dayMon(l.follow_up) : ''), phone: l.phone || '' }; }
+const nice15 = a => { const d = digits15(a); return /^04\d{8}$/.test(d) ? d.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 $3') : a; };
+// a name for a phone number: a lead, or someone in today's list, else the number
+function who15(addr){ const d = digits15(addr); if (!d) return addr || 'Someone';
+  const l = (S.leads || []).find(x => digits15(x.phone) === d); if (l) return l.name;
+  const r = (S.rows || []).find(x => digits15(x.phone) === d); if (r && r.owner_name) return people(r.owner_name)[0] || r.owner_name; return nice15(addr); }
 async function live15(){ if (!S.leads) await loadLeads().catch(() => {});
-  const chats = await bb15('chat/query', { limit: 40, offset: 0, with: ['participants', 'lastMessage'], sort: 'lastmessage' }) || [];
-  const since = Date.now() - 3 * 864e5;
-  return Promise.all(chats.map(async c => { const parts = c.participants || [], group = parts.length > 1;
-    const ms = await bb15('message/query', { chatGuid: c.guid, limit: 40, offset: 0, with: ['handle'], sort: 'DESC', after: since }).catch(() => []) || [];
-    const mine = new Set(ms.filter(m => m.isFromMe).map(m => m.guid));
-    const addr = parts[0]?.address || '', lead = group ? null : leadFor15(addr);
-    const nm = c.displayName || (lead && lead.name) || parts.map(p => p.address).join(', ');
-    return { id: c.guid, group, name: nm, members: group ? parts.length + 1 + ' people' : '', kind: group ? '' : (lead ? 'lead' : 'person'), lead, via: /^SMS/.test(c.guid) ? 'SMS' : 'iMessage',
-      msgs: ms.reverse().map(m => ({ who: m.isFromMe ? 'me' : (m.handle?.address || nm), mine: !!m.isFromMe, text: m.text || (m.attachments?.length ? 'Sent a photo or file' : ''), at: m.dateCreated, replyMine: m.threadOriginatorGuid && mine.has(m.threadOriginatorGuid) ? 'your message' : '' })) }; }));
+  const d = await ib15('load'); S.ib.srv = d;
+  if (!d.connected) return null;
+  if (d.prefs && Object.keys(d.prefs).length) try { localStorage.setItem(MS15_KEY, JSON.stringify(d.prefs)); } catch {}
+  S.ib.done = Object.assign({}, d.done || {});
+  if (d.quiet && (!d.synced_at || Date.now() - Date.parse(d.synced_at) > 10 * 60e3)) ib15('sync').then(r => { if (r && !r.skipped && S.tab === 'messages'){ S.ib.at = 0; view15(); } }).catch(() => {});
+  const by = {}; (d.msgs || []).forEach(m => (by[m.chat_guid] = by[m.chat_guid] || []).push(m));
+  return (d.chats || []).filter(c => by[c.guid]?.length).map(c => { const mine = new Set(by[c.guid].filter(m => m.from_me).map(m => m.guid)), mem = c.members || [];
+    const lead = c.lead_id ? leadFor15(c.lead_id) : null;
+    const name = c.name || (lead && lead.name) || (c.is_group ? mem.map(who15).join(', ') : who15(mem[0]));
+    return { id: c.guid, group: c.is_group, name, members: c.is_group ? (mem.length + 1) + ' people' : '', kind: c.is_group ? '' : (lead ? 'lead' : 'person'), lead, via: c.service || 'iMessage',
+      msgs: by[c.guid].slice().reverse().map(m => ({ who: m.from_me ? 'me' : (c.is_group ? who15(m.handle) : name), mine: m.from_me, text: m.body || '', at: Date.parse(m.at), replyMine: m.reply_to && mine.has(m.reply_to) ? 'your message' : '' })) }; });
 }
-async function load15(force){ S.ib = S.ib || { view: 'needs', sel: null, all: false, open: {}, draft: '', done: JSON.parse(ls15('dp_ibdone') || '{}') };
+async function load15(force){ S.ib = S.ib || { view: 'needs', sel: null, all: false, open: {}, draft: '', done: DEMO ? JSON.parse(ls15('dp_ibdone') || '{}') : {} };
   if (!force && S.ib.th && Date.now() - S.ib.at < 60e3) return S.ib.th;
-  if (DEMO) S.ib.th = S.ib.th || demo15(); else if (ms15().bbUrl) S.ib.th = await live15(); else S.ib.th = null;
+  if (DEMO) S.ib.th = S.ib.th || demo15(); else S.ib.th = await live15();
   S.ib.at = Date.now(); return S.ib.th; }
 
 // ---------- working out what shows ----------
@@ -170,10 +180,10 @@ async function view15(){
   const m = $('#main'); if (!m) return;
   let th; try { th = await load15(); } catch (e) { th = undefined; S.ib.err = e.message; }
   m.className = 'v2main old'; m.style.padding = '';
-  if (!th){ m.innerHTML = `<div class="ib15" style="display:block"><div class="empty15">${S.ib.err ? `<h2>Can’t reach your Mac</h2><p>${esc(S.ib.err)}</p><button class="b2 pri" onclick="S.ib.th=null;S.ib.err='';render()">Try again</button> <button class="b2" onclick="set15Mac()">Check the connection</button>` :
+  if (!th){ m.innerHTML = `<div class="ib15" style="display:block"><div class="empty15">${S.ib.err ? `<h2>Messages couldn’t load</h2><p>${esc(S.ib.err)}</p><button class="b2 pri" onclick="S.ib.th=null;S.ib.err='';render()">Try again</button> <button class="b2" onclick="set15Mac()">Check the connection</button>` :
     `<h2>Connect your Mac to see your messages here</h2><p>Prospect reads and sends your iMessages and texts through your own Mac, for free. It takes about 15 minutes, once.</p>
      <ol><li>On your Mac, install BlueBubbles from bluebubbles.app and sign in with your Apple ID.</li><li>On your iPhone, open Settings, Apps, Messages, Text Message Forwarding, and turn on your Mac. That lets texts to Android phones go through too.</li>
-     <li>In BlueBubbles, set a password and turn on the free Cloudflare link. Copy the address it shows.</li><li>Set your Mac to never sleep (System Settings, Energy).</li><li>Paste the address and password into Prospect.</li></ol>
+     <li>In BlueBubbles, set a password and turn on the free Cloudflare link. Copy the address it shows. If the address changes after a restart, Prospect follows it by itself.</li><li>Set your Mac to never sleep (System Settings, Energy).</li><li>Paste the address and password into Prospect. You only do this once, it works on every device after that.</li></ol>
      <button class="b2 pri" onclick="set15Mac()">Paste the address</button> <button class="b2" onclick="S.msgOld=1;go('messages')">Scheduled texts</button>`}</div></div>`; return; }
   const ib = S.ib, f = focus15(), s = ms15();
   const all = th.map(t => Object.assign({ t }, info15(t)));
@@ -228,13 +238,15 @@ function draft15(v, refocus){ const was = (S.ib.draft || '')[0] === '/' && !(S.i
   if (refocus || was || now){ S.ib.focusDraft = 1; view15(); } }
 function tp15(i){ const x = (S.ib.tps || [])[i]; if (!x) return; const th = (S.ib.th || []).find(t => t.id === S.ib.sel) || {}; const fn = String(th.name || '').split(' ')[0];
   S.ib.draft = x.b.replace(/\{first_name\}/g, fn).replace(/\{address\}/g, th.lead?.address || 'your place'); S.ib.focusDraft = 1; view15(); }
-function done15(id){ S.ib.done[id] = Date.now(); ls15('dp_ibdone', JSON.stringify(S.ib.done)); render(); }
+function done15(id){ S.ib.done[id] = Date.now(); if (DEMO) ls15('dp_ibdone', JSON.stringify(S.ib.done)); else ib15('done', { chat: id }).catch(() => {}); render(); }
 function mode15(id){ const s = ms15(), k = ['needs', 'every', 'never'], cur = s.groups[id] || 'needs', nx = k[(k.indexOf(cur) + 1) % 3];
   ms15Save({ groups: Object.assign({}, s.groups, { [id]: nx }) }); toast('Notify me: ' + MODES15[nx].toLowerCase()); render(); }
 async function send15(){ const txt = (S.ib.draft || '').trim(); if (!txt || (txt[0] === '/' && !txt.includes(' '))) return toast('Write a message first');
   const th = (S.ib.th || []).find(t => t.id === S.ib.sel); if (!th) return;
-  try { if (!DEMO) await bb15('message/text', { chatGuid: th.id, tempGuid: 'p' + Date.now(), message: txt, method: 'apple-script' }); }
-  catch (e) { return toast(e.message); }
+  if (S.ib.sending) return; S.ib.sending = 1;
+  try { if (!DEMO) await ib15('send', { chat: th.id, text: txt }); }
+  catch (e) { S.ib.sending = 0; return toast(e.message); }
+  S.ib.sending = 0;
   th.msgs.push({ who: 'me', mine: true, text: txt, at: Date.now() }); S.ib.draft = ''; done15(th.id); toast('Sent to ' + th.name); }
 
 // Messages replaces the old Texts page; the scheduled texts list stays one click away
@@ -252,28 +264,37 @@ function whenTxt15(){ const s = ms15(); return s.deliver === 'live' ? 'As they c
 window.viewSettings = (function(orig){ return async function(){ await orig(); const m = $('#main'); if (!m || S.tab !== 'settings') return; const s = ms15();
   const val = v => `<span class="sv2">${esc(v)}${chev2()}</span>`;
   const html = `<div class="set2"><div class="sth2">Messages</div><div class="g2">${[
-    row2('var(--acc)', 'msg', 'Connect your Mac', '', val(s.bbUrl ? 'Connected' : 'Not set up'), 'set15Mac()'),
+    row2('var(--acc)', 'msg', 'Connect your Mac', '', val(S.ib?.srv ? (S.ib.srv.connected ? 'Connected' : 'Not set up') : 'Check'), 'set15Mac()'),
     row2('var(--acc)', 'clock', 'When messages are delivered', '', val(whenTxt15()), 'set15When()'),
     row2('#6366f1', 'clock', 'Focus sessions', '', val(s.focusLen >= 9999 ? 'Until I end it' : s.focusLen >= 60 ? s.focusLen / 60 + ' hr' : s.focusLen + ' min'), 'set15Focus()'),
     row2('#0d9488', 'users', 'Group chats', '', val('Only when it needs me'), 'set15Groups()')].join('')}</div></div>`;
   const texts = [...m.querySelectorAll('.sth2')].find(x => x.textContent === 'Texts'); if (texts) texts.parentElement.insertAdjacentHTML('beforebegin', html); else m.querySelector('.setw2')?.insertAdjacentHTML('beforeend', html); }; })(window.viewSettings);
 const sw15 = (id, on, t, sub) => `<label style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line2);cursor:pointer"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} style="width:20px;height:20px;margin:2px 0 0;accent-color:var(--acc);flex:none"><span><b style="display:block">${t}</b><span style="font-size:13px;color:var(--t2)">${sub}</span></span></label>`;
-function set15Mac(){ const s = ms15(); openSheet2('Connect your Mac', `<p class="hint2">From BlueBubbles on your Mac: the server address (the Cloudflare link) and the password you set. Kept on this device only.</p>
-  <div class="fg2 one"><label><span>Server address</span><input id="bb_u" type="url" placeholder="https://something.trycloudflare.com" value="${esc(s.bbUrl)}"></label><label><span>Password</span><input id="bb_p" type="password" value="${esc(s.bbPass)}"></label></div>
-  <div style="display:flex;gap:8px;margin-top:14px"><button class="b2 pri wide2b" onclick="save15Mac()">Save and test</button>${s.bbUrl ? '<button class="b2" onclick="ms15Save({bbUrl:\'\',bbPass:\'\'});S.ib=null;closeOv();render()">Disconnect</button>' : ''}</div>`); }
-async function save15Mac(){ ms15Save({ bbUrl: $('#bb_u').value.trim(), bbPass: $('#bb_p').value }); try { await bb15('server/info'); toast('Connected to your Mac'); } catch (e) { return toast(e.message); } S.ib = null; closeOv(); render(); }
+function set15Mac(){ const on = S.ib?.srv?.connected, hk = S.ib?.srv && S.ib.srv.hook_ok === false;
+  openSheet2('Connect your Mac', `<p class="hint2">From BlueBubbles on your Mac: the server address and the password you set. Both are kept on Prospect's server, not on this phone or laptop, so you only do this once.</p>
+  ${on ? `<p class="hint2" style="color:var(--good)">Connected.${S.ib.srv.last_hook ? ' Last message arrived ' + clock15(Date.parse(S.ib.srv.last_hook)) + '.' : ''}</p>` : ''}
+  ${hk ? `<p class="hint2">Your Mac isn't sending new messages straight here yet, so Prospect checks every 10 minutes instead. To fix it, in BlueBubbles open API and Webhooks, add a webhook, and paste the address from "Copy webhook address".</p>` : ''}
+  <div class="fg2 one"><label><span>Server address</span><input id="bb_u" type="url" placeholder="https://something.trycloudflare.com" autocomplete="off"></label><label><span>Password</span><input id="bb_p" type="password" autocomplete="off"></label></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="b2 pri wide2b" id="bb_go" onclick="save15Mac()">Save and test</button>${on ? '<button class="b2" onclick="dis15()">Disconnect</button>' : ''}${(S.ibHook || S.ib?.srv?.hook_url) ? '<button class="b2" onclick="navigator.clipboard.writeText(S.ibHook || S.ib.srv.hook_url).then(()=>toast(\'Copied\'))">Copy webhook address</button>' : ''}</div>`); }
+async function save15Mac(){ const u = $('#bb_u').value.trim(), pw = $('#bb_p').value; if (!u || !pw) return toast('Add the address and the password');
+  const btn = $('#bb_go'); if (btn){ btn.disabled = true; btn.textContent = 'Connecting, this can take a minute'; }
+  try { const r = await ib15('setup', { url: u, pass: pw }); S.ibHook = r.hook_url || null;
+    toast(r.hook_ok ? `Connected to your Mac${r.synced ? ', ' + r.synced.messages + ' messages from the last week' : ''}` : 'Connected. One more step to get messages instantly, see Connect your Mac in Settings'); }
+  catch (e) { if (btn){ btn.disabled = false; btn.textContent = 'Save and test'; } return toast(e.message); }
+  S.ib = null; closeOv(); render(); }
+async function dis15(){ try { await ib15('disconnect'); } catch (e) { return toast(e.message); } S.ib = null; closeOv(); toast('Disconnected'); render(); }
 function set15When(){ const s = ms15(), r = (k, t, sub) => `<label style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line2);cursor:pointer"><input type="radio" name="dl15" value="${k}" ${s.deliver === k ? 'checked' : ''} style="width:20px;height:20px;margin:2px 0 0;accent-color:var(--acc);flex:none"><span><b style="display:block">${t}</b><span style="font-size:13px;color:var(--t2)">${sub}</span></span></label>`;
-  openSheet2('When messages are delivered', `<p class="hint2">Messages arrive all day, but only show and count at these times. Check in, clear them, back to calling.</p>
-   ${r('hourly', 'Every hour', 'On the hour, 8am to 6pm.')}${r('three', 'At set times', 'Morning, midday and afternoon by default. Change the times below.')}${r('live', 'As they come in', 'Like a normal phone. Not great on calling days.')}
+  openSheet2('When messages are delivered', `<p class="hint2">Inside Prospect, new messages only show and count at these times. Your iPhone still alerts as normal, so turn Messages alerts off on the phone if you want the quiet.</p>
+   ${r('hourly', 'Every hour', 'On the hour, 8am to 6pm.')}${r('three', 'At set times', 'Morning, midday and afternoon by default. Change the times below.')}${r('live', 'As they come in', 'Shows straight away in Prospect.')}
    <div class="fg2" style="margin-top:8px">${[0, 1, 2, 3].map(i => `<label><span>Time ${i + 1}</span><input type="time" id="dt15_${i}" value="${esc((s.times || [])[i] || '')}"></label>`).join('')}</div>
-   ${sw15('ur15', s.urgent, 'Let urgent lead messages straight through', 'A lead writing cancel, reschedule or running late skips the wait.')}
+   ${sw15('ur15', s.urgent, 'Let urgent lead messages straight through', 'A lead writing cancel, reschedule or running late shows in Prospect straight away.')}
    <button class="b2 pri wide2b" style="margin-top:12px" onclick="save15When()">Save</button>`); }
 function save15When(){ const d = document.querySelector('input[name=dl15]:checked')?.value || 'three'; const times = [0, 1, 2, 3].map(i => $('#dt15_' + i).value).filter(Boolean);
   if (d === 'three' && !times.length) return toast('Add at least one time'); ms15Save({ deliver: d, times, urgent: $('#ur15').checked }); closeOv(); toast('Saved'); render(); }
 function set15Focus(){ const s = ms15(), L = [[30, '30 min'], [60, '1 hour'], [120, '2 hours'], [9999, 'Until I end it']];
-  openSheet2('Focus sessions', `<p class="hint2">Nothing shows at all. Messages keep coming in quietly and are waiting when it ends.</p>
+  openSheet2('Focus sessions', `<p class="hint2">Prospect shows no new messages until it ends. They keep coming in quietly and are waiting for you. Your iPhone is not affected.</p>
    <div class="fg2 one"><label><span>Default length</span><select id="fl15">${L.map(([v, l]) => `<option value="${v}" ${+s.focusLen === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>
-   ${sw15('af15', s.autoFocus, 'Start focus when I open the call list', 'Ends when you leave the call list.')}${sw15('fu15', s.focusUrgent, 'Still let urgent lead messages through', 'Off means focus is completely silent.')}
+   ${sw15('af15', s.autoFocus, 'Start focus when I open the call list', 'Ends when you leave the call list.')}${sw15('fu15', s.focusUrgent, 'Still let urgent lead messages through', 'Off means Prospect stays completely quiet.')}
    <div style="display:flex;gap:8px;margin-top:12px"><button class="b2 pri wide2b" onclick="save15Focus()">Save</button><button class="b2" onclick="save15Focus(1)">Start one now</button></div>`); }
 function save15Focus(now){ ms15Save({ focusLen: +$('#fl15').value, autoFocus: $('#af15').checked, focusUrgent: $('#fu15').checked }); if (now) focusStart15(); closeOv(); toast(now ? 'Focus on' : 'Saved'); render(); }
 function set15Groups(){ const s = ms15(), r = s.rules;

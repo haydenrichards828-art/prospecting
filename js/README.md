@@ -20,6 +20,6 @@ way round, so keep the order. tools/PATCHES.md lists every wrapper and what it i
 | 12-needs-number-rail.js | Needs a number, quick notes in the note box, blue lists in the rail |
 | 13-stats.js | The Stats page |
 | 14-latest.js | No Save button on existing leads, typing without lag |
-| 15-inbox.js | Messages: one inbox through BlueBubbles on the Mac, group chats filtered to what needs her, delivery times, focus sessions, and their Settings |
+| 15-inbox.js | Messages: one inbox through BlueBubbles on the Mac, read and sent through the inbox function on the server (supabase/functions/inbox), group chats filtered to what needs her, delivery times, focus sessions, and their Settings |
 
 New work goes in a new numbered file (or the end of 14) rather than in the middle of an older one.
