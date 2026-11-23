@@ -154,7 +154,7 @@ const svUrl=r=>r.lat!=null?`https://www.google.com/maps/@?api=1&map_action=pano&
 // Sized to where it shows: a small square on the phone, a wide photo on a computer. Only the one on screen loads.
 const PH_SMALL=[240,240], PH_BIG=[640,440];
 function photo2(r,style,big,on=true){ const sz=big?PH_BIG:PH_SMALL, u=aerialUrl(r,sz[0],sz[1]);
-  return `<div class="photo2" style="${style||''}" role="img" aria-label="Aerial photo of ${esc(r.street_address||'the house')}">${u?`${on?`<img src="${u}" alt="" fetchpriority="high" decoding="async" onerror="this.remove()">`:''}<span class="pinm"></span>`:`<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3)">${ic2('house',big?28:18)}</span>`}
+  return `<div class="photo2" style="${style||''}" role="group" aria-label="Photo of ${esc(r.street_address||'the house')}">${u?`${on?`<img src="${u}" alt="" fetchpriority="high" decoding="async" onerror="this.remove()">`:''}<span class="pinm"></span>`:`<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3)">${ic2('house',big?28:18)}</span>`}
    ${big?`${u?'<span class="credit">Imagery © NSW Spatial Services</span>':''}<a class="sv" href="${svUrl(r)}" target="_blank" rel="noopener">${ic2('eye',15)}Street View</a>`:''}</div>`; }
 
 // ---------- shell ----------

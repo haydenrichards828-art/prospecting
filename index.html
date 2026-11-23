@@ -204,8 +204,8 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 .wrap:has(.dialer){padding-bottom:16px!important}
 </style>
-<link rel="preload" href="v2.js?v=185" as="script">
-<link rel="stylesheet" href="v2.css?v=184">
+<link rel="preload" href="v2.js?v=186" as="script">
+<link rel="stylesheet" href="v2.css?v=186">
 </head>
 <body>
 <div id="app"></div>
@@ -1208,7 +1208,7 @@ function openLead(id, opts={}){
    ${id?`<div class="lcta lstat">${l.status==="Listed"?`<button class="listedbtn on" disabled><i class="ti ti-star-filled"></i>Listed</button>`:`<button class="listedbtn" onclick="markLeadListed(${id})"><i class="ti ti-star"></i>Listed</button>`}</div>`:""}
    ${opts.fresh?`<div class="banner info" style="margin:8px 0 0;padding:8px 10px"><i class="ti ti-sparkles"></i><div>Added to Leads. Fill in what they want below, then Save.</div></div>`:""}
    ${id?`<div class="lcard"><textarea id="ln_body" rows="2" data-grow placeholder="What did they say?" class="lin"></textarea>
-    <div class="lk2">Follow up</div><div class="fu4" id="ln_fu">${[["Tomorrow",1],["1 week",7],["1 month",30]].map(([t,n])=>`<button onclick="S.ol.follow_up='${addDaysKey(n)}';pickOne(this);fuSave6()">${t}</button>`).join("")}<button onclick="const d=this.nextElementSibling;try{d.showPicker()}catch(e){d.click()}">Pick date</button><input type="date" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none" onchange="S.ol.follow_up=this.value;const b=this.previousElementSibling;pickOne(b);b.textContent=new Date(this.value+'T00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'});fuSave6()"></div></div>
+    <div class="lk2">Follow up</div><div class="fu4" id="ln_fu">${[["Tomorrow",1],["1 week",7],["1 month",30]].map(([t,n])=>`<button onclick="S.ol.follow_up='${addDaysKey(n)}';pickOne(this);fuSave6()">${t}</button>`).join("")}<button onclick="const d=this.nextElementSibling;try{d.showPicker()}catch(e){d.click()}">Pick date</button><input type="date" aria-label="Pick a follow up date" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none" onchange="S.ol.follow_up=this.value;const b=this.previousElementSibling;pickOne(b);b.textContent=new Date(this.value+'T00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'});fuSave6()"></div></div>
     <details class="lmore"><summary>More: status, next action, edit contact ›</summary>
      <div class="lrow2"><select id="ln_status" class="sm" aria-label="Status">${LO.status.map(o=>`<option ${o===S.ol.status?"selected":""}>${o}</option>`).join("")}</select><select id="ln_next" class="sm" aria-label="Next action"><option value="">Next action</option>${LO.next_action.map(o=>`<option ${o===l.next_action?"selected":""}>${esc(o)}</option>`).join("")}</select></div>
      <button class="ghost" style="margin-top:6px;width:100%" onclick="editDetails()"><i class="ti ti-pencil"></i>Edit name, phone and address</button></details>`:""}
@@ -1624,7 +1624,7 @@ async function importCSV(){
 window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
-<script src="v2.js?v=185"></script>
+<script src="v2.js?v=186"></script>
 <script>if (window.DEMO_ON) document.write('<script src="demo.js?v=1"><\/script>');</script>
 <script>window.__boot();</script>
 </body>
