@@ -1562,3 +1562,12 @@ button.cbk.none8{opacity:.6}
   .nn8 .act8{grid-area:ac;margin-top:8px;justify-content:stretch}.nn8 .act8 .b2{flex:1;height:40px;padding:0 8px!important}
   .nnh8{padding:4px 0 12px}
 }
+
+/* Call screen breathing room (23 Nov): result buttons stand apart, quick phrases sit clear of the note */
+.cl2 .bar2x,.pf2 .bar2x{gap:6px;border-radius:0!important;overflow:visible}
+.cl2 .bar2x button,.pf2 .bar2x button{border-radius:6px!important}
+.cl2{gap:22px}
+.cl2 .phr8,.pf2 .phr8{margin-top:12px}
+.cl2 .nw2 .h{margin-bottom:4px}
+.bar2x button svg{flex:none}
+@media (min-width:900px) and (max-width:1180px){.cl2 .bar2x{gap:4px}.cl2 .bar2x button{height:66px!important;min-height:66px!important;font-size:13px!important;line-height:15px;gap:4px}}
