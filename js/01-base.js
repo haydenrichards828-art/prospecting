@@ -43,7 +43,7 @@ const LVL2={Strong:['var(--acc)','#93c0ff'],Medium:['#6366f1','#a5b4fc'],Light:[
 // ---------- small helpers ----------
 const row2=(tile,icon,title,sub='',right='',on='')=>`<${on?'button':'div'} class="r2" ${on?`onclick="${on}"`:''}><span class="tile" style="--c:${tile}">${ic2(icon,17,'#fff')}</span><span class="rt2"><b>${title}</b>${sub?`<span>${sub}</span>`:''}</span>${right||'<span></span>'}</${on?'button':'div'}>`;
 const chev2=()=>ic2('chev',16,'var(--t3)');
-// A phone field can hold more than one number ("0414 872 772 (M) 0417 962 446"). Keep them apart.
+// A phone field can hold more than one number ("0491 570 156 (M) 0491 570 157"). Keep them apart.
 const phList=p=>{ const t=String(p||''); const m=t.match(/(?:\+?61[\s-]?\(?0?\)?|\(?0)[2-578]\)?(?:[\s-]?\d){8}/g); if(m&&m.length) return m.map(x=>{ let d=x.replace(/\D/g,''); if(d.startsWith('61')) d='0'+d.slice(2).replace(/^0/,''); return d; }).filter((d,i,a)=>a.indexOf(d)===i); const d=t.replace(/[^\d]/g,''); return d?[d]:[]; };
 const fmtOne2=d=>/^0[2378]\d{8}$/.test(d)?d.replace(/^(\d{2})(\d{4})(\d{4})$/,'$1 $2 $3'):d.replace(/^(\d{4})(\d{3})(\d{3})$/,'$1 $2 $3');
 const fmtPh2=p=>phList(p).map(fmtOne2).join(', ');
