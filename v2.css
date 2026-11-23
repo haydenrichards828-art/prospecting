@@ -1598,3 +1598,10 @@ body.typing .nbox8.nb8p{border-color:var(--acc)}
 .rail2>button.ls9.on svg{stroke:#fff}
 .rail2>button.ls9.on>span{background:#2563eb!important;color:#fff!important}
 @media (max-width:899px){.rail2>button.ls9{background:#141c2b!important}.rail2>button.ls9.on{background:#1d3a6e!important}}
+
+/* Sellers, Landlords, Solicitors always fit (23 Nov): a wider rail on mid size screens, columns sized to their words */
+@media (min-width:900px) and (max-width:1279px){.list2{grid-template-columns:236px minmax(0,1fr)}}
+.rail2 .lt5{grid-template-columns:auto auto auto!important;justify-content:stretch}
+.rail2 .lt5 button{padding:0 6px!important;font-size:13px!important;text-overflow:clip!important}
+.rail2 .lt5.sm9 button{font-size:12px!important;padding:0 3px!important}
+.rail2 .lt5.xs9 button{font-size:11px!important;padding:0 2px!important;letter-spacing:-.01em}

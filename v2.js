@@ -2771,3 +2771,6 @@ window.drawList2=(function(orig){ return function(...a){ const r=orig.apply(this
     if(!b.querySelector(':scope>svg')){ const i=b.classList.contains('cbk')?'clock':b.classList.contains('nn8b')?'phone':b.classList.contains('ohf5')?null:'pin'; if(i) b.insertAdjacentHTML('afterbegin',ic2(i,14)); }
   }
 }catch(e){} return r; }; })(window.drawList2);
+// If a browser draws the words wider than expected, the switch steps its text down rather than cutting a word
+window.drawList2=(function(orig){ return function(...a){ const r=orig.apply(this,a); try{ const s=document.querySelector('#main .rail2 .lt5'); if(s){ s.classList.remove('sm9','xs9');
+  const over=()=>[...s.querySelectorAll('button')].some(b=>b.scrollWidth>b.clientWidth+1); if(over()){ s.classList.add('sm9'); if(over()) s.classList.add('xs9'); } } }catch(e){} return r; }; })(window.drawList2);
