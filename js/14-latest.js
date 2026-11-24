@@ -279,31 +279,48 @@ window.dropListHTML = function(){
 // target zoom every frame, keeps the spot under the mouse still, and keeps the same sensitivity: one mouse wheel notch
 // is about one zoom level, and a trackpad pinch follows the fingers. Touch pinch on phones is untouched (already smooth).
 function smoothWheel14(){ if (!window.L || L.__sw14) return; L.__sw14 = 1;
+  // How it works, the same way Leaflet's own phone pinch works: while you scroll, the map and every layer only scale
+  // (cheap, no redrawing, no new map tiles), easing toward where you are heading. The heat map is scaled along with it.
+  // Once you stop, the map settles once: fresh tiles load and the pins, streets and heat redraw sharp.
   const H = L.Handler.extend({
     addHooks(){ L.DomEvent.on(this._map._container, 'wheel', this._wheel, this); },
-    removeHooks(){ L.DomEvent.off(this._map._container, 'wheel', this._wheel, this); },
+    removeHooks(){ L.DomEvent.off(this._map._container, 'wheel', this._wheel, this); this._end(true); },
     _wheel(e){ const m = this._map;
       let d = e.deltaY; if (e.deltaMode === 1) d *= 20; else if (e.deltaMode === 2) d *= 300;
       d = Math.max(-150, Math.min(150, d));
-      // same feel as Leaflet's own: 60px of trackpad scroll is a level, one mouse notch is a level, a pinch follows the fingers
+      // one mouse notch is a level, 60px of trackpad scroll is a level, a trackpad pinch follows the fingers
       const step = e.ctrlKey ? d / 30 : Math.sign(d) * Math.min(Math.abs(d) / 60, 1);
-      if (!this._on){ this._on = true; this._cp = m.getSize().divideBy(2); this._goal = m.getZoom(); m._stop(); this._moved = false; this._pc = m.getCenter(); this._pz = m.getZoom(); this._raf = requestAnimationFrame(() => this._step()); }
+      if (!this._on) this._start();
       this._mouse = m.mouseEventToContainerPoint(e); this._anchor = m.containerPointToLatLng(this._mouse);
       this._goal = Math.max(m.getMinZoom(), Math.min(m.getMaxZoom(), this._goal - step));
-      clearTimeout(this._t); this._t = setTimeout(() => this._end(), 220);
+      this._lastIn = performance.now();
       L.DomEvent.preventDefault(e); L.DomEvent.stopPropagation(e); },
-    _step(){ const m = this._map;
-      if (!m.getCenter().equals(this._pc) || m.getZoom() !== this._pz){ this._end(); return; }   // something else moved the map
+    _start(){ const m = this._map; this._on = true; m._container.classList.add('sw14'); m._stop(); this._goal = m.getZoom(); this._moved = false; this._t = performance.now();
+      this._heat = []; m.eachLayer(l => { if (l._heat && l._canvas){ this._heat.push(l); l.__to14 = l._canvas.style.transformOrigin; l._canvas.style.transformOrigin = '0 0'; } });   // the heat library scales from its middle; ours from the corner
+      this._tl = m.containerPointToLatLng([0, 0]); this._z0 = m.getZoom();
+      this._raf = requestAnimationFrame(t => this._step(t)); },
+    _step(now){ const m = this._map; if (!this._on) return;
+      const dt = Math.min(64, now - this._t); this._t = now;
       const z0 = m.getZoom(), diff = this._goal - z0;
-      if (Math.abs(diff) > 0.001){
-        const z = Math.abs(diff) < 0.01 ? this._goal : z0 + diff * 0.28;
-        const off = this._mouse.subtract(this._cp);
+      if (Math.abs(diff) > 0.0015){
+        const z = Math.abs(diff) < 0.004 ? this._goal : z0 + diff * (1 - Math.exp(-dt / 75));   // eases the same at any frame rate
+        const off = this._mouse.subtract(m.getSize().divideBy(2));
         const c = m.unproject(m.project(this._anchor, z).subtract(off), z);
         if (!this._moved){ m._moveStart(true, false); this._moved = true; }
-        m._move(c, z); this._pc = m.getCenter(); this._pz = m.getZoom(); }
-      this._raf = requestAnimationFrame(() => this._step()); },
-    _end(){ if (!this._on) return; this._on = false; cancelAnimationFrame(this._raf); clearTimeout(this._t);
-      if (this._moved){ this._map._moveEnd(true); } }
+        m._move(c, z, { pinch: true, round: false });       // pinch: tiles scale, no new tiles mid zoom
+        const sc = m.getZoomScale(z, this._z0), tl = m.latLngToLayerPoint(this._tl);
+        this._heat.forEach(l => { try { L.DomUtil.setTransform(l._canvas, tl, sc); } catch {} });
+      } else if (now - this._lastIn > 140){ this._end(); return; }
+      this._raf = requestAnimationFrame(t => this._step(t)); },
+    _end(quiet){ if (!this._on) return; this._on = false; cancelAnimationFrame(this._raf); this._map._container.classList.remove('sw14');
+      const m = this._map; (this._heat || []).forEach(l => { try { l._canvas.style.transformOrigin = l.__to14 || ''; } catch {} }); if (!this._moved || quiet) return;
+      // keep a copy of how the pins, streets and heat look right now, redraw them sharp underneath, then fade the copy
+      const ghosts = []; try { m.getPanes().overlayPane.querySelectorAll('canvas').forEach(c => { if (!c.width || !c.height || c.classList.contains('sw14g')) return;
+        const k = document.createElement('canvas'); k.width = c.width; k.height = c.height; k.getContext('2d').drawImage(c, 0, 0);
+        k.style.cssText = c.style.cssText; k.style.pointerEvents = 'none'; k.className = c.className + ' sw14g'; c.after(k); ghosts.push(k); }); } catch {}
+      m._move(m.getCenter(), m.getZoom());                  // settle: tiles for this zoom load
+      m._moveEnd(true);                                      // pins, streets and heat redraw once
+      requestAnimationFrame(() => requestAnimationFrame(() => { ghosts.forEach(k => { k.style.transition = 'opacity .2s ease-out'; k.style.opacity = '0'; }); setTimeout(() => ghosts.forEach(k => k.remove()), 280); })); }
   });
   L.Map.addInitHook(function(){ this.options.scrollWheelZoom = false; if (this.scrollWheelZoom) this.scrollWheelZoom.disable(); this.addHandler('smoothWheel14', H); this.smoothWheel14.enable(); });
   window.__swH14 = H; }
