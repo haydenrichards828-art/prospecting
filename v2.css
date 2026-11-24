@@ -1787,3 +1787,4 @@ body.h-ltab.h-lsheet .ltab3.l14 .t14{display:none}
 @media(max-width:1199px){ .ltab3.l14 .lt3{grid-template-columns:minmax(180px,2fr) minmax(84px,.6fr) minmax(130px,1fr) 96px!important} }
 body.h-ltab.h-lsheet .ltab3.l14 .lt3{grid-template-columns:minmax(0,1fr) 120px!important}
 header.top2 .fqb2,.ph2 .fqb2{gap:8px!important;padding:0 14px!important;font-size:16px!important;font-weight:700}
+#dmap .dfb5 i{display:none!important}
