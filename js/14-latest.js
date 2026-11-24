@@ -242,9 +242,9 @@ window.drawDropLayer = (function(o){ return function(...a){ const r = o.apply(th
 function walkBtn14(){ const top = document.querySelector('.dside > .dsh5') || document.querySelector('.dside > .top'); if (!top) return;
   let b = top.querySelector('.wk14'); if (!b){ top.insertAdjacentHTML('beforeend', `<button class="wk14" onclick="walkTap14()"></button>`); b = top.querySelector('.wk14'); }
   const open = !!document.querySelector('.wkl14');
-  b.innerHTML = S.walk ? `${ic2('x', 15)}<span>Clear walk</span>` : `${ic2('pin', 15)}<span>Plan a walk</span>`;
-  b.classList.toggle('on', open || !!S.walk); b.setAttribute('aria-expanded', open); }
-function walkTap14(){ if (S.walk){ walkClear3(); walkBtn14(); return; } const box = document.getElementById('best'); if (!box) return;
+  b.innerHTML = (S.walk || S.gl16walk) ? `${ic2('x', 15)}<span>Clear walk</span>` : `${ic2('pin', 15)}<span>Plan a walk</span>`;
+  b.classList.toggle('on', open || !!S.walk || !!S.gl16walk); b.setAttribute('aria-expanded', open); }
+function walkTap14(){ if (S.walk || S.gl16walk){ walkClear3(); walkBtn14(); return; } const box = document.getElementById('best'); if (!box) return;
   if (document.querySelector('.wkl14')){ drawBest(); return; }
   const subs = walkSubs3().slice(0, 12);
   box.innerHTML = `<div class="wkl14"><div class="wkh14"><b>Pick a suburb to walk</b><button onclick="drawBest()">Cancel</button></div><p>About an hour, the best 8 streets in a loop.</p>
