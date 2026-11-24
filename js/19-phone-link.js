@@ -21,25 +21,22 @@ window.phoneSetup = async function(kind){
   openSheet2(kind === 'iphone' ? 'Connect your iPhone' : 'Connect your Android', '<p class="hint2">Getting your link ready…</p>');
   let r; try { r = await link(kind); } catch (e) { return toast(e.message); }
   const sc = window.PHONE_SHORTCUT;
-  const body = kind === 'iphone' ? `
-    <ol class="st19">
-      <li><b>Add the Prospect shortcut.</b> ${sc ? `Tap the button, then <i>Set Up Shortcut</i>, paste your link (it's already copied) and tap <i>Add Shortcut</i>.<button class="b2 pri" onclick="phoneGo()">Add the shortcut</button>` : `Your link is copied.<button class="b2" onclick="phoneCopy()">Copy my link again</button>
-        <details class="bd19"><summary>Make the shortcut (first time only, about 3 minutes)</summary><ol>
+  const build = `<details class="bd19"><summary>Make the shortcut first (one time, about 3 minutes)</summary><ol>
           <li>Open Shortcuts, tap <i>+</i>, name it <i>Prospect messages</i>.</li>
           <li>Add the action <i>Get Contents of URL</i> and paste your link as the URL.</li>
           <li>Tap the arrow on that action. Set <i>Method</i> to <i>POST</i> and <i>Request Body</i> to <i>JSON</i>.</li>
           <li>Add a Text field called <i>from</i>: tap the value, choose <i>Shortcut Input</i>, then tap it again and pick <i>Sender</i>.</li>
           <li>Add a Text field called <i>text</i>: choose <i>Shortcut Input</i> and pick <i>Content</i>.</li>
-          <li>Add a Text field called <i>app</i> with the value <i>iphone</i>. Tap <i>Done</i>.</li></ol></details>`}</li>
-      <li><b>Make it automatic.</b> In the Shortcuts app tap <i>Automation</i>, then <i>+</i>, then <i>Message</i>. In <i>Message Contains</i> type one space. Choose <i>Run Immediately</i>, tap <i>Next</i>, and pick <i>Prospect messages</i>.</li>
-      <li><b>That's it.</b> Ask someone in Prospect to text you, or wait for the next reply. It shows below when it arrives.</li></ol>
-    <p class="hint2 sm19">Needs iOS 17 or newer. WhatsApp replies can't come through on iPhone (Apple doesn't allow it), so those stay in WhatsApp.</p>`
+          <li>Add a Text field called <i>app</i> with the value <i>iphone</i>. Tap <i>Done</i>.</li></ol></details>`;
+  const body = kind === 'iphone' ? `
+    ${sc ? '' : build}
+    ${guideHTML19(sc ? 'iphone' : 'iphone-auto')}
+    <div class="ac19">${sc ? `<button class="b2 pri" onclick="phoneGo()">Add the shortcut</button>` : ''}<button class="b2" onclick="phoneCopy()">Copy my link again</button></div>
+    <p class="hint2 sm19">Your link is already copied. Needs iOS 17 or newer. WhatsApp replies can't come through on iPhone (Apple doesn't allow it), so those stay in WhatsApp.</p>`
   : `
-    <ol class="st19">
-      <li><b>Install Message487.</b> It's free. On the page tap <i>Download APK</i> and open it. If Android asks, allow installing from your browser.<button class="b2 pri" onclick="window.open('${F_DROID}','_blank','noopener')">Get Message487</button></li>
-      <li><b>Paste your link.</b> Open it, go to <i>Connection</i>, paste your link into the address (it's already copied) and paste it again as the token.<button class="b2" onclick="phoneCopy()">Copy my link again</button></li>
-      <li><b>Turn on texts and WhatsApp.</b> In <i>Sources</i> turn on <i>SMS</i>, then <i>Notifications</i> and tick <i>WhatsApp</i> and <i>Messages</i>. Allow the permissions it asks for.</li></ol>
-    <p class="hint2 sm19">Leave the phone as it is: it works in the background, and keeps messages safe if the signal drops.</p>`;
+    ${guideHTML19('android')}
+    <div class="ac19"><button class="b2 pri" onclick="window.open('${F_DROID}','_blank','noopener')">Get Message487</button><button class="b2" onclick="phoneCopy()">Copy my link again</button></div>
+    <p class="hint2 sm19">Your link is already copied. Leave the phone as it is: it works in the background, and keeps messages safe if the signal drops.</p>`;
   await copy(r.url);
   openSheet2(kind === 'iphone' ? 'Connect your iPhone' : 'Connect your Android', body + `<div class="ok19" id="ph19s">Waiting for the first message…</div>
     <p class="hint2 sm19"><button class="lnk2" onclick="phoneOff()">Turn this off</button></p>`);
@@ -84,4 +81,44 @@ window.viewSettings = (function(o){ return async function(...a){ const r = await
   if (mac && !document.getElementById('ph19row')){ const p = S.ib?.srv?.phone, st = p ? (p.kind === 'android' ? 'Android' : 'iPhone') + (p.last ? ', working' : ', waiting') : 'Not set up';
     mac.insertAdjacentHTML('beforebegin', row2('var(--acc)', 'phone', 'Connect your phone', '', `<span class="sv2">${esc(st)}${chev2()}</span>`, 'phoneSetup()').replace(/^<(\w+)/, '<$1 id="ph19row"')); }
   return r; }; })(window.viewSettings);
+})();
+
+// ---------- Picture guide (24 Nov): a drawing of the phone screen for each step, the button to press glowing ----------
+// Plays by itself like a short video, or step through with Next and Back. One instruction per screen.
+(function(){
+const tap = '<i class="tp19" aria-hidden="true"></i>';
+const bar = (title, right = '') => `<div class="sb19"><span>9:41</span></div><div class="nv19"><b>${title}</b>${right}</div>`;
+const row = (t, hi, sub = '') => `<div class="rw19${hi ? ' hi' : ''}">${hi ? tap : ''}<span>${t}</span>${sub ? `<em>${sub}</em>` : ''}<i class="cv19">›</i></div>`;
+const tabs = hi => `<div class="tb19"><span>Shortcuts</span><span class="${hi ? 'hi' : ''}">${hi ? tap : ''}Automation</span><span>Gallery</span></div>`;
+const IOS = [
+  { t: 'Tap <b>Add the shortcut</b> in Prospect', s: `<div class="pr19">${bar('Prospect')}<div class="pc19"><p>Connect your iPhone</p><div class="bt19 hi">${tap}Add the shortcut</div></div></div>` },
+  { t: 'Shortcuts opens. Tap the box, then tap <b>Paste</b>', s: `${bar('Set Up Shortcut')}<div class="pg19"><p class="mu19">Paste your Prospect link</p><div class="in19 hi">${tap}<span class="pa19">Paste</span></div></div>` },
+  { t: 'Tap <b>Add Shortcut</b>', s: `${bar('Set Up Shortcut')}<div class="pg19"><p class="mu19">Paste your Prospect link</p><div class="in19 full">https://…/inbox?p=…</div></div><div class="bb19 hi">${tap}Add Shortcut</div>` },
+  { t: 'Tap <b>Automation</b> at the bottom', s: `${bar('Shortcuts')}<div class="gr19"><span>Prospect messages</span><span></span><span></span><span></span></div>${tabs(1)}` },
+  { t: 'Tap <b>+</b> at the top right', s: `${bar('Automation', `<span class="pl19 hi">${tap}+</span>`)}<div class="pg19"><p class="mu19">No automations yet</p></div>${tabs(0)}` },
+  { t: 'Scroll down and tap <b>Message</b>', s: `${bar('New Automation')}<div class="ls19">${row('Email', 0)}${row('Message', 1)}${row('Sleep', 0)}${row('Wi Fi', 0)}</div>` },
+  { t: 'Tap <b>Message Contains</b>, press the space bar once, tap <b>Done</b>', s: `${bar('When')}<div class="ls19">${row('Sender', 0, 'Choose')}${row('Message Contains', 1, 'space')}</div><div class="kb19"><span class="hi">${tap}space</span></div>` },
+  { t: 'Tap <b>Run Immediately</b>, then <b>Next</b>', s: `${bar('When', `<span class="nx19 hi">${tap}Next</span>`)}<div class="ls19"><div class="rw19"><span>Run After Confirmation</span><i class="rd19"></i></div><div class="rw19 hi">${tap}<span>Run Immediately</span><i class="rd19 on"></i></div></div>` },
+  { t: 'Tap <b>Prospect messages</b>. Done!', s: `${bar('Do')}<div class="ls19"><p class="mu19 pad19">My Shortcuts</p>${row('Prospect messages', 1)}${row('Other shortcut', 0)}</div>` }];
+const AND = [
+  { t: 'Tap <b>Get Message487</b> in Prospect', s: `<div class="pr19">${bar('Prospect')}<div class="pc19"><p>Connect your Android</p><div class="bt19 hi">${tap}Get Message487</div></div></div>` },
+  { t: 'Tap <b>Download APK</b>, then open it', s: `${bar('f-droid.org')}<div class="pg19"><p class="mu19">Message487</p><div class="bt19 hi alt">${tap}Download APK</div></div>` },
+  { t: 'If asked, allow installing, then tap <b>Install</b>', s: `${bar('Install')}<div class="pg19"><p class="mu19">Do you want to install this app?</p></div><div class="bb19 hi">${tap}Install</div>` },
+  { t: 'Open it, tap <b>Connection</b>', s: `${bar('Message487')}<div class="ls19">${row('Connection', 1)}${row('Sources', 0)}${row('Outbox', 0)}</div>` },
+  { t: 'Paste your link into the <b>address</b> and the <b>token</b>, tap <b>Save</b>', s: `${bar('Connection')}<div class="pg19"><p class="mu19">Webhook address</p><div class="in19 hi">${tap}<span class="pa19">Paste</span></div><p class="mu19">Token</p><div class="in19"><span class="pa19 dim">Paste</span></div></div><div class="bb19">Save</div>` },
+  { t: 'Tap <b>Sources</b>, turn on <b>SMS</b>', s: `${bar('Sources')}<div class="ls19"><div class="rw19 hi">${tap}<span>SMS</span><i class="sw19 on"></i></div><div class="rw19"><span>Notifications</span><i class="cv19">›</i></div></div>` },
+  { t: 'In <b>Notifications</b>, tick <b>WhatsApp</b> and <b>Messages</b>, allow access. Done!', s: `${bar('Notifications')}<div class="ls19"><div class="rw19 hi">${tap}<span>WhatsApp</span><i class="ck19 on">✓</i></div><div class="rw19"><span>Messages</span><i class="ck19 on">✓</i></div><div class="rw19"><span>Camera</span><i class="ck19"></i></div></div>` }];
+let G = null;
+function draw(){ const g = G, st = g.steps[g.i], el = document.getElementById('gd19'); if (!el) { stop(); return; }
+  el.querySelector('.ph19s').innerHTML = `<div class="sc19">${st.s}</div>`;
+  el.querySelector('.cap19').innerHTML = `<span class="n19">${g.i + 1}</span><span>${st.t}</span>`;
+  el.querySelector('.dt19').innerHTML = g.steps.map((_, j) => `<i class="${j === g.i ? 'on' : j < g.i ? 'dn' : ''}"></i>`).join('');
+  el.querySelector('.bk19').disabled = g.i === 0; el.querySelector('.nx19b').textContent = g.i === g.steps.length - 1 ? 'Start again' : 'Next';
+  el.querySelector('.pl19b').innerHTML = g.play ? 'Pause' : `${ic2('chev', 14)} Play`; }
+function stop(){ clearInterval(G && G.tm); if (G) G.play = 0; }
+window.guide19 = { next(){ G.i = (G.i + 1) % G.steps.length; draw(); }, back(){ G.i = Math.max(0, G.i - 1); draw(); },
+  play(){ if (G.play){ stop(); draw(); return; } G.play = 1; draw(); G.tm = setInterval(() => { if (!document.getElementById('gd19')) return stop(); if (G.i === G.steps.length - 1){ stop(); draw(); return; } G.i++; draw(); }, 3200); } };
+window.guideHTML19 = kind => { stop(); G = { steps: kind === 'android' ? AND : kind === 'iphone-auto' ? IOS.slice(3) : IOS, i: 0, play: 0 }; setTimeout(() => { draw(); guide19.play(); }, 30);
+  return `<div class="gd19" id="gd19"><div class="ph19f"><div class="ph19s"></div></div><div class="cap19"></div><div class="dt19"></div>
+    <div class="gc19"><button class="b2 bk19" onclick="guide19.back()">Back</button><button class="b2 pl19b" onclick="guide19.play()"></button><button class="b2 pri nx19b" onclick="guide19.next()">Next</button></div></div>`; };
 })();
