@@ -1763,3 +1763,27 @@ body.typing .nbox8.nb8p{border-color:var(--acc)}
 #best{padding-right:12px;box-sizing:border-box}
 .bs14{padding:6px 0 6px 4px}
 .bs14{padding-right:14px!important}
+/* Leads table, cleaner (24 Nov) */
+.ltab3.l14 .lt3{grid-template-columns:minmax(220px,1fr) 92px 150px 120px 96px!important;height:auto!important;min-height:60px;border-bottom:1px solid #262c35}
+.ltab3.l14 .lt3.h{min-height:40px;border-bottom:1px solid #363e4b}
+.ltab3.l14 .lt3>*{border-left:0!important;padding:8px 16px}
+.ltab3.l14 .n3{flex-direction:column;align-items:flex-start!important;justify-content:center;gap:2px!important}
+.ltab3.l14 .nn14{display:flex;align-items:center;gap:8px;min-width:0;max-width:100%}
+.ltab3.l14 .nn14 b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ltab3.l14 .na14{font-style:normal;font-size:13px;color:#8b94a1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.tg14{font-style:normal;font-size:12px;font-weight:600;padding:3px 8px;border-radius:4px;background:#262c35;color:#b8c0cc}
+.tg14.by{background:#2e1f4d;color:#c9b6ff}
+.ltab3.l14 .due3.od{color:#f2a0aa;font-weight:600}
+.ltab3.l14 .lgb3{height:36px;background:#14181e;position:sticky;top:0;z-index:1}
+.ltab3.l14 .lgb3 b{font-size:13px}
+.ltab3.l14 .b3{justify-content:flex-end!important;padding-right:14px!important}
+.ltab3.l14 .b3 a{width:38px;height:38px;display:grid;place-items:center;border-radius:4px;color:#a3acb9}
+.ltab3.l14 .b3 a:hover{background:#262c35;color:#fff}.ltab3.l14 .b3 a.call{color:#93c0ff}
+.np14{font-size:12px;color:#6b7480}
+body.h-ltab.h-lsheet .ltab3.l14 .lt3{grid-template-columns:minmax(0,1fr) 120px!important}
+body.h-ltab.h-lsheet .ltab3.l14 .t14{display:none}
+@media(max-width:1199px){ .ltab3.l14 .lt3{grid-template-columns:minmax(180px,1fr) 84px 130px 96px!important} .ltab3.l14 .lt3>:nth-child(4){display:none} }
+.ltab3.l14 .lt3{grid-template-columns:minmax(240px,2fr) minmax(90px,.6fr) minmax(140px,.9fr) minmax(110px,.8fr) 96px!important}
+@media(max-width:1199px){ .ltab3.l14 .lt3{grid-template-columns:minmax(180px,2fr) minmax(84px,.6fr) minmax(130px,1fr) 96px!important} }
+body.h-ltab.h-lsheet .ltab3.l14 .lt3{grid-template-columns:minmax(0,1fr) 120px!important}
+header.top2 .fqb2,.ph2 .fqb2{gap:8px!important;padding:0 14px!important;font-size:16px!important;font-weight:700}

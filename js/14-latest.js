@@ -165,3 +165,21 @@ window.zoomBest = function(i){ const g = (S._best || [])[i]; if (!S.map || !g) r
   if (innerWidth < 900) scrollTo({ top: 0, behavior: 'smooth' }); };
 // Leaflet name off as soon as the map library loads, before any map is made
 window.loadLeaflet = (function(o){ return function(...a){ return Promise.resolve(o.apply(this, a)).then(r => { try { if (!L.__p14){ L.__p14 = 1; L.Map.addInitHook(function(){ this.attributionControl && this.attributionControl.setPrefix(false); }); } if (S.map && S.map.attributionControl) S.map.attributionControl.setPrefix(false); } catch {} return r; }); }; })(window.loadLeaflet);
+
+// Leads table (24 Nov): name with the address under it, type as a small tag, a short due date
+// ("32 days late" under the Overdue heading), last spoke, and the text and call buttons. No lines between columns.
+window.leadsTable3 = function(ls){
+  const G = [['Overdue', 'od', n => n !== null && n < 0], ['Today', 'td', n => n === 0], ['Next 7 days', '', n => n > 0 && n <= 7], ['Later', '', n => n > 7], ['No follow up date', '', n => n === null]];
+  const addr = l => [l.address, l.suburb].filter(Boolean).join(', ');
+  const due = l => { const n = dueIn(l.follow_up); const t = n === null ? 'No date' : n < 0 ? `${-n} day${n === -1 ? '' : 's'} late` : n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : dayK3(l.follow_up);
+    return `<b class="due3 ${n === null ? 'q' : n < 0 ? 'od' : n === 0 ? 'td' : ''}">${esc(t)}</b>`; };
+  const btns = l => l.phone ? `<a href="${smsLink(l.phone, '')}" onclick="event.stopPropagation()" aria-label="Text ${esc(leadTitle(l))}">${ic2('msg', 17)}</a><a class="call" href="tel:${esc(telOf(l.phone))}" onclick="event.stopPropagation()" aria-label="Call ${esc(leadTitle(l))}">${ic2('phone', 17)}</a>` : '<i class="np14">No number</i>';
+  return `<div class="ltab3 l14"><div class="lt3 h"><span>Lead</span><span class="t14">Type</span><span>Follow up</span><span class="c3">Last spoke</span><span class="c3"></span></div>${G.map(([g, c, f]) => { const xs = ls.filter(l => f(dueIn(l.follow_up))); if (!xs.length) return '';
+    return `<div class="lgb3 ${c}"><i></i><b>${g}</b><span>${xs.length}</span></div>` + xs.map(l => { const t = ltype3(l), a = addr(l);
+      return `<div class="lt3${S.ol && S.ol.id === l.id && $('#ov').classList.contains('show') ? ' sel' : ''}" data-id="${l.id}" onclick="openLead(${l.id})" data-lq="${esc([l.name, l.address, l.suburb, l.phone].join(' ').toLowerCase())}">
+      <span class="n3"><span class="nn14"><b>${esc(leadTitle(l))}</b>${nwm3(l)}</span>${a ? `<em class="na14">${esc(a)}</em>` : ''}</span><span class="t14"><em class="tg14 ${t === 'Buyer' ? 'by' : ''}">${t}</em></span><span>${due(l)}</span><span class="c3">${l.last_contact ? esc(dayMon(l.last_contact)) : '<i>Never</i>'}</span><span class="c3 b3">${btns(l)}</span></div>`; }).join(''); }).join('')}</div>`; };
+
+// Smoother map zoom (24 Nov): zoom moves in small steps instead of jumping a whole level, so a trackpad pinch
+// or a scroll wheel glides. Double tap and the keys move half a level. Applied to every map, including one already open.
+const ZOOM14 = { zoomSnap: 0, zoomDelta: 0.5, wheelPxPerZoomLevel: 110, wheelDebounceTime: 10, zoomAnimationThreshold: 6, fadeAnimation: true, markerZoomAnimation: true };
+window.loadLeaflet = (function(o){ return function(...a){ return Promise.resolve(o.apply(this, a)).then(r => { try { if (!L.__z14){ L.__z14 = 1; L.Map.mergeOptions(ZOOM14); } if (S.map) Object.assign(S.map.options, ZOOM14); } catch {} return r; }); }; })(window.loadLeaflet);
