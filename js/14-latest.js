@@ -183,3 +183,16 @@ window.leadsTable3 = function(ls){
 // or a scroll wheel glides. Double tap and the keys move half a level. Applied to every map, including one already open.
 const ZOOM14 = { zoomSnap: 0, zoomDelta: 0.5, wheelPxPerZoomLevel: 110, wheelDebounceTime: 10, zoomAnimationThreshold: 6, fadeAnimation: true, markerZoomAnimation: true };
 window.loadLeaflet = (function(o){ return function(...a){ return Promise.resolve(o.apply(this, a)).then(r => { try { if (!L.__z14){ L.__z14 = 1; L.Map.mergeOptions(ZOOM14); } if (S.map) Object.assign(S.map.options, ZOOM14); } catch {} return r; }); }; })(window.loadLeaflet);
+
+// Today's counter (24 Nov).
+// 1. "Change result" took a call off the count but left the appraisal and connected counts as they were.
+window.undoToday = (function(o){ return async function(pid, callId){ const row = (S.rows || []).find(x => x.property_id === pid), cb = (S.callbacks || []).find(x => x.property_id === pid);
+  const was = (row && row.today_outcome) || (cb && cb.today_outcome) || null; const before = S.ov ? S.ov.today_calls : null;
+  const r = await o.apply(this, arguments);
+  if (S.ov && before !== null && S.ov.today_calls < before && was){ if (was !== 'no_answer') S.ov.today_connected = Math.max(0, (S.ov.today_connected || 0) - 1); if (was === 'appraisal') S.ov.today_appraisals = Math.max(0, (S.ov.today_appraisals || 0) - 1); drawProg(); }
+  return r; }; })(window.undoToday);
+// 2. Calls made on another device (phone and computer both open) now show when she comes back to this one,
+//    and every minute while the Calls page is open.
+async function today14(){ if (DEMO || !S.token || !S.ov || document.visibilityState !== 'visible') return; try { const t = await api('today'); if (t && typeof t.today_calls === 'number'){ Object.assign(S.ov, t); drawProg(); } } catch {} }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') today14(); });
+setInterval(() => { if (S.tab === 'calls') today14(); }, 60000);
