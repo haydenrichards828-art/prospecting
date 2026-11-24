@@ -196,3 +196,30 @@ window.undoToday = (function(o){ return async function(pid, callId){ const row =
 async function today14(){ if (DEMO || !S.token || !S.ov || document.visibilityState !== 'visible') return; try { const t = await api('today'); if (t && typeof t.today_calls === 'number'){ Object.assign(S.ov, t); drawProg(); } } catch {} }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') today14(); });
 setInterval(() => { if (S.tab === 'calls') today14(); }, 60000);
+
+// Leads table v2 (24 Nov): who, what to talk about, when, how long since.
+// About them: a buyer's budget, beds and suburbs; a seller's latest note. Hot leads first in each group with a red mark.
+function ago14(iso){ if (!iso) return 'Not yet'; const d = Math.floor((Date.now() - new Date(iso).getTime()) / 864e5);
+  if (d <= 0) return 'Today'; if (d === 1) return 'Yesterday'; if (d < 7) return d + ' days ago'; if (d < 30){ const w = Math.round(d / 7); return w + (w === 1 ? ' week ago' : ' weeks ago'); }
+  if (d < 365){ const m = Math.round(d / 30.4); return m + (m === 1 ? ' month ago' : ' months ago'); } const y = Math.round(d / 365); return y + (y === 1 ? ' year ago' : ' years ago'); }
+function about14(l){ const b = l.buy || {};
+  if (hasCriteria(b)){ const p = [];
+    if (b.max || b.min) p.push(b.min && b.max ? `${money(b.min)} to ${money(b.max)}` : b.max ? `up to ${money(b.max)}` : `from ${money(b.min)}`);
+    if (b.beds) p.push(`${b.beds}+ bed`); if ((b.suburbs || []).length) p.push(b.suburbs.slice(0, 2).join(', ') + (b.suburbs.length > 2 ? ` +${b.suburbs.length - 2}` : ''));
+    return { t: 'Buyer', x: p.join(', ') || 'Wants not filled in yet' }; }
+  const n = ((l.notes || [])[0] || {}).body || l.motivation || '';
+  return { t: 'Seller', x: n ? n.replace(/\s+/g, ' ').trim() : 'No notes yet', none: !n }; }
+const TORD14 = { Hot: 0, Warm: 1, Nurture: 2, Cold: 3 };
+window.leadsTable3 = function(ls){
+  const G = [['Overdue', 'od', n => n !== null && n < 0], ['Today', 'td', n => n === 0], ['Next 7 days', '', n => n > 0 && n <= 7], ['Later', '', n => n > 7], ['No follow up date', '', n => n === null]];
+  const addr = l => [l.address, l.suburb].filter(Boolean).join(', ');
+  const due = l => { const n = dueIn(l.follow_up); const t = n === null ? 'No date' : n < 0 ? `${-n} day${n === -1 ? '' : 's'} late` : n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : dayK3(l.follow_up);
+    return `<b class="due3 ${n === null ? 'q' : n < 0 ? 'od' : n === 0 ? 'td' : ''}">${esc(t)}</b>`; };
+  const btns = l => l.phone ? `<a href="${smsLink(l.phone, '')}" onclick="event.stopPropagation()" aria-label="Text ${esc(leadTitle(l))}" title="Text">${ic2('msg', 17)}</a><a class="call" href="tel:${esc(telOf(l.phone))}" onclick="event.stopPropagation()" aria-label="Call ${esc(leadTitle(l))}" title="Call">${ic2('phone', 17)}</a>` : '<i class="np14">No number</i>';
+  const ord = (a, b) => (TORD14[a.temperature] ?? 1.5) - (TORD14[b.temperature] ?? 1.5) || (a.follow_up || '9999').localeCompare(b.follow_up || '9999');
+  return `<div class="ltab3 l14 l15"><div class="lt3 h"><span>Lead</span><span>About them</span><span>Follow up</span><span class="c3">Last spoke</span><span class="c3"></span></div>${G.map(([g, c, f]) => { const xs = ls.filter(l => f(dueIn(l.follow_up))).sort(ord); if (!xs.length) return '';
+    return `<div class="lgb3 ${c}"><i></i><b>${g}</b><span>${xs.length}</span></div>` + xs.map(l => { const a = addr(l), ab = about14(l), hot = l.temperature === 'Hot';
+      return `<div class="lt3${S.ol && S.ol.id === l.id && $('#ov').classList.contains('show') ? ' sel' : ''}" data-id="${l.id}" onclick="openLead(${l.id})" data-lq="${esc([l.name, l.address, l.suburb, l.phone].join(' ').toLowerCase())}">
+      <span class="n3"><span class="nn14">${hot ? '<i class="hot15" title="Hot lead" aria-label="Hot lead"></i>' : ''}<b>${esc(leadTitle(l))}</b>${nwm3(l)}</span>${a ? `<em class="na14">${esc(a)}</em>` : ''}</span>
+      <span class="ab15"><em class="tg14 ${ab.t === 'Buyer' ? 'by' : ''}">${ab.t}</em><span class="${ab.none ? 'q15' : ''}" title="${esc(ab.x)}">${esc(ab.x)}</span></span>
+      <span>${due(l)}</span><span class="c3 ls15${l.last_contact ? '' : ' q15'}">${esc(ago14(l.last_contact))}</span><span class="c3 b3">${btns(l)}</span></div>`; }).join(''); }).join('')}</div>`; };

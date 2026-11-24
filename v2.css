@@ -1812,3 +1812,15 @@ header.top2 .fqb2,.ph2 .fqb2{gap:8px!important;padding:0 14px!important;font-siz
   .s9 .pb9{height:16px}.s9 .rs9 b{font-size:22px}
   .s9 .sc9{margin-top:4px}
 }
+/* Leads table v2 (24 Nov) */
+.ltab3.l15 .lt3{grid-template-columns:minmax(200px,1.2fr) minmax(220px,2fr) minmax(120px,.7fr) minmax(110px,.7fr) 96px!important}
+.ltab3.l15 .ab15{gap:10px}
+.ltab3.l15 .ab15>span{color:#c9d1db;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ltab3.l15 .q15,.ltab3.l15 .ab15>span.q15{color:#6b7480!important}
+.ltab3.l15 .tg14{flex:none}
+.ltab3.l15 .ls15{color:#a3acb9}
+.hot15{flex:none;width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 3px #ef444433}
+@media(max-width:1199px){ .ltab3.l15 .lt3{grid-template-columns:minmax(170px,1.2fr) minmax(170px,1.6fr) minmax(110px,.8fr) 96px!important} .ltab3.l15 .lt3>:nth-child(4){display:none} }
+body.h-ltab.h-lsheet .ltab3.l15 .lt3{grid-template-columns:minmax(0,1fr) 120px!important}
+body.h-ltab.h-lsheet .ltab3.l15 .ab15{display:none}
+body.h-ltab.h-lsheet .ltab3.l15 .lt3>:nth-child(2){display:none!important}
