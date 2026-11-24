@@ -274,3 +274,38 @@ window.dropListHTML = function(){
         xs.map(x => { const d = isDropped(x), n = [x.unit && x.unit + '/', x.house_number].filter(Boolean).join('') || '?';
           return `<button class="dr16${d ? ' on' : ''}" onclick="toggleDrop([${x.id}],${d})" aria-pressed="${d}" aria-label="${esc(n + ' ' + st)}${d ? ', dropped, tap to undo' : ', tap when dropped'}"><i class="dc16">${d ? ic2('check', 14) : ''}</i><b>${esc(n)}</b><span class="dx16">${why(x)}</span></button>`; }).join('') + `</section>`; }).join('');
     return big ? `<details class="dsub16"><summary><b>${esc(sub)}</b><span>${left} of ${tot} to drop</span></summary>${streets}</details>` : `<div class="dsub16"><h3><b>${esc(sub)}</b><span>${left} of ${tot} to drop</span></h3>${streets}</div>`; }).join('') + `</div>`; };
+
+// Smooth scroll zoom (24 Nov, second try). Leaflet's own scroll zoom jumps a level at a time. This glides toward the
+// target zoom every frame, keeps the spot under the mouse still, and keeps the same sensitivity: one mouse wheel notch
+// is about one zoom level, and a trackpad pinch follows the fingers. Touch pinch on phones is untouched (already smooth).
+function smoothWheel14(){ if (!window.L || L.__sw14) return; L.__sw14 = 1;
+  const H = L.Handler.extend({
+    addHooks(){ L.DomEvent.on(this._map._container, 'wheel', this._wheel, this); },
+    removeHooks(){ L.DomEvent.off(this._map._container, 'wheel', this._wheel, this); },
+    _wheel(e){ const m = this._map;
+      let d = e.deltaY; if (e.deltaMode === 1) d *= 20; else if (e.deltaMode === 2) d *= 300;
+      d = Math.max(-150, Math.min(150, d));
+      // same feel as Leaflet's own: 60px of trackpad scroll is a level, one mouse notch is a level, a pinch follows the fingers
+      const step = e.ctrlKey ? d / 30 : Math.sign(d) * Math.min(Math.abs(d) / 60, 1);
+      if (!this._on){ this._on = true; this._cp = m.getSize().divideBy(2); this._goal = m.getZoom(); m._stop(); this._moved = false; this._pc = m.getCenter(); this._pz = m.getZoom(); this._raf = requestAnimationFrame(() => this._step()); }
+      this._mouse = m.mouseEventToContainerPoint(e); this._anchor = m.containerPointToLatLng(this._mouse);
+      this._goal = Math.max(m.getMinZoom(), Math.min(m.getMaxZoom(), this._goal - step));
+      clearTimeout(this._t); this._t = setTimeout(() => this._end(), 220);
+      L.DomEvent.preventDefault(e); L.DomEvent.stopPropagation(e); },
+    _step(){ const m = this._map;
+      if (!m.getCenter().equals(this._pc) || m.getZoom() !== this._pz){ this._end(); return; }   // something else moved the map
+      const z0 = m.getZoom(), diff = this._goal - z0;
+      if (Math.abs(diff) > 0.001){
+        const z = Math.abs(diff) < 0.01 ? this._goal : z0 + diff * 0.28;
+        const off = this._mouse.subtract(this._cp);
+        const c = m.unproject(m.project(this._anchor, z).subtract(off), z);
+        if (!this._moved){ m._moveStart(true, false); this._moved = true; }
+        m._move(c, z); this._pc = m.getCenter(); this._pz = m.getZoom(); }
+      this._raf = requestAnimationFrame(() => this._step()); },
+    _end(){ if (!this._on) return; this._on = false; cancelAnimationFrame(this._raf); clearTimeout(this._t);
+      if (this._moved){ this._map._moveEnd(true); } }
+  });
+  L.Map.addInitHook(function(){ this.options.scrollWheelZoom = false; if (this.scrollWheelZoom) this.scrollWheelZoom.disable(); this.addHandler('smoothWheel14', H); this.smoothWheel14.enable(); });
+  window.__swH14 = H; }
+function smoothOn14(m){ try { if (!m || m.smoothWheel14) return; m.scrollWheelZoom && m.scrollWheelZoom.disable(); m.addHandler('smoothWheel14', window.__swH14); m.smoothWheel14.enable(); } catch {} }
+window.loadLeaflet = (function(o){ return function(...a){ return Promise.resolve(o.apply(this, a)).then(r => { try { smoothWheel14(); smoothOn14(S.map); } catch {} return r; }); }; })(window.loadLeaflet);
