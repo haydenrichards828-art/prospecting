@@ -1788,3 +1788,27 @@ body.h-ltab.h-lsheet .ltab3.l14 .t14{display:none}
 body.h-ltab.h-lsheet .ltab3.l14 .lt3{grid-template-columns:minmax(0,1fr) 120px!important}
 header.top2 .fqb2,.ph2 .fqb2{gap:8px!important;padding:0 14px!important;font-size:16px!important;font-weight:700}
 #dmap .dfb5 i{display:none!important}
+/* Stats fits the screen (24 Nov): the heat map and phone time keep their full size, the calls dot grid takes what is left */
+@media (min-width:900px){
+  .s9 .dots9{flex:1 1 0!important;height:auto!important;min-height:56px}
+  .s9 .st9{flex:0 0 auto!important;grid-template-rows:auto!important}
+  .s9 .c9{overflow:visible!important}
+  .s9 .hm9{flex:none!important;grid-template-rows:repeat(6,clamp(18px,3.1vh,34px)) auto!important}
+  .s9 .hm9 i{min-height:0!important}
+  .s9 .sb9{max-height:calc(6 * clamp(18px,3.1vh,34px) + 150px);overflow:hidden}
+}
+@media (min-width:900px) and (max-height:820px){
+  .s9{padding-top:12px;padding-bottom:14px}
+  .s9 .rs9{margin-top:10px}.s9 .rs9 b{font-size:24px}
+  .s9 .st9{margin-top:10px}.s9 .c9{padding-top:12px}
+  .s9 .h9{margin-bottom:10px}
+  .s9 .pl9{margin-top:8px}
+}
+@media (min-width:900px) and (max-height:700px){
+  .s9 .hm9{grid-template-rows:repeat(6,13px) auto!important;gap:3px}
+  .s9 .hm9 i{font-size:10px}
+  .s9 .bt9 span{display:none}.s9 .bt9{margin:-6px 0 8px}
+  .s9 .dots9{min-height:40px}
+  .s9 .pb9{height:16px}.s9 .rs9 b{font-size:22px}
+  .s9 .sc9{margin-top:4px}
+}
