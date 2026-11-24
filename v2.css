@@ -1904,3 +1904,18 @@ body.h-ltab.h-lsheet .ltab3.l15 .lt3>:nth-child(2){display:none!important}
 #dmap.gl16 .maplibregl-ctrl-attrib-button{display:none}
 #dmap.gl16 .mctl5,#dmap.gl16 .mfs5{z-index:5}
 .gl16l{pointer-events:none}
+/* Pipeline board, new style (24 Nov) */
+.bd3 .bh3{border-top-width:2px!important}
+.bd3 .cd3.c16 .cn3{font-size:15px;font-weight:600;color:#f2f4f7}
+.bd3 .cd3.c16 .ca3{font-size:13px;color:#8b94a1;line-height:18px}
+.bd3 .cd3.c16 .ck3{display:flex!important;align-items:center;gap:8px;margin-top:3px;font-size:13px;color:#8b94a1;line-height:20px}
+.bd3 .cd3.c16 .ck3>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tg16{flex:none;font-style:normal;font-size:12px;font-weight:600;padding:1px 7px;border-radius:4px;background:#262c35;color:#c9d1db;line-height:18px}
+.tg16.od{background:#3a1820;color:#f2a0aa}
+.tg16.td{background:#16264a;color:#93c0ff}
+.bc3.ap .tg16:not(.td){background:#13301f;color:#7ee2a8}
+.bc3.ls .tg16{background:#0f2e2b;color:#5eead4}
+.bd3 .cd3.c16 .cb3{gap:2px}
+.bd3 .cd3.c16 .cb3>*{width:34px;height:34px;display:grid;place-items:center;border-radius:4px;color:#8b94a1}
+.bd3 .cd3.c16 .cb3 .call{color:#93c0ff}
+.bd3 .cd3.c16 .cb3>*:hover{background:#262c35;color:#fff}
