@@ -1717,3 +1717,11 @@ body.typing .nbox8.nb8p{border-color:var(--acc)}
 @media (max-width:899px){ #rem2.rem14{right:14px;bottom:calc(72px + env(safe-area-inset-bottom))} }
 #rem2.rem14{flex-direction:row!important}
 #rem2.rem14 svg{width:18px!important;height:18px!important;flex:none;margin:0!important;display:block}
+/* History rows were being squashed to fit the space (24 Nov): keep each row full height and let the box scroll */
+.calls2>*{flex:none!important}
+.calls2{min-height:180px}
+.calls2>.lab2{margin-bottom:4px}
+/* Note box was squashed on short screens (24 Nov): it keeps its full height, the left column scrolls if needed */
+.cl2>.nw2{flex:1 0 auto!important}
+.cl2 .nbox8{flex:1 0 auto!important;min-height:91px}
+.cl2{overflow-y:auto;min-height:0}
