@@ -2,7 +2,8 @@
 // so the app reads chats from the database: quick on any device, set up once, and the Mac password never leaves the server.
 // Sending goes through here too. Texts with a lead count as contact that day (they are not copied into notes). The Mac's link can change after a
 // restart: BlueBubbles sends a new-server event and the stored link follows it. Two weeks of messages are kept.
-// App actions need a signed in session (x-session): load, send, setup, disconnect, sync, prefs, done.
+// App actions need a signed in session (x-session): load, send, setup, disconnect, sync, prefs, done, phone_setup, phone_off, phone_sent.
+// Without a Mac: her phone posts what it receives to ?p=<key> (see "her phone" below).
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
@@ -10,7 +11,7 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 const seen = new Map<string, number>();
 const HOOK_EVENTS = ["new-message", "updated-message", "new-server"];
-type St = { synced_at?: string | null; prefs: Record<string, unknown>; done: Record<string, number>; bb_url: string | null; bb_pass: string | null; hook_key: string | null; last_hook: string | null; hook_ok: boolean | null };
+type St = { phone_key?: string | null; phone_on?: boolean | null; phone_kind?: string | null; phone_last?: string | null; phone_dropped?: number | null; synced_at?: string | null; prefs: Record<string, unknown>; done: Record<string, number>; bb_url: string | null; bb_pass: string | null; hook_key: string | null; last_hook: string | null; hook_ok: boolean | null };
 type Lead = { id: number; name: string; phone: string };
 
 const digits = (p: unknown) => String(p ?? "").replace(/\D/g, "").replace(/^61(?=4)/, "0").replace(/^61/, "0");
@@ -124,9 +125,10 @@ async function load(st: St) {
   const names: Record<string, string> = {};
   const ks = [...addrs].filter((k) => k.length >= 5);
   for (let i = 0; i < ks.length; i += 300) { const { data } = await db.from("ib_contacts").select("addr,name").in("addr", ks.slice(i, i + 300)); (data ?? []).forEach((r) => names[r.addr] = r.name); }
-  const quiet = st.last_hook ? Date.now() - Date.parse(st.last_hook) > 6 * 3600_000 : true;
+  const quiet = !!st.bb_url && (st.last_hook ? Date.now() - Date.parse(st.last_hook) > 6 * 3600_000 : true);
   const hook_url = st.bb_url && st.hook_ok === false && st.hook_key ? `${Deno.env.get("SUPABASE_URL")}/functions/v1/inbox?hook=${st.hook_key}` : null;
-  return { connected: !!st.bb_url, hook_url, synced_at: st.synced_at ?? null, hook_ok: st.hook_ok, last_hook: st.last_hook, quiet, prefs: st.prefs, done: st.done, names, chats: out, msgs: msgs ?? [] };
+  const phone = st.phone_on ? { kind: st.phone_kind, last: st.phone_last ?? null, dropped: st.phone_dropped ?? 0, url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/inbox?p=${st.phone_key}` } : null;
+  return { connected: !!st.bb_url || !!st.phone_on, mode: st.bb_url ? "mac" : st.phone_on ? "phone" : null, phone, hook_url, synced_at: st.synced_at ?? null, hook_ok: st.hook_ok, last_hook: st.last_hook, quiet, prefs: st.prefs, done: st.done, names, chats: out, msgs: msgs ?? [] };
 }
 
 async function setup(b: { url?: string; pass?: string }) {
@@ -148,10 +150,82 @@ async function setup(b: { url?: string; pass?: string }) {
   return { ok: true, hook_ok, hook_url: hook_ok ? null : fnUrl, synced };
 }
 
+
+// ---------- her phone, without a Mac (24 Nov) ----------
+// iPhone: a Shortcuts automation posts each message she receives to ?p=<key>. Android: a forwarding app posts new texts and
+// WhatsApp notifications the same way. Only messages from people in Prospect are kept (a lead, an owner on the call list,
+// or someone she has messaged from Prospect). Everything else is dropped on arrival and never stored.
+function flat(o: unknown, pre = "", out: [string, string][] = []): [string, string][] {
+  if (o && typeof o === "object") { for (const [k, v] of Object.entries(o as Record<string, unknown>)) flat(v, pre ? pre + "." + k : k, out); }
+  else if (o != null && (typeof o === "string" || typeof o === "number")) out.push([pre.toLowerCase(), String(o)]);
+  return out; }
+const pickKey = (f: [string, string][], re: RegExp, not?: RegExp) => f.find(([k, v]) => re.test(k) && (!not || !not.test(k)) && v.trim())?.[1]?.trim() ?? "";
+async function phoneParse(req: Request) {
+  const raw = await req.text(); let o: unknown = null;
+  try { o = JSON.parse(raw); } catch { const u = new URLSearchParams(raw); o = u.toString() && [...u.keys()].length ? Object.fromEntries(u) : { text: raw }; }
+  const f = flat(o);
+  const app = pickKey(f, /(^|\.)(package|packagename|package_name|app|application|source|appname|app_name)$/);
+  const text = pickKey(f, /(^|\.)(text|body|message|content|msg|bigtext|big_text)$/, /title|sender|from/);
+  const from = pickKey(f, /(^|\.)(sender|from|address|phone|number|originatingaddress|origin|contact)$/) || pickKey(f, /(^|\.)(title|name)$/);
+  return { app, text, from };
+}
+async function sha(s: string) { const b = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(s)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("").slice(0, 24); }
+// who this is, if they belong in Prospect
+async function whoPhone(from: string): Promise<{ guid: string; lead: number | null; name: string | null; phone: string | null } | null> {
+  const d = digits(from);
+  if (d.length >= 8 && !/[a-z]/i.test(from.replace(/^\+?[\d\s()-]+$/, ""))) {
+    const ls = await leads(), l = ls.find((x) => digits(x.phone) === d);
+    if (l) return { guid: "ph:" + d, lead: l.id, name: l.name, phone: d };
+    const { data: had } = await db.from("ib_chats").select("guid,name").eq("guid", "ph:" + d).maybeSingle();
+    if (had) return { guid: "ph:" + d, lead: null, name: had.name ?? null, phone: d };
+    const { data: pr } = await db.from("properties").select("id,owner_name").ilike("phone", "%" + d.slice(-9) + "%").limit(1);
+    if (pr?.length) return { guid: "ph:" + d, lead: null, name: (pr[0].owner_name as string) ?? null, phone: d };
+    return null;
+  }
+  // a saved contact name (WhatsApp on Android shows names, not numbers)
+  const n = from.toLowerCase().replace(/\s+/g, " ").trim(); if (n.length < 3) return null;
+  const { data: ld } = await db.from("leads").select("id,name,phone").not("name", "is", null);
+  const l = (ld ?? []).find((x) => { const m = String(x.name).toLowerCase().replace(/\s+/g, " ").trim(); return m === n || (m.split(" ").length > 1 && n.includes(m)) || (n.split(" ").length > 1 && m.includes(n)); });
+  if (l) { const pd = digits(l.phone); return { guid: pd.length >= 8 ? "ph:" + pd : "ph:n:" + n, lead: l.id, name: l.name, phone: pd || null }; }
+  const { data: had } = await db.from("ib_chats").select("guid,name").eq("guid", "ph:n:" + n).maybeSingle();
+  return had ? { guid: had.guid, lead: null, name: had.name ?? from, phone: null } : null;
+}
+async function phoneIn(st: St, req: Request) {
+  const { app, text, from } = await phoneParse(req); const now = new Date().toISOString();
+  if (!text || !from) return { ok: true, kept: false, why: "nothing to read" };
+  const wa = /whatsapp/i.test(app), sms = /sms|mms|messag|telephony|iphone|shortcut/i.test(app) || !app;
+  if (!wa && !sms) return { ok: true, kept: false, why: "not a messaging app" };
+  if (wa && /:/.test(from) && /\(\d+ messages\)|@/.test(from + text)) return { ok: true, kept: false, why: "group" };
+  const who = await whoPhone(from);
+  if (!who){ await setState({ phone_last: now, phone_dropped: (st.phone_dropped ?? 0) + 1 }); return { ok: true, kept: false }; }
+  const guid = "ph:" + await sha(who.guid + "|" + text + "|" + now.slice(0, 15));
+  const { data: had } = await db.from("ib_msgs").select("guid").eq("guid", guid).maybeSingle();
+  await db.from("ib_chats").upsert({ guid: who.guid, is_group: false, service: wa ? "WhatsApp" : "Text", name: who.name, members: who.phone ? [who.phone] : [], last_at: now, updated_at: now }, { onConflict: "guid" });
+  await db.from("ib_msgs").upsert({ guid, chat_guid: who.guid, from_me: false, handle: who.phone ?? from, body: text.slice(0, 4000), at: now, reply_to: null, attach: false, lead_id: who.lead }, { onConflict: "guid" });
+  await setState({ phone_last: now });
+  if (!had && who.lead) await toLead(who.lead).catch(() => {});
+  if (!had && who.phone && /^\s*(stop|unsubscribe|opt ?out|remove me)\b/i.test(text)) await db.from("do_not_call").upsert({ phone: who.phone, reason: "Replied STOP to a message" }, { onConflict: "phone", ignoreDuplicates: true });
+  return { ok: true, kept: true };
+}
+// a message she sent from Prospect with one tap (her phone sent it), so the conversation reads both ways
+async function phoneSent(b: Record<string, unknown>) {
+  const d = digits(b.phone), text = String(b.text ?? "").trim(); if (d.length < 8 || !text) return { ok: true };
+  const ls = await leads(), l = ls.find((x) => digits(x.phone) === d), now = new Date().toISOString(), wa = b.channel === "whatsapp";
+  await db.from("ib_chats").upsert({ guid: "ph:" + d, is_group: false, service: wa ? "WhatsApp" : "Text", name: (b.name as string) || l?.name || null, members: [d], last_at: now, updated_at: now }, { onConflict: "guid" });
+  await db.from("ib_msgs").insert({ guid: "ph:" + await sha("me|" + d + "|" + text + "|" + now), chat_guid: "ph:" + d, from_me: true, handle: d, body: text.slice(0, 4000), at: now, reply_to: null, attach: false, lead_id: l?.id ?? null });
+  return { ok: true };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
-    const q = new URL(req.url).searchParams, hook = q.get("hook");
+    const q = new URL(req.url).searchParams, hook = q.get("hook"), pk = q.get("p") || (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "") || null;
+    // ---------- her phone (iPhone Shortcuts or an Android forwarding app) ----------
+    if (q.get("p") || (pk && !req.headers.get("x-session") && !hook)) {
+      const st = await state();
+      if (!st.phone_on || !st.phone_key || pk !== st.phone_key) return json({ error: "No" }, 403);
+      return json(await phoneIn(st, req));
+    }
     // ---------- BlueBubbles webhook ----------
     if (hook) {
       const st = await state();
@@ -188,6 +262,13 @@ Deno.serve(async (req) => {
         return json({ ok: true, guid: sent?.guid ?? null, at: sent?.dateCreated ?? Date.now() });
       }
       case "setup": return json(await setup(b as { url?: string; pass?: string }));
+      case "phone_setup": {
+        const kind = b.kind === "android" ? "android" : "iphone", key = st.phone_key ?? crypto.randomUUID().replace(/-/g, "");
+        await setState({ phone_key: key, phone_on: true, phone_kind: kind });
+        return json({ ok: true, url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/inbox?p=${key}`, key });
+      }
+      case "phone_off": { await setState({ phone_on: false, phone_key: null, phone_last: null }); return json({ ok: true }); }
+      case "phone_sent": return json(await phoneSent(b));
       case "disconnect": {
         // disconnecting also removes the copies of her messages and contact names
         await setState({ bb_url: null, bb_pass: null, hook_ok: null, hook_key: null, synced_at: null, last_hook: null });
