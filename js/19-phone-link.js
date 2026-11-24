@@ -6,7 +6,8 @@
 (function(){
 // The shared iPhone shortcut (made once, see tools/PHONE_SHORTCUT.md). Every agent installs it with one tap.
 window.PHONE_SHORTCUT = window.PHONE_SHORTCUT || '';
-const F_DROID = 'https://f-droid.org/packages/life.andre.message487/';
+// the developer's own signed APK (same app as on F-Droid), so tapping it downloads straight away
+const M487_APK = 'https://github.com/andre487/AndroidMessage487/releases/latest/download/message487.apk';
 const ago = t => { if (!t) return 'nothing yet'; const m = Math.round((Date.now() - Date.parse(t)) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' hr ago' : Math.round(m / 1440) + ' days ago'; };
 async function link(kind){ const r = await ib15('phone_setup', { kind }); S.phLink = r.url; S.phKey = r.key; return r; }
 async function copy(t){ try { await navigator.clipboard.writeText(t); return true; } catch { return false; } }
@@ -35,8 +36,8 @@ window.phoneSetup = async function(kind){
     <p class="hint2 sm19">Your link is already copied. Needs iOS 17 or newer. WhatsApp replies can't come through on iPhone (Apple doesn't allow it), so those stay in WhatsApp.</p>`
   : `
     ${videoHTML19('android')}
-    <div class="ac19"><button class="b2 pri" onclick="window.open('${F_DROID}','_blank','noopener')">Get Message487</button><button class="b2" onclick="phoneCopy()">Copy my link again</button></div>
-    <p class="hint2 sm19">Your link is already copied. Leave the phone as it is: it works in the background, and keeps messages safe if the signal drops.</p>`;
+    <div class="ac19"><button class="b2 pri" onclick="window.open('${M487_APK}','_blank','noopener')">Get Message487</button><button class="b2" onclick="phoneCopy()">Copy my link again</button></div>
+    <p class="hint2 sm19">Your link is already copied. In Message487 the token is just the word <b>prospect</b>. Leave the phone as it is after: it works in the background and keeps messages safe if the signal drops.</p>`;
   await copy(r.url);
   openSheet2(kind === 'iphone' ? 'Connect your iPhone' : 'Connect your Android', body + `<div class="ok19" id="ph19s">Waiting for the first message…</div>
     <p class="hint2 sm19"><button class="lnk2" onclick="phoneOff()">Turn this off</button></p>`);
@@ -90,49 +91,27 @@ window.viewSettings = (function(o){ return async function(...a){ const r = await
   return r; }; })(window.viewSettings);
 })();
 
-// ---------- Picture guide (24 Nov): a drawing of the phone screen for each step, the button to press glowing ----------
-// Plays by itself like a short video, or step through with Next and Back. One instruction per screen.
+// ---------- How to video (24 Nov) ----------
+// media/phone-*.mp4 are drawn to look like her real iPhone or Android screens (made by tools/phone_video, see its README).
+// The step through version shows a still from the video for each step. iphone-auto: the shortcut is already made, start at Automation.
 (function(){
-const tap = '<i class="tp19" aria-hidden="true"></i>';
-const bar = (title, right = '') => `<div class="sb19"><span>9:41</span></div><div class="nv19"><b>${title}</b>${right}</div>`;
-const row = (t, hi, sub = '') => `<div class="rw19${hi ? ' hi' : ''}">${hi ? tap : ''}<span>${t}</span>${sub ? `<em>${sub}</em>` : ''}<i class="cv19">›</i></div>`;
-const tabs = hi => `<div class="tb19"><span>Shortcuts</span><span class="${hi ? 'hi' : ''}">${hi ? tap : ''}Automation</span><span>Gallery</span></div>`;
-const IOS = [
-  { t: 'Tap <b>Add the shortcut</b> in Prospect', s: `<div class="pr19">${bar('Prospect')}<div class="pc19"><p>Connect your iPhone</p><div class="bt19 hi">${tap}Add the shortcut</div></div></div>` },
-  { t: 'Shortcuts opens. Tap the box, then tap <b>Paste</b>', s: `${bar('Set Up Shortcut')}<div class="pg19"><p class="mu19">Paste your Prospect link</p><div class="in19 hi">${tap}<span class="pa19">Paste</span></div></div>` },
-  { t: 'Tap <b>Add Shortcut</b>', s: `${bar('Set Up Shortcut')}<div class="pg19"><p class="mu19">Paste your Prospect link</p><div class="in19 full">https://…/inbox?p=…</div></div><div class="bb19 hi">${tap}Add Shortcut</div>` },
-  { t: 'Tap <b>Automation</b> at the bottom', s: `${bar('Shortcuts')}<div class="gr19"><span>Prospect messages</span><span></span><span></span><span></span></div>${tabs(1)}` },
-  { t: 'Tap <b>+</b> at the top right', s: `${bar('Automation', `<span class="pl19 hi">${tap}+</span>`)}<div class="pg19"><p class="mu19">No automations yet</p></div>${tabs(0)}` },
-  { t: 'Scroll down and tap <b>Message</b>', s: `${bar('New Automation')}<div class="ls19">${row('Email', 0)}${row('Message', 1)}${row('Sleep', 0)}${row('Wi Fi', 0)}</div>` },
-  { t: 'Tap <b>Message Contains</b>, press the space bar once, tap <b>Done</b>', s: `${bar('When')}<div class="ls19">${row('Sender', 0, 'Choose')}${row('Message Contains', 1, 'space')}</div><div class="kb19"><span class="hi">${tap}space</span></div>` },
-  { t: 'Tap <b>Run Immediately</b>, then <b>Next</b>', s: `${bar('When', `<span class="nx19 hi">${tap}Next</span>`)}<div class="ls19"><div class="rw19"><span>Run After Confirmation</span><i class="rd19"></i></div><div class="rw19 hi">${tap}<span>Run Immediately</span><i class="rd19 on"></i></div></div>` },
-  { t: 'Tap <b>Prospect messages</b>. Done!', s: `${bar('Do')}<div class="ls19"><p class="mu19 pad19">My Shortcuts</p>${row('Prospect messages', 1)}${row('Other shortcut', 0)}</div>` }];
-const AND = [
-  { t: 'Tap <b>Get Message487</b> in Prospect', s: `<div class="pr19">${bar('Prospect')}<div class="pc19"><p>Connect your Android</p><div class="bt19 hi">${tap}Get Message487</div></div></div>` },
-  { t: 'Tap <b>Download APK</b>, then open it', s: `${bar('f-droid.org')}<div class="pg19"><p class="mu19">Message487</p><div class="bt19 hi alt">${tap}Download APK</div></div>` },
-  { t: 'If asked, allow installing, then tap <b>Install</b>', s: `${bar('Install')}<div class="pg19"><p class="mu19">Do you want to install this app?</p></div><div class="bb19 hi">${tap}Install</div>` },
-  { t: 'Open it, tap <b>Connection</b>', s: `${bar('Message487')}<div class="ls19">${row('Connection', 1)}${row('Sources', 0)}${row('Outbox', 0)}</div>` },
-  { t: 'Paste your link into the <b>address</b> and the <b>token</b>, tap <b>Save</b>', s: `${bar('Connection')}<div class="pg19"><p class="mu19">Webhook address</p><div class="in19 hi">${tap}<span class="pa19">Paste</span></div><p class="mu19">Token</p><div class="in19"><span class="pa19 dim">Paste</span></div></div><div class="bb19">Save</div>` },
-  { t: 'Tap <b>Sources</b>, turn on <b>SMS</b>', s: `${bar('Sources')}<div class="ls19"><div class="rw19 hi">${tap}<span>SMS</span><i class="sw19 on"></i></div><div class="rw19"><span>Notifications</span><i class="cv19">›</i></div></div>` },
-  { t: 'In <b>Notifications</b>, tick <b>WhatsApp</b> and <b>Messages</b>, allow access. Done!', s: `${bar('Notifications')}<div class="ls19"><div class="rw19 hi">${tap}<span>WhatsApp</span><i class="ck19 on">✓</i></div><div class="rw19"><span>Messages</span><i class="ck19 on">✓</i></div><div class="rw19"><span>Camera</span><i class="ck19"></i></div></div>` }];
-window.GUIDE19 = { IOS, AND };
-// The video of the same steps (media/phone-*.mp4, made from these screens). Picture guide if it can't play, or if she'd rather step through.
-const VSTART = { 'iphone-auto': 10.4 };
-window.videoHTML19 = kind => { const f = kind === 'android' ? 'android' : 'iphone', t = VSTART[kind] ? ` onloadedmetadata="this.currentTime=${VSTART[kind]}"` : '';
-  return `<div class="vw19" id="vw19"><video class="vd19" src="media/phone-${f}.mp4?v=1"${t} poster="media/phone-${f}.jpg" autoplay muted playsinline controls preload="auto"
-    onerror="vid19off('${kind}')"></video><button class="lnk2" onclick="vid19off('${kind}')">Step through at my own pace instead</button></div>`; };
+const VID = { iphone: { n: 13, auto: 16.1, autoIdx: 4 }, android: { n: 22 } }, VER = 2;
+const file = kind => kind === 'android' ? 'android' : 'iphone';
+window.videoHTML19 = kind => { const f = file(kind), t = kind === 'iphone-auto' ? ` onloadedmetadata="this.currentTime=${VID.iphone.auto}"` : '';
+  return `<div class="vw19" id="vw19"><video class="vd19" src="media/phone-${f}.mp4?v=${VER}"${t} poster="media/phone-${f}.jpg?v=${VER}" autoplay muted playsinline controls preload="auto"
+    onerror="vid19off('${kind}')"></video><button class="lnk2" onclick="vid19off('${kind}')">Go through it one step at a time instead</button></div>`; };
 window.vid19off = kind => { const w = document.getElementById('vw19'); if (w) w.outerHTML = guideHTML19(kind); };
 let G = null;
-function draw(){ const g = G, st = g.steps[g.i], el = document.getElementById('gd19'); if (!el) { stop(); return; }
-  el.querySelector('.ph19s').innerHTML = `<div class="sc19">${st.s}</div>`;
-  el.querySelector('.cap19').innerHTML = `<span class="n19">${g.i + 1}</span><span>${st.t}</span>`;
-  el.querySelector('.dt19').innerHTML = g.steps.map((_, j) => `<i class="${j === g.i ? 'on' : j < g.i ? 'dn' : ''}"></i>`).join('');
-  el.querySelector('.bk19').disabled = g.i === 0; el.querySelector('.nx19b').textContent = g.i === g.steps.length - 1 ? 'Start again' : 'Next';
-  el.querySelector('.pl19b').innerHTML = g.play ? 'Pause' : `${ic2('chev', 14)} Play`; }
-function stop(){ clearInterval(G && G.tm); if (G) G.play = 0; }
-window.guide19 = { next(){ G.i = (G.i + 1) % G.steps.length; draw(); }, back(){ G.i = Math.max(0, G.i - 1); draw(); },
-  play(){ if (G.play){ stop(); draw(); return; } G.play = 1; draw(); G.tm = setInterval(() => { if (!document.getElementById('gd19')) return stop(); if (G.i === G.steps.length - 1){ stop(); draw(); return; } G.i++; draw(); }, 3200); } };
-window.guideHTML19 = kind => { stop(); G = { steps: kind === 'android' ? AND : kind === 'iphone-auto' ? IOS.slice(3) : IOS, i: 0, play: 0 }; setTimeout(() => { draw(); guide19.play(); }, 30);
-  return `<div class="gd19" id="gd19"><div class="ph19f"><div class="ph19s"></div></div><div class="cap19"></div><div class="dt19"></div>
-    <div class="gc19"><button class="b2 bk19" onclick="guide19.back()">Back</button><button class="b2 pl19b" onclick="guide19.play()"></button><button class="b2 pri nx19b" onclick="guide19.next()">Next</button></div></div>`; };
+function draw(){ const el = document.getElementById('gd19'); if (!el || !G) return;
+  const img = el.querySelector('.gi19'), last = G.i === G.n - 1;
+  img.src = `media/phone-${G.f}-${G.i + 1}.jpg?v=${VER}`; img.alt = `Step ${G.i + 1} of ${G.n - 1}`;
+  if (!last) new Image().src = `media/phone-${G.f}-${G.i + 2}.jpg?v=${VER}`;
+  el.querySelector('.sn19').textContent = last ? 'Done' : `Step ${G.i + 1} of ${G.n - 1}`;
+  el.querySelector('.bk19').disabled = G.i === G.from; el.querySelector('.nx19b').textContent = last ? 'Watch the video' : 'Next'; }
+window.guide19 = { next(){ if (G.i === G.n - 1){ const g = document.getElementById('gd19'); if (g) g.outerHTML = videoHTML19(G.kind); return; } G.i++; draw(); },
+  back(){ G.i = Math.max(G.from, G.i - 1); draw(); } };
+window.guideHTML19 = kind => { const f = file(kind), v = VID[f], from = kind === 'iphone-auto' ? v.autoIdx : 0;
+  G = { kind, f, n: v.n, from, i: from }; setTimeout(draw, 0);
+  return `<div class="gd19" id="gd19"><img class="gi19" alt=""><span class="sn19"></span>
+    <div class="gc19"><button class="b2 bk19" onclick="guide19.back()">Back</button><button class="b2 pri nx19b" onclick="guide19.next()">Next</button></div></div>`; };
 })();

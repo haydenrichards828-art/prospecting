@@ -163,11 +163,13 @@ const pickKey = (f: [string, string][], re: RegExp, not?: RegExp) => f.find(([k,
 async function phoneParse(req: Request) {
   const raw = await req.text(); let o: unknown = null;
   try { o = JSON.parse(raw); } catch { const u = new URLSearchParams(raw); o = u.toString() && [...u.keys()].length ? Object.fromEntries(u) : { text: raw }; }
-  const f = flat(o);
+  const f = flat(o), top = (o && typeof o === "object" ? o : {}) as Record<string, unknown>;
   const app = pickKey(f, /(^|\.)(package|packagename|package_name|app|application|source|appname|app_name)$/);
+  // Message487 (Android) sends message_type sms, notification or test, and waits for {status: "accepted", event_id} back
+  const type = String(top.message_type ?? ""), event_id = typeof top.event_id === "string" ? top.event_id : null;
   const text = pickKey(f, /(^|\.)(text|body|message|content|msg|bigtext|big_text)$/, /title|sender|from/);
   const from = pickKey(f, /(^|\.)(sender|from|address|phone|number|originatingaddress|origin|contact)$/) || pickKey(f, /(^|\.)(title|name)$/);
-  return { app, text, from };
+  return { app, text, from, type, event_id };
 }
 async function sha(s: string) { const b = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(s)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("").slice(0, 24); }
 // who this is, if they belong in Prospect
@@ -191,9 +193,14 @@ async function whoPhone(from: string): Promise<{ guid: string; lead: number | nu
   return had ? { guid: had.guid, lead: null, name: had.name ?? from, phone: null } : null;
 }
 async function phoneIn(st: St, req: Request) {
-  const { app, text, from } = await phoneParse(req); const now = new Date().toISOString();
+  const p = await phoneParse(req), ack = p.event_id ? { status: "accepted", event_id: p.event_id } : {};
+  return { ...(await phoneKeep(st, p)), ...ack };
+}
+async function phoneKeep(st: St, { app, text, from, type }: { app: string; text: string; from: string; type: string }) {
+  const now = new Date().toISOString();
+  if (type === "test") { await setState({ phone_last: now }); return { ok: true, kept: false, why: "test" }; }   // the app's own test: shows as connected
   if (!text || !from) return { ok: true, kept: false, why: "nothing to read" };
-  const wa = /whatsapp/i.test(app), sms = /sms|mms|messag|telephony|iphone|shortcut/i.test(app) || !app;
+  const wa = /whatsapp/i.test(app), sms = type === "sms" || /sms|mms|messag|telephony|iphone|shortcut/i.test(app) || !app;
   if (!wa && !sms) return { ok: true, kept: false, why: "not a messaging app" };
   if (wa && /:/.test(from) && /\(\d+ messages\)|@/.test(from + text)) return { ok: true, kept: false, why: "group" };
   const who = await whoPhone(from);
