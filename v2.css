@@ -1728,3 +1728,9 @@ body.typing .nbox8.nb8p{border-color:var(--acc)}
 /* Map credit kept as small and quiet as the licence allows */
 .leaflet-control-attribution{font-size:9px!important;line-height:1.3!important;padding:0 4px!important;background:#0006!important;color:#fff9!important;border-radius:3px 0 0 0}
 .leaflet-control-attribution a{color:#fffb!important;text-decoration:none}
+/* Popup header (24 Nov): close X always on the far right, name and address stacked tight on the left */
+#sheet .sh2{display:flex!important;align-items:center;gap:8px;padding:0 0 8px!important;margin:0 -8px 4px!important}
+#sheet .sh2>b{flex:1;min-width:0;text-align:left;font-size:17px;line-height:1.25;padding-left:8px}
+#sheet .sh2>span:first-child{display:none}
+#sheet .sh2>button:last-child{margin-left:auto;flex:none}
+#sheet .sh2 .shs14{display:block;font-size:13px;font-weight:400;color:var(--t2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
