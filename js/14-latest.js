@@ -153,11 +153,11 @@ window.drawBest = function(){
 // street is tapped or the map is tapped.
 window.zoomBest = function(i){ const g = (S._best || [])[i]; if (!S.map || !g) return;
   if (S.hi14){ try { S.map.removeLayer(S.hi14); } catch {} S.hi14 = null; }
-  const ls = [], paths = (S.streets || []).filter(st => `${st.street}, ${st.suburb}` === g.k).flatMap(st => st.paths || []).map(p => p.map(([x, y]) => [y, x]));
-  paths.forEach(p => ls.push(L.polyline(p, { color: '#fff', weight: 14, opacity: .9, lineCap: 'round', lineJoin: 'round', interactive: false })));
-  paths.forEach(p => ls.push(L.polyline(p, { color: '#2563eb', weight: 8, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false })));
+  const ls = [], one = (S.streets || []).filter(st => `${st.street}, ${st.suburb}` === g.k), paths = (one.length ? one : (S.streets || []).filter(st => st.suburb === g.k)).flatMap(st => st.paths || []).map(p => p.map(([x, y]) => [y, x]));
+  const wide = !one.length; paths.forEach(p => ls.push(L.polyline(p, { color: '#fff', weight: wide ? 9 : 14, opacity: .9, lineCap: 'round', lineJoin: 'round', interactive: false })));
+  paths.forEach(p => ls.push(L.polyline(p, { color: '#2563eb', weight: wide ? 5 : 8, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false })));
   S.hi14 = L.layerGroup(ls).addTo(S.map);
-  const b = L.latLngBounds([...paths.flat(), ...(g.pts || [])]);
+  const b = L.latLngBounds(paths.length ? paths.flat() : (g.pts || []));
   if (b.isValid()) S.map.flyToBounds(b, { padding: [60, 60], maxZoom: 17, duration: .6 });
   if (!S.hi14on){ S.hi14on = 1; S.map.on('click', () => { if (S.hi14){ S.map.removeLayer(S.hi14); S.hi14 = null; document.querySelectorAll('.bs14.on').forEach(x => x.classList.remove('on')); } }); }
   document.querySelectorAll('.bs14').forEach((x, j) => x.classList.toggle('on', j === i));
@@ -219,3 +219,11 @@ window.leadsTable3 = function(ls){
       <span class="n3"><span class="nn14">${hot ? '<i class="hot15" title="Hot lead" aria-label="Hot lead"></i>' : ''}<b>${esc(leadTitle(l))}</b>${nwm3(l)}</span>${a ? `<em class="na14">${esc(a)}</em>` : ''}</span>
       <span class="ab15"><em class="tg14 ${ab.t === 'Buyer' ? 'by' : ''}">${ab.t}</em><span class="${ab.none ? 'q15' : ''}" title="${esc(ab.x)}">${esc(ab.x)}</span></span>
       <span>${due(l)}</span><span class="c3 ls15${l.last_contact ? '' : ' q15'}">${esc(ago14(l.last_contact))}</span><span class="c3 b3">${btns(l)}</span></div>`; }).join(''); }).join('')}</div>`; };
+
+// Marking a whole suburb (or any big group) dropped asks first, since one tap could mark thousands of letterboxes
+window.toggleDrop = (function(o){ return async function(ids, undo){ if (!undo && (ids || []).length > 60 && !(await uiAsk(`Mark all ${ids.length.toLocaleString('en-AU')} letterboxes dropped?`, { ok: 'Yes, all dropped' }))) return; return o.apply(this, arguments); }; })(window.toggleDrop);
+// Streets / Suburbs tabs show which one is picked (the new list dropped this)
+window.drawBest = (function(o){ return function(...a){ const r = o.apply(this, a);
+  document.querySelectorAll('button').forEach(b => { const t = b.textContent.trim(); if (t !== 'Streets' && t !== 'Suburbs') return; const sib = [...b.parentElement.children].map(x => x.textContent.trim()); if (!sib.includes('Streets') || !sib.includes('Suburbs')) return;
+    const on = (t === 'Streets') === (S.dgroup !== 'suburb'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+  return r; }; })(window.drawBest);
