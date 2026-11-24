@@ -1865,3 +1865,27 @@ body.h-ltab.h-lsheet .ltab3.l15 .lt3>:nth-child(2){display:none!important}
 .dr16{justify-content:flex-start!important}
 .dl16{padding:4px clamp(16px,2vw,28px) 40px;margin:0}
 .dsub16:first-child>h3{margin-top:12px}
+/* Call screen, new style (24 Nov) */
+.cl2 .nm2{font-size:clamp(30px,2.6vw,40px)!important;line-height:1.1!important;letter-spacing:-.01em}
+.cl2 a.num2{min-height:0!important;height:64px!important;font-size:30px!important;border-radius:6px!important}
+.cl2 a.num2 svg{width:26px;height:26px}
+/* why call: one list */
+.cl2 .wl2{display:flex!important;flex-direction:column!important;gap:0!important;background:#171b21;border:1px solid #262c35!important;border-radius:6px!important;overflow:hidden}
+.cl2 .wc2{background:none!important;border:0!important;border-top:1px solid #222831!important;border-radius:0!important;padding:9px 14px!important;gap:12px!important;min-height:44px}
+.cl2 .wc2:first-child{border-top:0!important}
+.cl2 .wc2 .ti2{width:22px!important;height:22px!important;background:none!important;color:var(--c)}
+.cl2 .wc2 .ti2 svg{stroke:var(--c)!important;width:18px;height:18px}
+.cl2 .wc2>span:last-child{flex:1;display:flex;align-items:center;gap:12px;min-width:0}
+.cl2 .wc2 b{flex:1;font-size:15px!important;font-weight:500!important;line-height:20px!important;color:#e6e9ee!important}
+.cl2 .wc2 em{flex:none;font-size:12px!important;font-weight:600!important;padding:3px 8px;border-radius:4px;background:#262c35;color:#a3acb9!important}
+.cl2 .wc2 em[data-s15=strong]{background:#13301f;color:#7ee2a8!important}
+.cl2 .wc2 em[data-s15=some]{background:#16264a;color:#93c0ff!important}
+/* result buttons: tinted, colour kept for speed */
+.cl2 .bar2x button{background:color-mix(in srgb,var(--c) 20%,#151a21)!important;border:1px solid color-mix(in srgb,var(--c) 55%,#151a21)!important;color:#f2f4f7!important;font-weight:600}
+.cl2 .bar2x button svg{stroke:color-mix(in srgb,var(--c) 55%,#fff)!important}
+.cl2 .bar2x button:hover{background:color-mix(in srgb,var(--c) 32%,#151a21)!important;filter:none!important}
+.cl2 .bar2x button:active{background:var(--c)!important}
+/* facts along the bottom: smaller */
+.cr2 .facts2 .attr2 b{font-size:20px!important}
+.cr2 .facts2 .attr2 span{font-size:13px!important}
+.cl2 a.num2{flex:none!important;display:flex!important;align-items:center}

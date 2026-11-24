@@ -309,3 +309,13 @@ function smoothWheel14(){ if (!window.L || L.__sw14) return; L.__sw14 = 1;
   window.__swH14 = H; }
 function smoothOn14(m){ try { if (!m || m.smoothWheel14) return; m.scrollWheelZoom && m.scrollWheelZoom.disable(); m.addHandler('smoothWheel14', window.__swH14); m.smoothWheel14.enable(); } catch {} }
 window.loadLeaflet = (function(o){ return function(...a){ return Promise.resolve(o.apply(this, a)).then(r => { try { smoothWheel14(); smoothOn14(S.map); } catch {} return r; }); }; })(window.loadLeaflet);
+
+// Call screen, new style (24 Nov). Signs as one quiet list with a strength tag; unknown facts ("?") hidden.
+function callTidy15(){ const c = document.querySelector('.cl2'); if (!c) return;
+  c.querySelectorAll('.wc2').forEach(w => { const em = w.querySelector('em'); if (!em || em.dataset.s15) return; const t = em.textContent.trim().toLowerCase();
+    em.dataset.s15 = t.startsWith('strong') ? 'strong' : t.startsWith('some') ? 'some' : 'weak'; });
+  const wl = c.querySelector('.wl2'); if (wl && !wl.dataset.o15){ wl.dataset.o15 = 1; const R = { strong: 0, some: 1, weak: 2 }; [...wl.querySelectorAll('.wc2')].sort((a, b) => R[a.querySelector('em')?.dataset.s15 || 'weak'] - R[b.querySelector('em')?.dataset.s15 || 'weak']).forEach(x => wl.appendChild(x)); }
+  document.querySelectorAll('.cr2 .facts2 .attr2').forEach(a => { const b = a.querySelector('b'); if (b && b.textContent.trim() === '?') a.remove(); });
+  document.querySelectorAll('.cr2 .facts2').forEach(f => { if (!f.querySelector('.attr2')) f.remove(); }); }
+window.drawCall2 = (function(o){ return function(...a){ const r = o.apply(this, a); try { callTidy15(); } catch {} return r; }; })(window.drawCall2);
+new MutationObserver(() => { if (window.__ct15) return; window.__ct15 = 1; requestAnimationFrame(() => { window.__ct15 = 0; if (document.querySelector('.cl2 .wc2 em:not([data-s15]), .cr2 .facts2')) callTidy15(); }); }).observe(document.getElementById('app') || document.body, { childList: true, subtree: true });
