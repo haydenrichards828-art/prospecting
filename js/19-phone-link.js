@@ -30,11 +30,11 @@ window.phoneSetup = async function(kind){
           <li>Add a Text field called <i>app</i> with the value <i>iphone</i>. Tap <i>Done</i>.</li></ol></details>`;
   const body = kind === 'iphone' ? `
     ${sc ? '' : build}
-    ${guideHTML19(sc ? 'iphone' : 'iphone-auto')}
+    ${videoHTML19(sc ? 'iphone' : 'iphone-auto')}
     <div class="ac19">${sc ? `<button class="b2 pri" onclick="phoneGo()">Add the shortcut</button>` : ''}<button class="b2" onclick="phoneCopy()">Copy my link again</button></div>
     <p class="hint2 sm19">Your link is already copied. Needs iOS 17 or newer. WhatsApp replies can't come through on iPhone (Apple doesn't allow it), so those stay in WhatsApp.</p>`
   : `
-    ${guideHTML19('android')}
+    ${videoHTML19('android')}
     <div class="ac19"><button class="b2 pri" onclick="window.open('${F_DROID}','_blank','noopener')">Get Message487</button><button class="b2" onclick="phoneCopy()">Copy my link again</button></div>
     <p class="hint2 sm19">Your link is already copied. Leave the phone as it is: it works in the background, and keeps messages safe if the signal drops.</p>`;
   await copy(r.url);
@@ -115,6 +115,13 @@ const AND = [
   { t: 'Paste your link into the <b>address</b> and the <b>token</b>, tap <b>Save</b>', s: `${bar('Connection')}<div class="pg19"><p class="mu19">Webhook address</p><div class="in19 hi">${tap}<span class="pa19">Paste</span></div><p class="mu19">Token</p><div class="in19"><span class="pa19 dim">Paste</span></div></div><div class="bb19">Save</div>` },
   { t: 'Tap <b>Sources</b>, turn on <b>SMS</b>', s: `${bar('Sources')}<div class="ls19"><div class="rw19 hi">${tap}<span>SMS</span><i class="sw19 on"></i></div><div class="rw19"><span>Notifications</span><i class="cv19">›</i></div></div>` },
   { t: 'In <b>Notifications</b>, tick <b>WhatsApp</b> and <b>Messages</b>, allow access. Done!', s: `${bar('Notifications')}<div class="ls19"><div class="rw19 hi">${tap}<span>WhatsApp</span><i class="ck19 on">✓</i></div><div class="rw19"><span>Messages</span><i class="ck19 on">✓</i></div><div class="rw19"><span>Camera</span><i class="ck19"></i></div></div>` }];
+window.GUIDE19 = { IOS, AND };
+// The video of the same steps (media/phone-*.mp4, made from these screens). Picture guide if it can't play, or if she'd rather step through.
+const VSTART = { 'iphone-auto': 10.4 };
+window.videoHTML19 = kind => { const f = kind === 'android' ? 'android' : 'iphone', t = VSTART[kind] ? ` onloadedmetadata="this.currentTime=${VSTART[kind]}"` : '';
+  return `<div class="vw19" id="vw19"><video class="vd19" src="media/phone-${f}.mp4?v=1"${t} poster="media/phone-${f}.jpg" autoplay muted playsinline controls preload="auto"
+    onerror="vid19off('${kind}')"></video><button class="lnk2" onclick="vid19off('${kind}')">Step through at my own pace instead</button></div>`; };
+window.vid19off = kind => { const w = document.getElementById('vw19'); if (w) w.outerHTML = guideHTML19(kind); };
 let G = null;
 function draw(){ const g = G, st = g.steps[g.i], el = document.getElementById('gd19'); if (!el) { stop(); return; }
   el.querySelector('.ph19s').innerHTML = `<div class="sc19">${st.s}</div>`;
