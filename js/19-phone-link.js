@@ -59,6 +59,13 @@ window.view15 = (function(o){ return async function(...a){ const r = await o.app
         <button onclick="phoneSetup('android')">${ic2('phone', 22)}<b>I have an Android</b><span>Texts and WhatsApp</span></button></div>
       <p class="sm19">Only messages from people in Prospect are kept. Family and friends are never saved.</p>
       <p class="sm19"><button class="lnk2" onclick="set15Mac()">Use a Mac instead</button> · <button class="lnk2" onclick="S.msgOld=1;go('messages')">Scheduled texts</button></p>`; }
+  // Started connecting the phone but no message has come in yet: always a way back to the steps
+  const p = S.ib?.srv?.phone, ic = document.querySelector('#main .ib15 .ic');
+  if (p && !p.last && S.ib?.srv?.mode === 'phone' && ic && !S.ib.sel && !document.getElementById('fin19')){
+    const nm = p.kind === 'android' ? 'Android' : 'iPhone';
+    const at = ic.offsetParent ? (ic.querySelector('.hd') || ic.firstElementChild) : document.querySelector('#main .ib15 > :first-child > :first-child');
+    at?.insertAdjacentHTML('afterend', `<div class="fin19" id="fin19">${ic2('phone', 22)}<div><b>Finish connecting your ${nm}</b><p>Replies show up here once it's set up. It picks up where you left off.</p></div>
+      <div class="fb19"><button class="b2 pri" onclick="phoneSetup('${p.kind === 'android' ? 'android' : 'iphone'}')">Carry on</button><button class="b2" onclick="phoneSetup()">Different phone</button></div></div>`); }
   return r; }; })(window.view15);
 
 // Replying from the Messages tab when it's her phone: her Messages or WhatsApp opens with the reply typed in

@@ -2014,3 +2014,7 @@ body.h-ltab.h-lsheet .ltab3.l15 .lt3>:nth-child(2){display:none!important}
 .ac19{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px}
 @media (prefers-reduced-motion:reduce){.tp19{animation:none;box-shadow:0 0 0 4px #ff9f0a55}.sc19{animation:none}}
 .bd19+.gd19{margin-top:14px}
+.fin19{display:flex;align-items:center;gap:14px;margin:16px 24px 0;padding:16px 18px;border:1px solid #3b82f655;background:#3b82f614;border-radius:8px;color:var(--accT)}
+.fin19>div:first-of-type{flex:1;min-width:0;color:var(--t1)}.fin19 p{margin:2px 0 0;color:var(--t2)}.fb19{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:700px){.fin19{flex-wrap:wrap;margin:12px}.fb19{width:100%}.fb19 .b2{flex:1}}
+.ib15>:first-child .fin19{margin:10px 0}
