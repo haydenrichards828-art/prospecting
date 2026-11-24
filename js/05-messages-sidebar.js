@@ -25,7 +25,7 @@ async function sendInfo(who){ S.sw=who; if(!S.templates&&!DEMO) api('templates')
     <div id="sw_list"></div>
     <label class="fl2">Message<textarea id="sw_body" rows="4" data-grow placeholder="Pick one above or write your own"></textarea></label>
     <div class="sw2">${who.phone&&canText6()?`<button class="b2 pri" onclick="swSend('text')">${ic2('msg',18)}Text</button>`:''}${who.email?`<button class="b2" onclick="swSend('email')">${ic2('mail',18)}Email</button>`:''}<button class="b2${who.phone&&canText6()?'':' pri'}" onclick="swSend('copy')">Copy</button></div>
-    ${who.phone&&!canText6()?'<p class="hint2">This computer can\'t send texts. Copy it and send it from your phone.</p>':''}
+
     ${who.phone?'':'<p class="hint2">No phone number on file, so copy it and paste where you need it.</p>'}`); }
 async function swPick(i,btn){ pickOne(btn,'#sheet .later2'); const o=S.swOpts[i], w=S.sw, fn=firstName(w.name||''), hi=`Hi ${fn!=='them'?fn:'there'}, it's ${ME}.`; $('#sw_list').innerHTML='';
   if(o[0]==='street'){ $('#sw_body').value='Looking up recent sales…'; try{ const r=(await api2('street_update',{property_id:w.property_id})).rows||[];

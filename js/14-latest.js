@@ -65,3 +65,23 @@ window.record=(function(orig){ return async function(id,o,cb){ const r=await ori
   window.callDayOk = function(i){ return orig(i) && !fixed(i.key); };
   window.nationalHoliday = fixed;
 })();
+
+// Left panel tidy up (24 Nov): Add a person sits beside New call sheet as an icon button, and Booked call backs
+// becomes an ordinary row at the top of Lists, so the top of the panel is one switch and one action row.
+function railTidy14(){ const r = document.querySelector('.rail2'); if (!r || r.dataset.t14) return; r.dataset.t14 = 1;
+  const top = r.querySelector('.rl5'), add = r.querySelector('.cbk.addp'), cb = top && top.querySelector('.cbk:not(.addp)'), head = r.querySelector('.rh5');
+  if (top && add){ add.classList.add('ad14'); add.setAttribute('aria-label', 'Add a person'); top.classList.add('rl14'); }
+  if (cb && head){ cb.classList.add('ls9', 'bk14'); const n = cb.querySelector('.rn5'); if (n) n.textContent = 'Booked for later';
+    cb.insertAdjacentHTML('afterbegin', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2"/></svg>');
+    const today = r.querySelector('.ls9:not(.bk14)'); if (today && /Call backs/.test(today.textContent)) today.after(cb); else head.after(cb); }
+}
+window.drawList = (function(o){ return function(...a){ const x = o.apply(this, a); try { railTidy14(); } catch {} return x; }; })(window.drawList);
+window.render = (function(o){ return function(...a){ const x = o.apply(this, a); try { railTidy14(); setTimeout(railTidy14, 0); } catch {} return x; }; })(window.render);
+
+// Follow ups due (24 Nov): no more popup of names. The same small orange button as on the Leads page,
+// phone and number, sits in the corner; tapping it calls the due leads one after another.
+window.paintReminders = function(){ document.getElementById('rem2')?.remove(); const it = S.remind || []; if (!it.length || S.tab === 'leads') return;
+  const n = it.length;
+  document.body.insertAdjacentHTML('beforeend', `<button id="rem2" class="rem14" onclick="remGo14()" aria-label="${n} follow up${n === 1 ? '' : 's'} due, call them" title="${n} follow up${n === 1 ? '' : 's'} due. Tap to call them one after another">${ic2('phone', 18)}<span>${n}</span></button>`); };
+function remGo14(){ document.getElementById('rem2')?.remove(); go('leads'); setTimeout(() => { try { fqStart(); } catch {} }, 250); }
+window.go = (function(o){ return function(...a){ const x = o.apply(this, a); try { paintReminders(); } catch {} return x; }; })(window.go);
