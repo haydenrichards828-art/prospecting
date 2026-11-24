@@ -227,3 +227,12 @@ window.drawBest = (function(o){ return function(...a){ const r = o.apply(this, a
   document.querySelectorAll('button').forEach(b => { const t = b.textContent.trim(); if (t !== 'Streets' && t !== 'Suburbs') return; const sib = [...b.parentElement.children].map(x => x.textContent.trim()); if (!sib.includes('Streets') || !sib.includes('Suburbs')) return;
     const on = (t === 'Streets') === (S.dgroup !== 'suburb'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
   return r; }; })(window.drawBest);
+
+// Card drop pins easier to see (24 Nov): solid blue with a white ring, a bit bigger. Dropped ones stay grey.
+window.pinR = function(base){ return Math.max(3.5, base * pinScale() * 1.45); };
+function pinStyle14(g){ try { g.eachLayer(function st(m){ if (m.eachLayer) return m.eachLayer(st); if (!m.setStyle || m.options.base == null) return;
+  const dropped = m.options.fillColor === '#c9ced4' || m.options._d14 === 1; m.options._d14 = dropped ? 1 : 0;
+  m.setStyle(dropped ? { color: '#ffffff', weight: 1, fillColor: '#9aa3ad', fillOpacity: .75 } : { color: '#ffffff', weight: 1.5, fillColor: '#2563eb', fillOpacity: 1 }); m.setRadius(pinR(m.options.base)); }); } catch {} }
+// Pins grow as you zoom in: walk into the grouped layers too
+window.resizePins = function(){ if (!S.dlay || !S.dlay.eachLayer) return; S.dlay.eachLayer(function rz(m){ if (m.eachLayer) return m.eachLayer(rz); if (m.setRadius && m.options.base != null) m.setRadius(pinR(m.options.base)); }); };
+window.drawDropLayer = (function(o){ return function(...a){ const r = o.apply(this, a); if (S._c14 && S._c14.pins && !S._c14.pins._st14){ pinStyle14(S._c14.pins.l); S._c14.pins._st14 = 1; } return r; }; })(window.drawDropLayer);
