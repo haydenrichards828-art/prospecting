@@ -49,7 +49,7 @@ function mount(){ const el = document.getElementById('dmap'); if (!el || S.tab !
   if (S.gl){ try { S.gl.remove(); } catch {} S.gl = null; }
   el.innerHTML = ''; el.classList.add('gl16');
   const pts = dropRows().filter(x => x.lat != null);
-  const m = new maplibregl.Map({ container: el, style: rasterStyle(), center: [150.91, -34.36], zoom: 11.5, maxZoom: 19, attributionControl: { compact: true }, dragRotate: false, pitchWithRotate: false, touchPitch: false, fadeDuration: 0, renderWorldCopies: false });
+  const m = new maplibregl.Map({ container: el, style: rasterStyle(), center: [150.91, -34.36], zoom: 11.5, maxZoom: 19, attributionControl: { compact: false }, dragRotate: false, pitchWithRotate: false, touchPitch: false, fadeDuration: 0, renderWorldCopies: false });
   m.touchZoomRotate.disableRotation(); S.gl = m; wheel(m);
   if (pts.length){ const bb = pts.reduce((a, x) => [Math.min(a[0], x.lng), Math.min(a[1], x.lat), Math.max(a[2], x.lng), Math.max(a[3], x.lat)], [180, 90, -180, -90]); m.fitBounds([[bb[0], bb[1]], [bb[2], bb[3]]], { padding: 20, duration: 0 }); }
   new ResizeObserver(() => { try { m.resize(); } catch {} }).observe(el);
