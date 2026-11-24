@@ -156,7 +156,6 @@ window.zoomBest = function(i){ const g = (S._best || [])[i]; if (!S.map || !g) r
   const ls = [], paths = (S.streets || []).filter(st => `${st.street}, ${st.suburb}` === g.k).flatMap(st => st.paths || []).map(p => p.map(([x, y]) => [y, x]));
   paths.forEach(p => ls.push(L.polyline(p, { color: '#fff', weight: 14, opacity: .9, lineCap: 'round', lineJoin: 'round', interactive: false })));
   paths.forEach(p => ls.push(L.polyline(p, { color: '#2563eb', weight: 8, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false })));
-  (g.pts || []).forEach(pt => ls.push(L.circleMarker(pt, { radius: 5, weight: 2, color: '#fff', fillColor: '#2563eb', fillOpacity: 1, interactive: false })));
   S.hi14 = L.layerGroup(ls).addTo(S.map);
   const b = L.latLngBounds([...paths.flat(), ...(g.pts || [])]);
   if (b.isValid()) S.map.flyToBounds(b, { padding: [60, 60], maxZoom: 17, duration: .6 });
@@ -179,10 +178,7 @@ window.leadsTable3 = function(ls){
       return `<div class="lt3${S.ol && S.ol.id === l.id && $('#ov').classList.contains('show') ? ' sel' : ''}" data-id="${l.id}" onclick="openLead(${l.id})" data-lq="${esc([l.name, l.address, l.suburb, l.phone].join(' ').toLowerCase())}">
       <span class="n3"><span class="nn14"><b>${esc(leadTitle(l))}</b>${nwm3(l)}</span>${a ? `<em class="na14">${esc(a)}</em>` : ''}</span><span class="t14"><em class="tg14 ${t === 'Buyer' ? 'by' : ''}">${t}</em></span><span>${due(l)}</span><span class="c3">${l.last_contact ? esc(dayMon(l.last_contact)) : '<i>Never</i>'}</span><span class="c3 b3">${btns(l)}</span></div>`; }).join(''); }).join('')}</div>`; };
 
-// Smoother map zoom (24 Nov): zoom moves in small steps instead of jumping a whole level, so a trackpad pinch
-// or a scroll wheel glides. Double tap and the keys move half a level. Applied to every map, including one already open.
-const ZOOM14 = { zoomSnap: 0, zoomDelta: 0.5, wheelPxPerZoomLevel: 110, wheelDebounceTime: 10, zoomAnimationThreshold: 6, fadeAnimation: true, markerZoomAnimation: true };
-window.loadLeaflet = (function(o){ return function(...a){ return Promise.resolve(o.apply(this, a)).then(r => { try { if (!L.__z14){ L.__z14 = 1; L.Map.mergeOptions(ZOOM14); } if (S.map) Object.assign(S.map.options, ZOOM14); } catch {} return r; }); }; })(window.loadLeaflet);
+// Map zoom: Leaflet's own settings (a smoother zoom was tried 24 Nov and felt worse, so it was taken out)
 
 // Today's counter (24 Nov).
 // 1. "Change result" took a call off the count but left the appraisal and connected counts as they were.
