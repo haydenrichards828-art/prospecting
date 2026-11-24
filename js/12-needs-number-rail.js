@@ -1,4 +1,5 @@
 // ---------- Needs a number (23 Nov) ----------
+if(typeof window.BOOT==="undefined") window.BOOT=API.replace(/\/api$/,"/boot");   // works even if loaded before the opening code
 // The best 50 homes each day that have no phone yet. Copy the address, find the number and add it: they move into today's calls.
 // "No number" rests a home for six months so tomorrow's 50 are new ones.
 const NN8='Needs a number';
