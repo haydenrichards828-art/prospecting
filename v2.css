@@ -1919,3 +1919,4 @@ body.h-ltab.h-lsheet .ltab3.l15 .lt3>:nth-child(2){display:none!important}
 .bd3 .cd3.c16 .cb3>*{width:34px;height:34px;display:grid;place-items:center;border-radius:4px;color:#8b94a1}
 .bd3 .cd3.c16 .cb3 .call{color:#93c0ff}
 .bd3 .cd3.c16 .cb3>*:hover{background:#262c35;color:#fff}
+.bd3 .bh3>span{visibility:hidden}

@@ -341,6 +341,6 @@ new MutationObserver(() => { if (window.__ct15) return; window.__ct15 = 1; reque
 // "32 days overdue" becomes a red "32 days late" tag; weekdays come off dates so nothing gets cut off.
 window.card3 = function(o){
   const short = t => String(t || '').replace(/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s*/g, '').replace(/ overdue\b/, ' late');
-  const ph = o.buyer ? `<span class="ph3 b">${ic2('search', 18)}</span>` : `<span class="ph3">${ic2('house', 20)}${o.photo ? `<img src="${o.photo}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
+  const ph = o.buyer && !o.photo ? `<span class="ph3 b">${ic2('search', 18)}</span>` : `<span class="ph3">${ic2('house', 20)}${o.photo ? `<img src="${o.photo}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
   const key = short(o.key), sub = short(o.sub).replace(/^(Booked [^,]+),\s*from .*$/, '$1');
   return `<div class="cd3 c16">${ph}<div class="cx3"><button class="cn3" onclick="${o.open}">${esc(o.name)}</button><span class="ca3">${esc(o.addr)}</span><span class="ck3"><em class="tg16 ${o.cls || ''}">${esc(key)}</em>${sub ? `<span>${esc(sub)}</span>` : ''}</span></div><div class="cb3">${o.acts}</div></div>`; };
