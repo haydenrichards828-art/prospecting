@@ -28,9 +28,13 @@ function build(img){ if (img.dataset.am16) return; const p = parse(img.currentSr
   img.dataset.am16 = 1;
   if (W > 720){ img.src = exportOf(img.src); return; }      // big photos: the drawn picture, sharp at that size
   const lazy = img.loading === 'lazy' ? ' loading="lazy"' : '', abs = getComputedStyle(img).position === 'absolute', box = document.createElement('span');
-  box.className = 'am16'; box.setAttribute('aria-hidden', 'true');
+  box.className = 'am16 ld16'; box.setAttribute('aria-hidden', 'true');
   box.style.cssText = abs ? 'position:absolute;inset:0;overflow:hidden;display:block' : 'position:relative;display:block;width:100%;height:100%;overflow:hidden';
   box.innerHTML = layout(p, W, H).map(t => `<img src="${t.url}" alt=""${lazy} decoding="async" draggable="false" style="position:absolute;left:${t.l.toFixed(3)}%;top:${t.t.toFixed(3)}%;width:calc(${t.w.toFixed(3)}% + .6px);height:calc(${t.h.toFixed(3)}% + .6px);max-width:none;object-fit:fill" onerror="this.style.visibility='hidden'">`).join('');
+  // show the photo whole: hidden until every tile has arrived (tiles already on the device arrive at once), then it fades in
+  const ts = [...box.querySelectorAll('img')]; let left = ts.length; const done = () => box.classList.remove('ld16');
+  ts.forEach(t => { const one = () => { if (--left <= 0) done(); }; t.addEventListener('load', one, { once: true }); t.addEventListener('error', one, { once: true }); });
+  setTimeout(done, 2500);
   img.replaceWith(box); }
 function scan(root){ (root.querySelectorAll ? root.querySelectorAll('img[src*="NSW_Imagery/MapServer/export"],img[src^="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7#am16"]') : []).forEach(i => { if (i.closest('.leaflet-container,.maplibregl-map')) return; build(i); }); }
 // photos are swapped before the browser starts fetching the slow drawn picture
