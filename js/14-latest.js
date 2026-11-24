@@ -88,3 +88,80 @@ window.go = (function(o){ return function(...a){ const x = o.apply(this, a); try
 
 // Map credit (24 Nov): drop the Leaflet flag and name. The map data licence still needs a small OpenStreetMap credit.
 (function mapCredit14(){ const go = () => { if (!window.L || !L.Map) return setTimeout(go, 300); L.Map.addInitHook(function(){ try { this.attributionControl && this.attributionControl.setPrefix(false); } catch {} }); }; go(); })();
+
+// Card drop map speed (24 Nov).
+// 1. Street lines draw on one canvas instead of thousands of separate shapes, and the canvas gives each line
+//    a wide tap area, so the second invisible copy of every street is no longer needed.
+// 2. Each layer (Pins, Heat, Streets) is built once and kept. Turning a filter on or off just shows or hides it;
+//    a layer is only rebuilt when the addresses, the dropped marks, the Top N or the street colours change.
+window.widen5 = function(){};
+window.L_streetCanvas14 = null;
+window.drawStreetLayer = (function(orig){ return function(){
+  if (!window.L) return orig();
+  const P = L.polyline;
+  window.L_streetCanvas14 = window.L_streetCanvas14 || L.canvas({ padding: 0.3, tolerance: 10 });
+  L.polyline = function(ll, o){ return P(ll, Object.assign({ renderer: window.L_streetCanvas14, smoothFactor: 1.5 }, o || {})); };
+  try { return orig(); } finally { L.polyline = P; }
+}; })(window.drawStreetLayer);
+window.toggleDrop = (function(o){ return function(...a){ S._dver14 = (S._dver14 || 0) + 1; return o.apply(this, a); }; })(window.toggleDrop);
+window.drawDropLayer = (function(orig){ return function(){
+  if (!S.map || !window.L) return orig();
+  const sig = v => [S._dver14 || 0, S.dtop || 0, v === 'streets' ? [...streetShown()].sort().join() : ''].join('|');
+  if (S.map !== S._c14map || S._c14drops !== S.drops || S._c14streets !== S.streets){ S._c14 = {}; S._c14map = S.map; S._c14drops = S.drops; S._c14streets = S.streets; }
+  const C = S._c14, all = lays5();
+  if (S.dlay){ try { S.map.removeLayer(S.dlay); } catch {} S.dlay = null; }
+  Object.values(C).forEach(c => { try { S.map.removeLayer(c.l); } catch {} });
+  const want = ['heat', 'streets', 'pins'].filter(v => all.has(v)), shown = [];
+  for (const v of want){
+    if (!C[v] || C[v].sig !== sig(v)){
+      S.dlays = new Set([v]);              // build just this one layer with the existing code
+      try { orig(); } finally { S.dlays = all; }
+      if (S.dlay){ try { S.map.removeLayer(S.dlay); } catch {} C[v] = { l: S.dlay, sig: sig(v) }; S.dlay = null; } else delete C[v];
+    }
+    if (C[v]) { C[v].l.addTo(S.map); shown.push(C[v].l); }
+  }
+  S.dlay = L.layerGroup(shown).addTo(S.map); S.dlayer = want[0] || 'pins';
+  if (S.walk) S.map.removeLayer(S.dlay);
+  try { dfBtn5(); } catch {}
+}; })(window.drawDropLayer);
+
+// Map filter panel, compact (24 Nov): no Done or Reset footer (tap the map or Filters to close, Clear all resets),
+// map style and street colours as small toggles, shorter rows.
+window.dfHTML5 = function(){ const m = mx5();
+  const nPipe = (S.pipe || []).filter(x => x.lat != null && ['appraisal', 'listed'].includes(x.stage)).length, nSales = S.rsales ? S.rsales.length : null;
+  const byId = new Map((S.drops || []).map(d => [d.id, d]));
+  const nDrop = (S.streets || []).filter(st => { const ids = st.ids || []; return ids.length && ids.every(id => { const x = byId.get(id); return x && isDropped(x); }); }).length;
+  const row = (k, l, n) => `<label class="dfr5"><input type="checkbox" ${m[k] ? 'checked' : ''} onchange="mx5().${k}=this.checked;mxSave5();mapExtras3();dfRefresh5()"><span>${l}${n != null ? ` <em>${n}</em>` : ''}</span></label>`;
+  const col = { most: STREET_TIERS[0][2], likely: STREET_TIERS[1][2], some: STREET_TIERS[2][2], done: '#9aa3ad', rest: '#c9ced4' };
+  return `<div class="dfp5 dfc14" role="dialog" aria-label="Map filters">
+   <div class="dfh5"><b>Map</b><button class="dfx5" onclick="S.mx={...MX5_DEF};mxSave5();layReset5()">Clear all</button><button class="dfq14" onclick="popClose5()" aria-label="Close">${ic2('x', 16)}</button></div>
+   <div class="dft5">${[['pins', 'Pins'], ['heat', 'Heat'], ['streets', 'Streets']].map(([v, l]) => `<button class="${lays5().has(v) ? 'on' : ''}" aria-pressed="${lays5().has(v)}" onclick="layToggle5('${v}')">${l}</button>`).join('')}</div>
+   ${lays5().has('streets') ? `<div class="dtr5">${STREET_KEYS.map(k => `<button class="${streetShown().has(k) ? 'on' : ''}" aria-pressed="${streetShown().has(k)}" onclick="toggleTier('${k}');dfRefresh5()"><i style="background:${col[k]}"></i>${STREET_LABELS[k]}</button>`).join('')}</div>` : ''}
+   <div class="dfb5x">${row('pipe', 'Our appraisals and listings', nPipe)}${row('sales', 'Recent sales', nSales)}${row('dropped', 'Dropped dates', nDrop)}</div></div>`; };
+
+// Best streets list (24 Nov): rank, street, suburb and letterboxes, with a plain Dropped button.
+window.drawBest = function(){
+  const el = document.getElementById('best'); if (!el) return;
+  const gs = dropGroups(S.dgroup).slice(0, 12); S._best = gs;
+  el.innerHTML = gs.length ? gs.map((g, i) => { const [st, ...rest] = String(g.k).split(', '), sub = rest.join(', '), n = g.ids.length;
+    return `<div class="bs14"><button class="bsm14" onclick="zoomBest(${i})" aria-label="Show ${esc(g.k)} on the map"><span class="bsn14">${i + 1}</span><span class="bst14"><b>${esc(st)}</b><em>${sub ? esc(sub) + ', ' : ''}${n} letterbox${n === 1 ? '' : 'es'}</em></span></button>
+      <button class="bsd14" onclick="toggleDrop(S._best[${i}].ids,false)" aria-label="Mark ${esc(g.k)} dropped">${ic2('check', 16)}<span>Dropped</span></button></div>`; }).join('')
+    : `<p class="emptyline">Everything has been dropped in the last ${DROP_DAYS} days.</p>`; };
+
+// Tapping a street in the list (24 Nov): zoom to it and light it up, a thick blue line along the street
+// with a white edge so it stands out on any map, plus a dot on every letterbox still to drop. It stays until another
+// street is tapped or the map is tapped.
+window.zoomBest = function(i){ const g = (S._best || [])[i]; if (!S.map || !g) return;
+  if (S.hi14){ try { S.map.removeLayer(S.hi14); } catch {} S.hi14 = null; }
+  const ls = [], paths = (S.streets || []).filter(st => `${st.street}, ${st.suburb}` === g.k).flatMap(st => st.paths || []).map(p => p.map(([x, y]) => [y, x]));
+  paths.forEach(p => ls.push(L.polyline(p, { color: '#fff', weight: 14, opacity: .9, lineCap: 'round', lineJoin: 'round', interactive: false })));
+  paths.forEach(p => ls.push(L.polyline(p, { color: '#2563eb', weight: 8, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false })));
+  (g.pts || []).forEach(pt => ls.push(L.circleMarker(pt, { radius: 5, weight: 2, color: '#fff', fillColor: '#2563eb', fillOpacity: 1, interactive: false })));
+  S.hi14 = L.layerGroup(ls).addTo(S.map);
+  const b = L.latLngBounds([...paths.flat(), ...(g.pts || [])]);
+  if (b.isValid()) S.map.flyToBounds(b, { padding: [60, 60], maxZoom: 17, duration: .6 });
+  if (!S.hi14on){ S.hi14on = 1; S.map.on('click', () => { if (S.hi14){ S.map.removeLayer(S.hi14); S.hi14 = null; document.querySelectorAll('.bs14.on').forEach(x => x.classList.remove('on')); } }); }
+  document.querySelectorAll('.bs14').forEach((x, j) => x.classList.toggle('on', j === i));
+  if (innerWidth < 900) scrollTo({ top: 0, behavior: 'smooth' }); };
+// Leaflet name off as soon as the map library loads, before any map is made
+window.loadLeaflet = (function(o){ return function(...a){ return Promise.resolve(o.apply(this, a)).then(r => { try { if (!L.__p14){ L.__p14 = 1; L.Map.addInitHook(function(){ this.attributionControl && this.attributionControl.setPrefix(false); }); } if (S.map && S.map.attributionControl) S.map.attributionControl.setPrefix(false); } catch {} return r; }); }; })(window.loadLeaflet);
