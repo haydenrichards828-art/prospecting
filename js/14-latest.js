@@ -236,3 +236,21 @@ function pinStyle14(g){ try { g.eachLayer(function st(m){ if (m.eachLayer) retur
 // Pins grow as you zoom in: walk into the grouped layers too
 window.resizePins = function(){ if (!S.dlay || !S.dlay.eachLayer) return; S.dlay.eachLayer(function rz(m){ if (m.eachLayer) return m.eachLayer(rz); if (m.setRadius && m.options.base != null) m.setRadius(pinR(m.options.base)); }); };
 window.drawDropLayer = (function(o){ return function(...a){ const r = o.apply(this, a); if (S._c14 && S._c14.pins && !S._c14.pins._st14){ pinStyle14(S._c14.pins.l); S._c14.pins._st14 = 1; } return r; }; })(window.drawDropLayer);
+
+// Plan a walk lives with the list (24 Nov), next to Streets and Suburbs. Tapping it swaps the list for the suburbs
+// to walk; picking one draws the walk and brings the list back. While a walk is showing, the button becomes Clear walk.
+function walkBtn14(){ const top = document.querySelector('.dside > .dsh5') || document.querySelector('.dside > .top'); if (!top) return;
+  let b = top.querySelector('.wk14'); if (!b){ top.insertAdjacentHTML('beforeend', `<button class="wk14" onclick="walkTap14()"></button>`); b = top.querySelector('.wk14'); }
+  const open = !!document.querySelector('.wkl14');
+  b.innerHTML = S.walk ? `${ic2('x', 15)}<span>Clear walk</span>` : `${ic2('pin', 15)}<span>Plan a walk</span>`;
+  b.classList.toggle('on', open || !!S.walk); b.setAttribute('aria-expanded', open); }
+function walkTap14(){ if (S.walk){ walkClear3(); walkBtn14(); return; } const box = document.getElementById('best'); if (!box) return;
+  if (document.querySelector('.wkl14')){ drawBest(); return; }
+  const subs = walkSubs3().slice(0, 12);
+  box.innerHTML = `<div class="wkl14"><div class="wkh14"><b>Pick a suburb to walk</b><button onclick="drawBest()">Cancel</button></div><p>About an hour, the best 8 streets in a loop.</p>
+    ${subs.map(o => `<button class="wkr14" data-s="${esc(o.sub)}" onclick="walkGo5(this.dataset.s);drawBest()"><span>${esc(o.sub)}</span><em>${Math.min(8, o.n)} streets</em>${ic2('chev', 14)}</button>`).join('') || '<p>No streets to walk yet</p>'}</div>`;
+  walkBtn14(); }
+window.drawBest = (function(o){ return function(...a){ const r = o.apply(this, a); walkBtn14(); return r; }; })(window.drawBest);
+window.walkClear3 = (function(o){ return function(...a){ const r = o.apply(this, a); setTimeout(walkBtn14, 0); return r; }; })(window.walkClear3);
+window.walk3 = (function(o){ return async function(...a){ const r = await o.apply(this, a); setTimeout(walkBtn14, 0); return r; }; })(window.walk3);
+window.dfBtn5 = (function(o){ return function(...a){ const r = o.apply(this, a); try { walkBtn14(); } catch {} return r; }; })(window.dfBtn5);

@@ -1824,3 +1824,19 @@ header.top2 .fqb2,.ph2 .fqb2{gap:8px!important;padding:0 14px!important;font-siz
 body.h-ltab.h-lsheet .ltab3.l15 .lt3{grid-template-columns:minmax(0,1fr) 120px!important}
 body.h-ltab.h-lsheet .ltab3.l15 .ab15{display:none}
 body.h-ltab.h-lsheet .ltab3.l15 .lt3>:nth-child(2){display:none!important}
+/* Plan a walk beside the Streets / Suburbs tabs */
+#dmap .wkb5{display:none!important}
+.dside>.top,.dside>.dsh5{display:flex;align-items:center;gap:8px}
+.dside>.top .seg,.dside>.dsh5 .seg,.dside>.dsh5>:first-child{flex:1;min-width:0}
+.wk14{flex:none;display:inline-flex;align-items:center;gap:7px;height:40px;min-height:0!important;padding:0 14px!important;font-size:14px!important;font-weight:600;border-radius:4px!important;background:#1d222a!important;border:1px solid #303845!important;color:#e6e9ee!important;white-space:nowrap}
+.wk14:hover{background:#262c35!important}
+.wk14.on{background:#162544!important;border-color:#2563eb!important;color:#93c0ff!important}
+.wkl14{padding:6px 4px 12px}
+.wkh14{display:flex;align-items:center;justify-content:space-between;padding:6px 4px 2px}
+.wkh14 b{font-size:15px;color:#f2f4f7}
+.wkh14 button{min-height:32px!important;height:32px;padding:0 10px!important;background:none!important;border:0!important;color:#93c0ff!important;font-size:14px!important}
+.wkl14>p{margin:2px 4px 10px;font-size:13px;color:#8b94a1}
+.wkr14{width:100%;display:flex;align-items:center;gap:10px;min-height:48px!important;padding:0 10px!important;background:none!important;border:0!important;border-bottom:1px solid #262c35!important;border-radius:0!important;color:#e6e9ee!important;text-align:left}
+.wkr14:hover{background:#ffffff08!important}
+.wkr14 span{flex:1;font-size:15px;font-weight:600}.wkr14 em{font-style:normal;font-size:13px;color:#8b94a1}.wkr14 svg{color:#6b7480}
+@media (max-width:899px){ .wk14 span{display:none} .wk14{width:40px;padding:0!important;justify-content:center} }
