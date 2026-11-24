@@ -1840,3 +1840,28 @@ body.h-ltab.h-lsheet .ltab3.l15 .lt3>:nth-child(2){display:none!important}
 .wkr14:hover{background:#ffffff08!important}
 .wkr14 span{flex:1;font-size:15px;font-weight:600}.wkr14 em{font-style:normal;font-size:13px;color:#8b94a1}.wkr14 svg{color:#6b7480}
 @media (max-width:899px){ .wk14 span{display:none} .wk14{width:40px;padding:0!important;justify-content:center} }
+/* Card drop checklist (24 Nov) */
+.dl16{max-width:820px;padding:4px 0 40px}
+.dsub16>h3,.dsub16>summary{display:flex;align-items:baseline;gap:10px;margin:22px 0 8px;font-size:18px;list-style:none;cursor:pointer}
+.dsub16>h3 b,.dsub16>summary b{color:#f2f4f7}.dsub16>h3 span,.dsub16>summary span{font-size:13px;font-weight:500;color:#8b94a1}
+.ds16{background:#171b21;border:1px solid #262c35;border-radius:6px;margin-bottom:10px;overflow:hidden}
+.dsh16{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #262c35}
+.dsh16 b{font-size:15px;color:#f2f4f7}.dsh16 span{flex:1;font-size:13px;color:#8b94a1}
+.dsh16 button{min-height:32px!important;height:32px;padding:0 10px!important;background:none!important;border:1px solid #303845!important;border-radius:4px!important;color:#c9d1db!important;font-size:13px!important}
+.dsh16 button:hover{background:#262c35!important}
+.dr16{width:100%;display:flex;align-items:center;gap:12px;min-height:46px!important;padding:6px 14px!important;background:none!important;border:0!important;border-top:1px solid #20252d!important;border-radius:0!important;text-align:left;color:inherit!important}
+.dr16:first-of-type{border-top:0!important}
+.dr16:hover{background:#ffffff06!important}
+.dc16{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid #4b5565;display:grid;place-items:center;color:#fff}
+.dr16 b{flex:none;min-width:58px;font-size:15px;color:#f2f4f7;font-variant-numeric:tabular-nums}
+.dx16{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
+.dw16{font-size:14px;color:#a3acb9}
+.dg16{font-style:normal;font-size:12px;font-weight:600;padding:2px 7px;border-radius:4px;background:#13301f;color:#7ee2a8}
+.dr16.on .dc16{background:#16a34a;border-color:#16a34a}
+.dr16.on b{color:#6b7480;text-decoration:line-through}
+.dr16.on .dx16{opacity:.45}
+@media (max-width:899px){ .dl16{padding:0 0 100px} .dr16{min-height:50px!important} }
+@media print{ .ds16{break-inside:avoid;border-color:#ccc;background:#fff} .dr16 b,.dsh16 b{color:#000} }
+.dr16{justify-content:flex-start!important}
+.dl16{padding:4px clamp(16px,2vw,28px) 40px;margin:0}
+.dsub16:first-child>h3{margin-top:12px}

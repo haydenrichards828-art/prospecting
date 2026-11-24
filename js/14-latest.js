@@ -254,3 +254,23 @@ window.drawBest = (function(o){ return function(...a){ const r = o.apply(this, a
 window.walkClear3 = (function(o){ return function(...a){ const r = o.apply(this, a); setTimeout(walkBtn14, 0); return r; }; })(window.walkClear3);
 window.walk3 = (function(o){ return async function(...a){ const r = await o.apply(this, a); setTimeout(walkBtn14, 0); return r; }; })(window.walk3);
 window.dfBtn5 = (function(o){ return function(...a){ const r = o.apply(this, a); try { walkBtn14(); } catch {} return r; }; })(window.dfBtn5);
+
+// Card drop list (24 Nov): a checklist for walking. Each house is a row with a tick circle; tap the row to tick it.
+// The reason is split into how long they've owned it and a small tag ("Prime selling window"). Each street says how
+// many are left and has a quiet "Tick all". Dropped houses sink to the bottom of their street, struck through.
+window.dropListHTML = function(){
+  const bySub = new Map();
+  for (const x of dropRows()){ const s = x.suburb || 'Unknown', st = x.street || 'Unknown'; if (!bySub.has(s)) bySub.set(s, new Map()); const m = bySub.get(s); if (!m.has(st)) m.set(st, []); m.get(st).push(x); }
+  const num = x => parseInt(String(x.house_number || '').replace(/^.*\//, '')) || 0, unitN = x => parseInt(x.unit) || 0;
+  const big = dropRows().length > 1500;
+  const why = x => { const r = String((x.reasons || [])[0] || ''); const m = r.match(/^(.*?)\s*\(([^)]+)\)\s*$/); const main = (m ? m[1] : r).replace(/\byrs\b/, 'years').replace(/\byr\b/, 'year'); const tag = m ? m[2] : '';
+    return `${main ? `<span class="dw16">${esc(main)}</span>` : ''}${tag ? `<em class="dg16">${esc(tag[0].toUpperCase() + tag.slice(1))}</em>` : ''}`; };
+  return `<div class="dl16">` + [...bySub.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([sub, m]) => {
+    const tot = [...m.values()].reduce((a, xs) => a + xs.length, 0), left = [...m.values()].reduce((a, xs) => a + xs.filter(x => !isDropped(x)).length, 0);
+    const streets = [...m.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([st, xs]) => {
+      xs.sort((a, b) => (isDropped(a) - isDropped(b)) || num(a) - num(b) || unitN(a) - unitN(b));
+      const ids = xs.filter(x => !isDropped(x)).map(x => x.id);
+      return `<section class="ds16"><div class="dsh16"><b>${esc(st)}</b><span>${ids.length ? `${ids.length} to drop` : 'All dropped'}</span>${ids.length > 1 ? `<button class="noprint" onclick="toggleDrop([${ids}],false)">Tick all</button>` : ''}</div>` +
+        xs.map(x => { const d = isDropped(x), n = [x.unit && x.unit + '/', x.house_number].filter(Boolean).join('') || '?';
+          return `<button class="dr16${d ? ' on' : ''}" onclick="toggleDrop([${x.id}],${d})" aria-pressed="${d}" aria-label="${esc(n + ' ' + st)}${d ? ', dropped, tap to undo' : ', tap when dropped'}"><i class="dc16">${d ? ic2('check', 14) : ''}</i><b>${esc(n)}</b><span class="dx16">${why(x)}</span></button>`; }).join('') + `</section>`; }).join('');
+    return big ? `<details class="dsub16"><summary><b>${esc(sub)}</b><span>${left} of ${tot} to drop</span></summary>${streets}</details>` : `<div class="dsub16"><h3><b>${esc(sub)}</b><span>${left} of ${tot} to drop</span></h3>${streets}</div>`; }).join('') + `</div>`; };

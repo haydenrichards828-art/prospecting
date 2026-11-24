@@ -7,7 +7,7 @@ function dropsTidy5(){ try{
     if(!document.querySelector('#main .l5mark')) document.getElementById('main').insertAdjacentHTML('afterbegin','<i class="l5mark" hidden></i>'); }
   if(!document.querySelector('.dsplit')){ // list view: print and download go in the top bar, nothing else is needed here
     top.querySelector('h1.pt2')?.remove(); top.querySelector('.dfb2')?.remove(); document.querySelectorAll('#main > .dflt2').forEach(x=>x.remove());
-    if(head&&innerWidth>=900){ const srch=head.querySelector('.tsearch'); top.querySelectorAll('.iconbtn').forEach(b=>{ b.classList.add('lift5','dic5'); srch?srch.before(b):head.appendChild(b); }); }
+    if(head&&innerWidth>=900){ const srch=head.querySelector('.tsearch'); if(top.querySelector('.iconbtn')) head.querySelectorAll('.dic5').forEach(x=>x.remove()); top.querySelectorAll('.iconbtn').forEach(b=>{ b.classList.add('lift5','dic5'); srch?srch.before(b):head.appendChild(b); }); }
     if(!top.querySelector('button,.seg')) top.remove();
     return; }
   if(!top.querySelector('.dfb2')) return; top.classList.add('dtb5');
