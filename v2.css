@@ -1954,3 +1954,5 @@ body.h-ltab.h-lsheet .ltab3.l15 .lt3>:nth-child(2){display:none!important}
 .ad16 .fl2>span{display:block}
 @media (max-width:520px){ .gr16.as16{grid-template-columns:1fr} }
 .ad16 .ch16{padding:0!important;margin:0!important}
+.sw2 .wa18{background:#0f2e22!important;border-color:#1f6b4a!important;color:#b7f0d2!important}
+.sw2 .wa18 svg{color:#25d366}

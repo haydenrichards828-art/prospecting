@@ -120,3 +120,20 @@ window.leadMove6 = (function(o){ return async function(id, stage){ const l = (S.
   set('#ap_name', l.name); set('#ap_phone', l.phone); set('#ap_addr', [p.house_number, p.street].filter(Boolean).join(' ')); set('#ap_sub', p.suburb);
   kind16(first); $('#ap_go').textContent = first === 'listed' ? 'Move to Listings' : 'Move to Appraisals'; document.querySelectorAll('#ad_src button').forEach(b => b.classList.toggle('on', b.textContent === (SOURCES[S.ad16.src] || ''))); }; })(window.leadMove6);
 })();
+
+// ---------- WhatsApp beside Text and Email in the message sheet (24 Nov) ----------
+// Opens WhatsApp (phone app, desktop app or web) with the message typed in; she presses send. Works on iPhone, Android and computers.
+(function(){
+const intl = p => { let d = String(p || '').replace(/[^\d+]/g, ''); if (d.startsWith('+')) return d.slice(1); if (d.startsWith('0')) return '61' + d.slice(1); return d; };
+window.waLink = (phone, body) => `https://wa.me/${intl(phone)}?text=${encodeURIComponent(body)}`;
+window.sendInfo = (function(o){ return async function(...a){ const r = await o.apply(this, a); const w = S.sw, row = document.querySelector('#sheet .sw2');
+  if (w && w.phone && row && !row.querySelector('.wa18')){ const b = document.createElement('button'); b.className = 'b2 wa18'; b.innerHTML = `${ic2('msg', 18)}WhatsApp`; b.onclick = () => swSend('whatsapp');
+    const copy = [...row.children].find(x => /Copy/.test(x.textContent)); row.insertBefore(b, copy || null); }
+  return r; }; })(window.sendInfo);
+window.swSend = (function(o){ return async function(ch){ if (ch !== 'whatsapp') return o.apply(this, arguments);
+  const w = S.sw, body = ($('#sw_body')?.value || '').trim(); if (!body) return toast('Write a message first');
+  if (!callingAllowed()) return toast('Outside calling hours, so messages wait too. Copy it and send later.');
+  openUrl(waLink(w.phone, body));
+  api2('log_send', { channel: 'whatsapp', kind: 'info', body, person_name: w.name, phone: w.phone, email: w.email, lead_id: w.lead_id, property_id: w.property_id }).catch(() => {});
+  closeOv(); toast('Opened WhatsApp. It’s noted on their record.'); }; })(window.swSend);
+})();
