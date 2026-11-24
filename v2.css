@@ -1923,3 +1923,34 @@ body.h-ltab.h-lsheet .ltab3.l15 .lt3>:nth-child(2){display:none!important}
 /* House photos fade in whole once every tile is there */
 .am16 img{transition:opacity .14s ease-out}
 .am16.ld16 img{opacity:0}
+/* One Add a person form (24 Nov) */
+.ad16{display:flex;flex-direction:column;gap:14px}
+.kd16{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:4px;background:#14181e;border:1px solid #262c35;border-radius:6px}
+.kd16 button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:56px!important;padding:6px 2px!important;border:0!important;border-radius:4px!important;background:none!important;color:#a3acb9!important;font-size:13px!important;font-weight:600}
+.kd16 button:hover{background:#1d222a!important;color:#e6e9ee!important}
+.kd16 button.on{background:#162544!important;color:#fff!important;box-shadow:inset 0 0 0 1px #2563eb}
+.kd16 button.on svg{color:#93c0ff}
+.kh16{margin:-6px 2px 0;font-size:13px;line-height:18px;color:#8b94a1}
+.gr16{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gr16 .sp16{grid-column:1/-1}.gr16 .sp16:empty{display:none}
+.aw16{position:relative}
+.op16{font-style:normal;font-weight:400;color:#6b7480;margin-left:4px}
+.ch16{display:grid;gap:6px}
+.ch16.g4{grid-template-columns:repeat(4,1fr)}
+.ch16.wrap{display:flex;flex-wrap:wrap}
+.ch16:empty{display:none}
+.ch16 button{min-height:40px!important;height:40px;padding:0 12px!important;border-radius:4px!important;background:#1a1f26!important;border:1px solid #2c333d!important;color:#c9d1db!important;font-size:14px!important;font-weight:600}
+.ch16 button:hover{background:#222831!important}
+.ch16 button.on{background:#162544!important;border-color:#2563eb!important;color:#fff!important}
+.pd16{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:13px;font-weight:600;color:#8b94a1}
+.pd16 input{height:40px;border-radius:4px;padding:0 10px;font-size:14px;max-width:190px}
+.pd16.on span{color:#93c0ff}
+.ad16 .fl2 input,.ad16 .fl2 textarea{border-radius:4px!important}
+.ad16 #ap_go{height:48px;font-size:16px!important;border-radius:4px!important}
+@media (max-width:520px){ .gr16{grid-template-columns:1fr} .kd16 button{font-size:12px!important;min-height:52px!important} .ch16.g4{grid-template-columns:repeat(2,1fr)} }
+.gr16.as16{grid-template-columns:2fr 1fr;align-items:start}
+#ad_more{display:flex;flex-direction:column;gap:14px}
+#ad_more:empty{display:none}
+.ad16 .fl2>span{display:block}
+@media (max-width:520px){ .gr16.as16{grid-template-columns:1fr} }
+.ad16 .ch16{padding:0!important;margin:0!important}
