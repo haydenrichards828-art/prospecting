@@ -6,6 +6,7 @@ import postgres from "npm:postgres@3.4.5";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { "Content-Type": "application/json" } });
+const DIGNAM = `'{"agency_id":"00000000-0000-4000-8000-000000000001"}'::jsonb`;
 // backup entries that are a slice of a table rather than a whole table
 const VIRTUAL: Record<string, string> = {
   properties_contacts: "select id, owner_name, phone, owner2_name, phone2, contact_as_of, contact_locked, crm_flag from public.properties",
@@ -35,7 +36,8 @@ Deno.serve(async (req) => {
       try {
         if (VIRTUAL[t]) await sql.unsafe(`create table restore_test."${t}" as ${VIRTUAL[t]} limit 0`);
         else await sql.unsafe(`create table restore_test."${t}" (like public."${t}")`);
-        await sql.unsafe(`insert into restore_test."${t}" select * from json_populate_recordset(null::restore_test."${t}", $1::text::json)`, [JSON.stringify(rows)]);
+        // Backups made before 26 Nov have no agency_id, so those rows are given Dignam's (a row's own agency_id always wins)
+        await sql.unsafe(`insert into restore_test."${t}" select * from jsonb_populate_recordset(null::restore_test."${t}", (select coalesce(jsonb_agg(${DIGNAM} || r), '[]'::jsonb) from jsonb_array_elements($1::text::jsonb) r))`, [JSON.stringify(rows)]);
         const [{ n }] = await sql.unsafe(`select count(*)::int n from restore_test."${t}"`);
         // rows in the backup that are exactly the same in the live data today (anything changed since the backup will differ)
         const [{ same }] = await sql.unsafe(`select count(*)::int same from (select md5(to_jsonb(r)::text) h from restore_test."${t}" r intersect all select md5(to_jsonb(l)::text) from ${live}) x`);

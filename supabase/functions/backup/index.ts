@@ -2,6 +2,7 @@
 // Keeps 30 days. Sign in data and secret keys are never included. Started by the nightly_backup schedule with the cron key.
 // 24 Nov: also keeps "no number" skips, Do Not Call Register results, probate notices, AgentBox imports, CRM events,
 // the territory suburb list and suburb spellings, and the Messages settings (never the Mac password).
+// 26 Nov: also keeps the agency accounts tables (agencies, people, roles, suburbs, connections, audit log, each agency's contacts).
 // A restore test (restore-test function) puts the newest file back into a scratch area once a month to prove it works.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import postgres from "npm:postgres@3.4.5";
@@ -10,7 +11,8 @@ const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SE
 const TABLES = ["calls", "leads", "lead_notes", "pipeline", "reminders", "messages", "templates", "settings", "do_not_call", "card_drops",
   "campaigns", "campaign_items", "enquiry_lists", "enquiry_contacts", "referrals", "referral_partners", "crm_notes", "list_feedback",
   "exclusions", "solicitor_contacts", "sends", "work_events", "algo_versions", "contact_roles", "contact_asof", "deceased_phones", "withdrawn_listings", "listings",
-  "nophone_skips", "dncr", "probate_notices", "agentbox_withdrawn", "dignam_rentals", "crm_events", "territory_suburbs", "suburb_alias", "patch_suburbs"];
+  "nophone_skips", "dncr", "probate_notices", "agentbox_withdrawn", "dignam_rentals", "crm_events", "territory_suburbs", "suburb_alias", "patch_suburbs",
+  "agencies", "app_users", "memberships", "agency_suburbs", "agency_integrations", "audit_log", "agency_contacts"];
 const KEEP_DAYS = 30;
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { "Content-Type": "application/json" } });
 

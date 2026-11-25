@@ -10,6 +10,9 @@ CRM notes, list feedback, exclusions, solicitor contacts, list versions, contact
 withdrawn listings, listings, and the owner names and phone numbers on every home.
 Added 24 Nov: "no number" skips, Do Not Call Register results, probate notices, AgentBox withdrawn and Dignam rentals imports,
 CRM events, the territory suburbs and suburb spellings, and the Messages settings (never the Mac address or password).
+Added 26 Nov: the agency accounts tables (agencies, people, roles, suburbs, connections, audit log, and each agency's
+own copy of owner names and numbers). Every row now carries an `agency_id`; Dignam is `00000000-0000-4000-8000-000000000001`.
+Backups made before 26 Nov have no `agency_id`, so a restore gives those rows Dignam's (a row's own value always wins).
 
 ## Getting a copy
 
@@ -33,6 +36,7 @@ The `restore-test` server function (cron key only) takes the newest file, puts e
 (schema `restore_test`), checks each table has the right number of rows, compares the rows with the live data, then
 deletes the scratch area. Nothing live is touched. Result in `run_log` (job `restore_test`).
 First run 24 Nov 2026: 39 tables, every one restored with the right count and matching the live data.
+26 Nov 2026, after the agency accounts change: 46 tables, 51,977 rows, every one restored with the right count.
 A monthly schedule for it (`monthly_restore_test`, 1st of the month about 2:50am) is waiting on approval.
 
 Both backups and the test live in the same Supabase project. If the project itself were lost, so would the backups:
