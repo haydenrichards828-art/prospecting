@@ -39,5 +39,18 @@ First run 24 Nov 2026: 39 tables, every one restored with the right count and ma
 26 Nov 2026, after the agency accounts change: 46 tables, 51,977 rows, every one restored with the right count.
 A monthly schedule for it (`monthly_restore_test`, 1st of the month about 2:50am) is waiting on approval.
 
-Both backups and the test live in the same Supabase project. If the project itself were lost, so would the backups:
-an off site copy (for example a weekly copy to Google Drive or a private GitHub repo) would cover that.
+## Off site copy in Google Drive
+
+The `backup-offsite` server function copies the newest nightly file into a "Prospect backups" folder in Hayden's
+Google Drive every night at about 3am Sydney time (2am in winter; schedule `nightly_backup_offsite`, 16:00 UTC),
+and keeps the last 30 nights there. It uses the `drive.file` permission, so it can only see the folder and files it made.
+Results go to `run_log` (job `backup_offsite`). Until Google is connected each run logs "skipped: Google Drive not connected yet".
+
+Connecting (once): a Google OAuth client (Web application, published "In production" so the connection doesn't
+expire after 7 days) with redirect URI `https://hywtghpfhhvbygunokca.supabase.co/functions/v1/backup-offsite`.
+Its ID and secret go in the Edge Function secrets `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Then open
+`.../backup-offsite?connect=<code>`, where the code is the one time `google_setup_code` row in `app_secrets`
+(ask Claude for a fresh one if it has expired), and allow access. The connection is stored as
+`google_drive_refresh_token` and the setup code is deleted.
+
+The monthly restore test schedule (`monthly_restore_test`) was added 26 Nov.
