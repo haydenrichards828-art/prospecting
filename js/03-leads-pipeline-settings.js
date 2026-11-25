@@ -199,12 +199,20 @@ function setReturn(){ const s=S.setv||{};
    <p class="hint2">Do not call is forever. Open leads and booked call backs stay off until dealt with.</p><button class="b2 pri wide2b" onclick="saveReturn().then(()=>{closeOv();render()})">Save</button>`); }
 function setHealth(){ openSheet2('List health',`<div id="health"><p class="hint2">Checking…</p></div>`); loadHealth(); }
 async function loadHealth(){ const el=$("#health"); if(!el) return;
-  try{ const h=(await api("list_health")).rows||{}; const c=(h.checks||[])[0], rep=h.reports||[], bad=h.rule_breakers_on_list||0;
-    el.innerHTML=`<div class="hb2 ${bad?'bad':''}">${ic2(bad?'warn':'check',22)}<div><b>${bad?`${bad} rule breaker${bad>1?'s':''} on today's list`:'Today\'s list passes every check'}</b><span>${[h.list_size!=null?h.list_size+' people on the list':'',c?c.removed+' taken off this morning':''].filter(Boolean).join(' · ')}</span></div></div>
+  try{ const h=(await api("list_health")).rows||{}; const c=(h.checks||[])[0], rep=h.reports||[], bad=h.rule_breakers_on_list||0, stops=(h.data_checks||[]).filter(x=>x.level==='stop'&&x.n>0).length;
+    el.innerHTML=`<div class="hb2 ${bad||stops?'bad':''}">${ic2(bad||stops?'warn':'check',22)}<div><b>${bad?`${bad} rule breaker${bad>1?'s':''} on today's list`:stops?`${stops} problem${stops>1?'s':''} with today's list, see the data check`:'Today\'s list passes every check'}</b><span>${[h.list_size!=null?h.list_size+' people on the list':'',c?c.removed+' taken off this morning':''].filter(Boolean).join(' · ')}</span></div></div>
      ${(h.safeguards||[]).length?`<div class="sth2">Safeguards</div><div class="g2">${h.safeguards.map(g=>`<div class="r2"><span class="tile" style="--c:${g.ok?'#16a34a':'#d97706'}">${ic2(g.ok?'check':'warn',16,'#fff')}</span><span class="rt2"><b>${esc(g.name)}</b></span><span class="sv2">${Number(g.n).toLocaleString()}</span></div>`).join('')}</div>`:''}
+     ${dataChecks6(h)}
      ${c&&Object.keys(c.rules||{}).length?`<div class="sth2">Taken off this morning</div><div class="g2">${Object.entries(c.rules).map(([k,v])=>`<div class="hr2"><span>${esc(k[0].toUpperCase()+k.slice(1))}</span><b>${v}</b></div>`).join('')}</div>`:''}
      ${rep.length?`<div class="sth2">Problems you reported</div><div class="g2">${rep.slice(0,10).map(r=>`<div class="hr2"><span>${esc(r.address)}<em>${esc((WRONG.find(w=>w[0]===r.kind)||[,r.kind])[1])}${r.note?' · '+esc(r.note):''}</em></span></div>`).join('')}</div>`:''}`;
   }catch(e){ el.innerHTML=`<p class="hint2">${esc(e.message)}</p>`; } }
+// The nightly data check: anything wrong on today's list first, then wrong data elsewhere, then what passed
+function dataChecks6(h){ const all=h.data_checks||[]; if(!all.length) return '';
+  const bad=all.filter(x=>x.n>0&&x.level!=='info'), ok=all.filter(x=>!x.n&&x.level!=='info'), info=all.filter(x=>x.n>0&&x.level==='info');
+  const col={stop:'#dc2626',fix:'#d97706',info:'#64748b'};
+  const row=x=>`<div class="r2 dc6"><span class="tile" style="--c:${col[x.level]}">${ic2(x.level==='info'?'tag':'warn',16,'#fff')}</span><span class="rt2"><b>${esc(x.name)}</b><em>${esc(x.what||'')}</em></span><span class="sv2">${Number(x.n).toLocaleString()}</span></div>`;
+  return `<div class="sth2">Data check${h.data_checked_on?' · '+esc(dayMon(h.data_checked_on)):''}</div><div class="g2">${bad.map(row).join('')}${info.map(row).join('')}
+    <div class="r2 dc6"><span class="tile" style="--c:#16a34a">${ic2('check',16,'#fff')}</span><span class="rt2"><b>${ok.length} other check${ok.length===1?'':'s'} passed</b><em>${esc(ok.map(x=>x.name).join(' · '))}</em></span></div></div>`; }
 function setTemplates(){
   const card=tp=>`<div class="tpl2"><input id="tn${tp.id}" class="tpn2" placeholder="Template name" value="${esc(tp.name)}"><textarea id="tb${tp.id}" rows="${Math.max(3,Math.ceil((tp.body||'').length/(desk2()?70:36))+1)}" placeholder="Hi {first_name}, it's Marlowe from Dignam. … Reply STOP to opt out.">${esc(tp.body)}</textarea>
     <div class="tpr2"><select id="td${tp.id}">${[["now","Send now"],["tomorrow_8am","Tomorrow 8am"],["1w","Next week"]].map(([k,l])=>`<option value="${k}" ${k===tp.default_delay?"selected":""}>${l}</option>`).join("")}</select>

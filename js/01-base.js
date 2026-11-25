@@ -48,7 +48,7 @@ const phList=p=>{ const t=String(p||''); const m=t.match(/(?:\+?61[\s-]?\(?0?\)?
 const fmtOne2=d=>/^0[2378]\d{8}$/.test(d)?d.replace(/^(\d{2})(\d{4})(\d{4})$/,'$1 $2 $3'):d.replace(/^(\d{4})(\d{3})(\d{3})$/,'$1 $2 $3');
 const fmtPh2=p=>phList(p).map(fmtOne2).join(', ');
 const telOf=p=>{ const t=String(p||''); return t.trim().startsWith('+')&&phList(t).length<2?t.replace(/[^\d+]/g,''):(phList(t)[0]||''); };
-const price2=v=>v?(v>=1e6?'$'+(Math.round(v/1e4)/100)+'m':'$'+Math.round(v/1e3)+'k'):'';
+const price2=v=>v?(Math.abs(v)>=999500?'$'+(Math.round(v/1e4)/100)+'m':'$'+Math.round(v/1e3)+'k'):'';
 const yrsSince=d=>{ if(!d) return null; const y=(Date.now()-new Date(d+'T12:00:00Z'))/(365.25*864e5); return y>=0?Math.floor(y):null; };
 const monYear=d=>{ const x=new Date(String(d).slice(0,10)+'T12:00:00Z'); return isNaN(x)?'':MONF[x.getUTCMonth()]+' '+x.getUTCFullYear(); };
 const dayMon=iso=>{ if(!iso) return ''; const s=String(iso); const x=/^\d{4}-\d\d-\d\d$/.test(s)?new Date(s+'T12:00:00Z'):new Date(s); return x.toLocaleDateString('en-AU',{timeZone:/^\d{4}-\d\d-\d\d$/.test(s)?'UTC':'Australia/Sydney',day:'numeric',month:'short'}); };
@@ -60,7 +60,7 @@ const firstName=n=>((people(n)[0]||'').split(' ')[0])||'them';
 const RC={wd:['#d97706','var(--cbT)','tag','Withdrawn'],pb:['#64748b','#cbd5e1','users','Estate'],st:['#0891b2','#a5f3fc','trend','Street sale'],da:['#8b5cf6','#ddd6fe','land','DA lodged'],lh:['#6366f1','#c7d2fe','clock','Long hold'],crm:['#3b82f6','#93c0ff','users','In CRM'],inv:['#0d9488','#5eead4','house','Investor'],cb:['#d97706','var(--cbT)','cal','Call back'],gen:['#475063','var(--t2)','tag','On the list']};
 function reasonOf(r){
   const sig=r.signals||[], rs=r.reasons||[];
-  const own=rs.find(x=>/^Owned /.test(x)), yrs=own&&(own.match(/Owned (\d+)/)||[])[1];
+  const own=rs.find(x=>/^Owned \d+ yrs/.test(x)), yrs=own&&(own.match(/^Owned (\d+) yrs/)||[])[1], nosale=rs.find(x=>/^No sale on record|^Owned 35\+/.test(x));
   const nb=rs.find(x=>/^Neighbour at /.test(x)), wdr=rs.find(x=>/^Listing withdrawn|^Withdrawn/.test(x));
   const wd=(r.withdrawn||[]).find(w=>w.kind!=='rental_withdrawn');
   const ownLine=yrs?`Owned ${yrs} years`:'', ss=r.street_sales_12m?`${r.street_sales_12m} street sale${r.street_sales_12m>1?'s':''} this year`:'';
@@ -73,6 +73,7 @@ function reasonOf(r){
   if(sig.includes('da_major')) return mk('da','Subdivision DA in the last year',ownLine||ss||'Plans lodged with council','Subdivision DA','Strong');
   if(S.type==='landlord'||rs.includes('Investment property')) return mk('inv','Investment property',[ownLine,ss].filter(Boolean).join(', ')||'Owner does not live here','Investor','Medium');
   if(yrs) return mk('lh',`Owned for ${yrs} years`,/prime/.test(own)?'In the prime selling window':(ss||'Long time owner'),ownLine,'Medium');
+  if(nosale) return mk('lh','No sale on record since 1990',ss||'Government sale records go back to 1990','No sale since 1990','Medium');
   return mk('gen',rs[0]||'On today\'s list',ss||'','','Light');
 }
 function whyRows(r){
@@ -82,6 +83,7 @@ function whyRows(r){
     else if(/^Listing withdrawn|^Withdrawn/.test(x)) out.push(['tag',x.replace(/^Listing withdrawn or expired/,'Withdrawn').replace(/, not sold since/,', not sold'),'Strong']);
     else if(/^Neighbour at/.test(x)) out.push(['trend',x.replace(/^Neighbour at /,'Sold nearby: '),'Strong']);
     else if(/DA/.test(x)) out.push(['land',x,'Strong']);
+    else if(/^No sale on record|^Owned 35\+/.test(x)) out.push(['clock','No sale on record since 1990','Medium']);
     else if(/^Owned/.test(x)) out.push(['clock',x.replace(/ yrs/,' years').replace(/\s*\(prime selling window\)/,', prime window').replace(/\s*\([^)]*\)$/,''),'Medium']);
     else if(/CRM/.test(x)) return;
     else if(/Investment/.test(x)) out.push(['house',x,'Light']);
@@ -98,9 +100,10 @@ function histRows(r){
   // Each sale shows how much it rose from the one before and how long that owner held it; the latest shows who sold it when we know
   const ag=r.last_agency&&sales[0]&&r.agency_sale_date&&Math.abs(new Date(r.agency_sale_date)-new Date(sales[0].d))<=120*864e5;
   sales.forEach((s,i)=>{ const pv=sales[i+1]; let gain='';
-    if(pv&&s.price&&pv.price){ const yrs=(new Date(s.d)-new Date(pv.d))/31557600000, df=s.price-pv.price, pc=Math.round(df/pv.price*100);
+    if(pv&&s.price&&pv.price&&!s.bulk&&!pv.bulk){ const yrs=(new Date(s.d)-new Date(pv.d))/31557600000, df=s.price-pv.price, pc=Math.round(df/pv.price*100);
       gain=`${df>=0?'+':'−'}${price2(Math.abs(df))} (${df>=0?'+':''}${pc}%) over ${yrs<1?Math.max(1,Math.round(yrs*12))+' months':(Math.round(yrs*10)/10)+' yrs'}`; }
-    ev.push({d:s.d,lab:i===0?'Bought':'Sold',val:price2(s.price),col:'#9ba4b2',year:true,gain,agency:i===0&&ag?[r.last_agency,r.last_agent].filter(Boolean).join(', '):''}); });
+    if(s.bulk) gain='';
+    ev.push({d:s.d,lab:i===0?'Bought':'Sold',val:s.bulk?'Sold with other homes':price2(s.price),col:'#9ba4b2',year:true,gain,agency:i===0&&ag?[r.last_agency,r.last_agent].filter(Boolean).join(', '):''}); });
   if(!sales.length&&r.last_sale_date) ev.push({d:r.last_sale_date,lab:'Bought',val:price2(r.last_sale_price),col:'#9ba4b2',year:true});
   (r.withdrawn||[]).filter(w=>w.kind!=='rental_withdrawn').forEach(w=>ev.push({d:w.d,lab:/expir/.test(w.kind)?'Expired':'Withdrawn',val:'Not sold',col:'#f0a92b'}));
   ev.sort((a,b)=>String(a.d).localeCompare(String(b.d)));

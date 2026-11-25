@@ -186,8 +186,14 @@ async function whoPhone(from: string): Promise<{ guid: string; lead: number | nu
   }
   // a saved contact name (WhatsApp on Android shows names, not numbers)
   const n = from.toLowerCase().replace(/\s+/g, " ").trim(); if (n.length < 3) return null;
+  // Only an exact name, and only when one lead has it. "John Smith" never matches "John Smithers", and two leads
+  // with the same name match neither, so a message is never put against the wrong person.
   const { data: ld } = await db.from("leads").select("id,name,phone").not("name", "is", null);
-  const l = (ld ?? []).find((x) => { const m = String(x.name).toLowerCase().replace(/\s+/g, " ").trim(); return m === n || (m.split(" ").length > 1 && n.includes(m)) || (n.split(" ").length > 1 && m.includes(n)); });
+  const clean = (t: string) => t.toLowerCase().normalize("NFKD").replace(/[^\p{L}\p{N} ]/gu, " ").replace(/\s+/g, " ").trim();
+  // a lead can hold two people ("Jasmin Tarasin & Ben Wollen"): each full name counts on its own
+  const names = (x: { name: unknown }) => [String(x.name), ...String(x.name).split(/\s*(?:&|\/|;|\band\b)\s*/i)].map(clean).filter((t) => t.split(" ").length > 1);
+  const nn = clean(n), hits = nn.split(" ").length > 1 ? (ld ?? []).filter((x) => names(x).includes(nn)) : [];
+  const l = hits.length === 1 ? hits[0] : undefined;
   if (l) { const pd = digits(l.phone); return { guid: pd.length >= 8 ? "ph:" + pd : "ph:n:" + n, lead: l.id, name: l.name, phone: pd || null }; }
   const { data: had } = await db.from("ib_chats").select("guid,name").eq("guid", "ph:n:" + n).maybeSingle();
   return had ? { guid: had.guid, lead: null, name: had.name ?? from, phone: null } : null;

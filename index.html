@@ -204,10 +204,10 @@ body.srch header nav{display:none}body.srch .hsearch{max-width:none;flex:1 1 aut
 @media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 body.h-dialer .wrap{padding-bottom:16px!important}
 </style>
-<link rel="preload" href="js/01-base.js?v=269" as="script">
-<link rel="preload" href="js/02-calls.js?v=269" as="script">
-<link rel="preload" href="js/03-leads-pipeline-settings.js?v=269" as="script">
-<link rel="stylesheet" href="v2.css?v=269">
+<link rel="preload" href="js/01-base.js?v=270" as="script">
+<link rel="preload" href="js/02-calls.js?v=270" as="script">
+<link rel="preload" href="js/03-leads-pipeline-settings.js?v=270" as="script">
+<link rel="stylesheet" href="v2.css?v=270">
 </head>
 <body>
 <div id="app"></div>
@@ -296,7 +296,7 @@ function demoApi(action, body){
     case "settings": Object.assign(D.settings, body.values||{}); return {ok:true};
     case "regenerate": return {rows:800};
     case "report_issue": return {ok:true};
-    case "list_health": return {rows:{checks:[{date:"2026-11-18",removed:5,flagged:209,rules:{"bought under 12 months ago":5,"several people on one record":195,"bought under 2 years ago":14}}],reports:[]}};
+    case "list_health": return {rows:{checks:[{date:"2026-11-18",removed:5,flagged:209,rules:{"bought under 12 months ago":5,"several people on one record":195,"bought under 2 years ago":14}}],reports:[],data_checked_on:"2026-11-18",data_checks:[{name:"Numbers on today's list not checked against the Do Not Call Register in the last 30 days",level:"stop",n:1000,what:"the law allows calling a number only within 30 days of checking it"},{name:"Lead linked to a different home than its address",level:"fix",n:1,what:"the lead shows facts about the wrong home"},{name:"Sales where one price covers several homes",level:"info",n:412,what:"shown as \"Sold with other homes\", never as this home's price"},{name:"Same number twice on today's list",level:"stop",n:0,what:""},{name:"Same home stored twice",level:"fix",n:0,what:""}]}};
     case "import": return {imported:(body.rows||[]).length};
     default: return {ok:true};
   }
@@ -1626,26 +1626,26 @@ window.__boot=()=>{ render(); };
 if (!DEMO && "serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 <!-- The new design, in load order. Each file wraps functions from the ones before it, so the order matters. -->
-<script src="js/01-base.js?v=269"></script>
-<script src="js/02-calls.js?v=269"></script>
-<script src="js/03-leads-pipeline-settings.js?v=269"></script>
-<script src="js/04-people-openhomes.js?v=269"></script>
-<script src="js/05-messages-sidebar.js?v=269"></script>
-<script src="js/06-fixes-20nov.js?v=269"></script>
-<script src="js/07-crm-callsheets.js?v=269"></script>
-<script src="js/08-card-drops.js?v=269"></script>
-<script src="js/09-tracking-instant.js?v=269"></script>
-<script src="js/10-feel.js?v=269"></script>
-<script src="js/11-tracking-review.js?v=269"></script>
-<script src="js/12-needs-number-rail.js?v=269"></script>
-<script src="js/13-stats.js?v=269"></script>
-<script src="js/14-latest.js?v=269"></script>
-<script src="js/15-inbox.js?v=269"></script>
-<script src="js/16-glmap.js?v=269"></script>
-<script src="js/17-photos.js?v=269"></script>
-<script src="js/18-add-person.js?v=269"></script>
-<script src="js/19-phone-link.js?v=269"></script>
-<script src="js/20-map-speed.js?v=269"></script>
+<script src="js/01-base.js?v=270"></script>
+<script src="js/02-calls.js?v=270"></script>
+<script src="js/03-leads-pipeline-settings.js?v=270"></script>
+<script src="js/04-people-openhomes.js?v=270"></script>
+<script src="js/05-messages-sidebar.js?v=270"></script>
+<script src="js/06-fixes-20nov.js?v=270"></script>
+<script src="js/07-crm-callsheets.js?v=270"></script>
+<script src="js/08-card-drops.js?v=270"></script>
+<script src="js/09-tracking-instant.js?v=270"></script>
+<script src="js/10-feel.js?v=270"></script>
+<script src="js/11-tracking-review.js?v=270"></script>
+<script src="js/12-needs-number-rail.js?v=270"></script>
+<script src="js/13-stats.js?v=270"></script>
+<script src="js/14-latest.js?v=270"></script>
+<script src="js/15-inbox.js?v=270"></script>
+<script src="js/16-glmap.js?v=270"></script>
+<script src="js/17-photos.js?v=270"></script>
+<script src="js/18-add-person.js?v=270"></script>
+<script src="js/19-phone-link.js?v=270"></script>
+<script src="js/20-map-speed.js?v=270"></script>
 <script>
 // If one of the app's files failed to load (a dropped connection, or GitHub mid update), reload once instead of
 // showing a half working screen. A second failure in a row is left alone so it can't loop.
