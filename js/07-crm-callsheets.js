@@ -197,7 +197,7 @@ async function areaSheet(pid){
   if(!window.L&&$('#ar3m')) $('#ar3m').innerHTML=`<div class="empty" style="padding:40px 0">The map couldn't load. The count below still works.</div>`;
   if(window.L&&$('#ar3m')){ $('#ar3m').innerHTML='';
     const m=L.map('ar3m',{zoomControl:false,attributionControl:true,preferCanvas:true}).setView([d.lat,d.lng],15);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(m);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(m);
     S.area3.map=m;
     S.area3.dots=d.pts.map(p=>L.circleMarker([p[0],p[1]],{radius:4,weight:0,fillOpacity:.9}).addTo(m));
     S.area3.circle=L.circle([d.lat,d.lng],{radius:AREA_DEF,color:'#5b9bff',weight:2,fillColor:'#2563eb',fillOpacity:.1}).addTo(m);

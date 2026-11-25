@@ -47,7 +47,7 @@ window.record=(function(orig){ return async function(id,o,cb){ const r=await ori
   const rules = [['h-ltab', '.ltab3'], ['h-lsheet', '#ov.show #sheet.lsheet'], ['h-dsplit', '#main.drops2 .dsplit'], ['h-setw', '#main .setw2'],
     ['h-dialer', '.wrap .dialer'], ['h-bd3', '.pg2 .bd3'], ['h-res2', '.pg2 .res2'], ['h-sg5', '.pg2 .sg5']];
   const sync = () => { const b = document.body; if (!b) return; for (const [c, sel] of rules){ const on = !!document.querySelector(sel); if (b.classList.contains(c) !== on) b.classList.toggle(c, on); } };
-  new MutationObserver(ms => { for (const m of ms){ if (m.type === 'attributes' && m.target === document.body) continue; sync(); return; } })
+  new MutationObserver(ms => { for (const m of ms){ if (m.type === 'attributes' && m.target === document.body) continue; if (m.target.closest && m.target.closest('.leaflet-container,.maplibregl-map')) continue; sync(); return; } })   // map squares coming and going don't count
     .observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   sync();
 })();

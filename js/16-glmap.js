@@ -40,7 +40,7 @@ function pinFeatures(){ const rows = dropRows().filter(x => x.lat != null), max 
   return { type: 'FeatureCollection', features: f }; }
 
 // ---- map ----
-function rasterStyle(){ return { version: 8, sources: { osm: { type: 'raster', tiles: ['a', 'b', 'c'].map(s => `https://${s}.tile.openstreetmap.org/{z}/{x}/{y}.png`), tileSize: 256, maxzoom: 19, attribution: '© OpenStreetMap' } },
+function rasterStyle(){ return { version: 8, sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, maxzoom: 19, attribution: '© OpenStreetMap' } },
   layers: [{ id: 'osm', type: 'raster', source: 'osm', paint: { 'raster-fade-duration': 120 } }] }; }
 const zw = (k) => ['interpolate', ['linear'], ['zoom'], 11, ['*', ['get', 'w'], .55 * k], 14, ['*', ['get', 'w'], .9 * k], 16, ['*', ['get', 'w'], 1.25 * k], 18, ['*', ['get', 'w'], 2 * k]];
 const pinR = ['interpolate', ['linear'], ['zoom'], 11, ['max', 2.6, ['*', ['get', 'base'], .55 * 1.45]], 13, ['max', 3.5, ['*', ['get', 'base'], .7 * 1.45]], 15, ['*', ['get', 'base'], 1.45], 16, ['*', ['get', 'base'], 1.3 * 1.45], 18, ['*', ['get', 'base'], 1.9 * 1.45]];
@@ -54,8 +54,8 @@ function mount(){ const el = document.getElementById('dmap'); if (!el || S.tab !
   if (pts.length){ const bb = pts.reduce((a, x) => [Math.min(a[0], x.lng), Math.min(a[1], x.lat), Math.max(a[2], x.lng), Math.max(a[3], x.lat)], [180, 90, -180, -90]); m.fitBounds([[bb[0], bb[1]], [bb[2], bb[3]]], { padding: 20, duration: 0 }); }
   new ResizeObserver(() => { try { m.resize(); } catch {} }).observe(el);
   m.on('load', () => { if (S.gl !== m) return;
-    m.addSource('streets', { type: 'geojson', data: streetFeatures(), tolerance: .6 });
-    m.addSource('pins', { type: 'geojson', data: pinFeatures() });
+    m.addSource('streets', { type: 'geojson', data: streetFeatures(), tolerance: .6, maxzoom: 15 });
+    m.addSource('pins', { type: 'geojson', data: pinFeatures(), maxzoom: 14 });
     m.addSource('hi', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
     m.addSource('ext', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
     m.addSource('walk', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });

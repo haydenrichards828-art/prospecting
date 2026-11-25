@@ -1987,3 +1987,6 @@ body.h-ltab.h-lsheet .ltab3.l15 .lt3>:nth-child(2){display:none!important}
 .ib15>:first-child .fin19{margin:10px 0}
 .vw19{display:grid;justify-items:center;gap:8px;margin:4px 0 14px}
 .vd19{display:block;height:min(58vh,560px);aspect-ratio:9/16;max-width:100%;border-radius:12px;background:#0a0c0f;border:1px solid var(--hair)}
+/* card drop map: the browser isn't using the graphics chip (25 Nov) */
+.gpu20{position:absolute;left:12px;bottom:12px;z-index:900;max-width:360px;display:grid;gap:4px;padding:12px 14px;border-radius:10px;background:var(--panel);border:1px solid var(--hair);box-shadow:0 8px 24px rgba(0,0,0,.35);color:var(--t1);font-size:13px;line-height:1.4}
+.gpu20 b{font-size:14px}.gpu20 span{color:var(--t2)}.gpu20 i{font-style:normal;color:var(--t1)}.gpu20 .b2{justify-self:start;margin-top:6px;height:32px;padding:0 14px!important}
