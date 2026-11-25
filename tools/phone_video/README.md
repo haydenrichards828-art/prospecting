@@ -13,7 +13,8 @@ Remake after changing the steps (film2.js, `scenes`) or Prospect's setup sheet:
 
 `rec2.js <kind> x stills` writes the stills to /tmp/g19 to check them first; `rec2.js <kind> x plan` prints the timings.
 Each render writes `media/phone-*.json` (total length, step count, where the iPhone automation part starts).
-If those change, update `VID` in js/19-phone-link.js and bump its `VER`.
+If those change, update `VID` in js/19-phone-link.js and bump its `VER`. Also bump the `?v=` on the media links in phone.html.
+The iPhone video ends with the check (tap the shortcut once, Always Allow) and `shots/iphone-connected.png`.
 
 Sources checked 24 Nov 2026: Apple's Shortcuts guide (Message trigger, Message Contains, Run Immediately),
 Message487 1.2.0 source and screenshots (github.com/andre487/AndroidMessage487), its APK install guide

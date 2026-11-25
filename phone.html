@@ -16,6 +16,8 @@ ol{padding-left:22px;margin:8px 0 22px}li{margin:0 0 10px}i{font-style:normal;co
 .box b{display:block;margin-bottom:4px}.sm{color:#a3acb9;font-size:14px}
 video{display:block;width:100%;max-width:300px;margin:8px auto 0;border-radius:12px;border:1px solid #232933;background:#000}
 .bad{color:#fca5a5}
+.st{margin:18px 0 8px;padding:14px 16px;border-radius:12px;border:1px dashed #3a4250;background:#12161c;color:#a3acb9;font-size:15px}
+.st.on{border:1px solid #1f6b4a;background:#0f2e22;color:#b7f0d2;font-weight:600}
 </style></head><body><main id="m"></main>
 <script>
 (function(){
@@ -35,7 +37,8 @@ video{display:block;width:100%;max-width:300px;margin:8px auto 0;border-radius:1
     ${sc ? `<button class="btn" onclick="go1()">Add the shortcut</button><p class="done" id="done"></p>
       <ol><li>Shortcuts opens. Tap <i>Set Up Shortcut</i>, tap the box, then <i>Paste</i> and <i>Add Shortcut</i>.</li>
       <li>Tap <i>Automation</i>, then <i>New Automation</i> (or <i>+</i>).</li><li>Scroll down, tap <i>Message</i>. Tap <i>Message Contains</i>, press the space bar once, tap ✓.</li>
-      <li>Tap <i>Run Immediately</i>, then <i>Next</i>, then <i>Prospect messages</i>. Done.</li></ol>`
+      <li>Tap <i>Run Immediately</i>, then <i>Next</i>, then <i>Prospect messages</i>.</li>
+      <li>Check it: tap <i>Shortcuts</i> at the bottom, then <i>Prospect messages</i> once. If it asks, tap <i>Always Allow</i>.</li></ol>`
     : `<button class="btn" onclick="cp()">Copy my link</button><p class="done" id="done"></p>
       <div class="box"><b>1. Make the shortcut (once, about 3 minutes)</b><ol>
       <li>Open Shortcuts, tap <i>+</i>, name it <i>Prospect messages</i>.</li><li>Add the action <i>Get Contents of URL</i> and paste your link as the URL.</li>
@@ -43,17 +46,22 @@ video{display:block;width:100%;max-width:300px;margin:8px auto 0;border-radius:1
       <li>Add a Text field called <i>from</i>: tap the value, choose <i>Shortcut Input</i>, then tap it again and pick <i>Sender</i>.</li>
       <li>Add a Text field called <i>text</i>: choose <i>Shortcut Input</i> and pick <i>Content</i>.</li><li>Add a Text field called <i>app</i> with the value <i>iphone</i>. Tap <i>Done</i>.</li></ol></div>
       <div class="box"><b>2. Make it run by itself</b><ol><li>Tap <i>Automation</i>, then <i>New Automation</i> (or <i>+</i>).</li>
-      <li>Scroll down, tap <i>Message</i>. Tap <i>Message Contains</i>, press the space bar once, tap ✓.</li><li>Tap <i>Run Immediately</i>, then <i>Next</i>, then <i>Prospect messages</i>. Done.</li></ol></div>`}
-    <p class="sm">Needs iOS 17 or newer. Your computer shows Connected once the first text arrives.</p>
-    <div class="box"><b>Watch how</b><video src="media/phone-iphone.mp4?v=2" poster="media/phone-iphone.jpg?v=2" controls playsinline preload="metadata"${sc ? '' : ' onloadedmetadata="this.currentTime=16.1"'}></video></div>`;
+      <li>Scroll down, tap <i>Message</i>. Tap <i>Message Contains</i>, press the space bar once, tap ✓.</li><li>Tap <i>Run Immediately</i>, then <i>Next</i>, then <i>Prospect messages</i>.</li></ol></div>
+      <div class="box"><b>3. Check it</b><ol><li>Tap <i>Shortcuts</i> at the bottom, then <i>Prospect messages</i> once. If it asks, tap <i>Always Allow</i>.</li></ol></div>`}
+    <div class="st" id="st">Waiting for your phone. This turns green when it's connected.</div>
+    <p class="sm">Needs iOS 17 or newer.</p>
+    <div class="box"><b>Watch how</b><video src="media/phone-iphone.mp4?v=3" poster="media/phone-iphone.jpg?v=3" controls playsinline preload="metadata"${sc ? '' : ' onloadedmetadata="this.currentTime=16.1"'}></video></div>`;
   const android = `<h1>Connect your Android</h1><p class="lead">Replies to your texts and WhatsApp will show up in Prospect by themselves. About three minutes, once.</p>
     <button class="btn" onclick="go1()">Get Message487</button><button class="btn two" onclick="cp()">Copy my link again</button><p class="done" id="done"></p>
     <ol><li>Install Message487. If Chrome or Android asks, allow it (the video shows every screen).</li>
       <li>In Message487 tap <i>Connection</i>. Paste your link into <i>Webhook URL</i>, type <i>prospect</i> as the token, tap <i>Save and send test event</i>.</li>
       <li>Tap <i>Sources</i>, then <i>Notification access settings</i>. If Android says it's restricted, open Message487's App info, tap ⋮, <i>Allow restricted settings</i>, and try again.</li>
       <li>Turn on <i>Notifications</i>, tick <i>WhatsApp</i> and <i>Messages</i>, turn on <i>Incoming SMS</i> and tap <i>Allow</i>.</li></ol>
-    <p class="sm">Your computer shows Connected as soon as the test arrives.</p>
-    <div class="box"><b>Watch how</b><video src="media/phone-android.mp4?v=2" poster="media/phone-android.jpg?v=2" controls playsinline preload="metadata"></video></div>`;
+    <div class="st" id="st">Waiting for your phone. This turns green when the test arrives.</div>
+    <div class="box"><b>Watch how</b><video src="media/phone-android.mp4?v=3" poster="media/phone-android.jpg?v=3" controls playsinline preload="metadata"></video></div>`;
   m.innerHTML = `<div class="brand">${logo}Prospect</div>` + (kind === 'android' ? android : iphone);
+  const t0 = Date.now(), tick = setInterval(async () => { if (document.hidden) return; if (Date.now() - t0 > 30 * 60e3) return clearInterval(tick);
+    try { const r = await fetch(link, { cache: 'no-store' }); const j = await r.json(); if (!j.connected) return;
+      const st = document.getElementById('st'); st.classList.add('on'); st.textContent = '✓ Connected. Replies will show up in Prospect by themselves.'; clearInterval(tick); } catch {} }, 4000);
 })();
 </script></body></html>

@@ -62,12 +62,12 @@ const ios = {
   sb: dark => `<div class="sbar${dark ? ' dk' : ''}"><span>9:41</span><i class="di"></i><span class="ic">${I.sig}${I.wifi}${I.batt}</span></div>`,
   wrap: (inner, o = {}) => `<div class="ios${o.dark ? ' dark' : ''}" style="${o.bg ? 'background:' + o.bg : ''}">${ios.sb(o.dark)}<div class="body">${inner}</div><i class="hind"></i></div>`,
   row: (t, o = {}) => `<div class="row"${o.k ? ` data-t="${o.k}"` : ''}>${o.ic || ''}<span>${t}</span>${o.v != null ? `<span class="v">${o.v}${o.chev === false ? '' : I.chev}</span>` : (o.right || '')}</div>`,
-  tabs: (on, k) => `<div class="tabbar">${[['Shortcuts', I.stack], ['Automation', I.clockcheck], ['Gallery', I.spark]].map(([n, ic], i) => `<span class="${i === on ? 'on' : ''}"${k && i === 1 ? ` data-t="${k}"` : ''}>${ic}<em>${n}</em></span>`).join('')}</div><div class="tsearch">${I.search}</div>`,
+  tabs: (on, k, k0) => `<div class="tabbar">${[['Shortcuts', I.stack], ['Automation', I.clockcheck], ['Gallery', I.spark]].map(([n, ic], i) => `<span class="${i === on ? 'on' : ''}"${k && i === 1 ? ` data-t="${k}"` : k0 && i === 0 ? ` data-t="${k0}"` : ''}>${ic}<em>${n}</em></span>`).join('')}</div><div class="tsearch">${I.search}</div>`,
   kb: (o = {}) => `<div class="kb">${['qwertyuiop', 'asdfghjkl', 'zxcvbnm'].map((r, i) => `<div class="kr">${i === 2 ? '<i class="g">⇧</i>' : ''}${[...r].map(c => `<i data-t="k-${c}">${c}</i>`).join('')}${i === 2 ? '<i class="g">⌫</i>' : ''}</div>`).join('')}<div class="kr"><i class="g w">123</i><i class="g w">☺</i><i class="sp" data-t="k-space">space</i><i class="g w2">return</i></div></div>`,
 };
 // the Shortcuts library after adding
-const iLibrary = (k) => ios.wrap(`<div class="nav"><span></span><span class="navr"><span class="gb">${I.plus}</span></span></div><div class="lt">All Shortcuts</div>
-  <div class="tiles"><div class="tile" style="background:linear-gradient(155deg,#ff7aa5,#a347ff)"><span class="tic">${I.sms}</span><b>Prospect messages</b></div></div>${ios.tabs(0, k)}`);
+const iLibrary = (k, kt, alert) => ios.wrap(`<div class="nav"><span></span><span class="navr"><span class="gb">${I.plus}</span></span></div><div class="lt">All Shortcuts</div>
+  <div class="tiles"><div class="tile" style="background:linear-gradient(155deg,#ff7aa5,#a347ff)"${kt ? ` data-t="${kt}"` : ''}><span class="tic">${I.sms}</span><b>Prospect messages</b></div></div>${ios.tabs(0, k)}${alert || ''}`);
 const iAutoEmptyBody = (k) => `<div class="nav"><span></span><span class="gb">${I.plus}</span></div><div class="lt">Automation</div>
   <div class="empty"><div class="eic">${I.clockcheck}</div><p>Have your devices react to changes in conditions.</p><span class="bigbtn"${k ? ` data-t="${k}"` : ''}>New Automation</span></div>${ios.tabs(1)}`;
 const iAutoEmpty = (k) => ios.wrap(iAutoEmptyBody(k));
@@ -86,13 +86,17 @@ const iContains = (n) => ios.wrap(`${iWhenBody(0, '')}<div class="sheetbg"></div
 const iDo = () => ios.wrap(`<div class="nav"><span class="gb">${I.back}</span><span class="tt">Do</span><span></span></div>
   <div class="grp">${ios.row('New Blank Automation', { ic: `<span class="ico" style="background:#0a84ff">${I.plus}</span>` })}</div><div class="sh">My Shortcuts</div>
   <div class="grp">${ios.row('Prospect messages', { k: 'pm', ic: `<span class="ico" style="background:linear-gradient(155deg,#ff7aa5,#a347ff)">${I.sms}</span>` })}</div>`);
-const iAutoList = () => ios.wrap(`<div class="nav"><span></span><span class="gb">${I.plus}</span></div><div class="lt">Automation</div><div class="sh">Personal</div>
-  <div class="grp">${ios.row('<span class="two"><b>When I get a message containing “ ”</b><em>Prospect messages</em></span>', { ic: icon('messages', 34), v: '' })}</div>${ios.tabs(1)}`);
+const iAutoList = (k0) => ios.wrap(`<div class="nav"><span></span><span class="gb">${I.plus}</span></div><div class="lt">Automation</div><div class="sh">Personal</div>
+  <div class="grp">${ios.row('<span class="two"><b>When I get a message containing “ ”</b><em>Prospect messages</em></span>', { ic: icon('messages', 34), v: '' })}</div>${ios.tabs(1, null, k0)}`);
 const iAdd = () => ios.wrap(`<div class="nav"><span></span><span class="gb">${I.x}</span></div><div class="addcard"><div class="tile big" style="background:linear-gradient(155deg,#ff7aa5,#a347ff)"><span class="tic">${I.sms}</span></div>
   <h2>Prospect messages</h2><p>Sends texts you receive from people in Prospect to Prospect, so their replies show up there.</p></div><span class="widebtn" data-t="setup">Set Up Shortcut</span>`, { bg: '#fff' });
 const iSetup = (n) => ios.wrap(`<div class="nav"><span class="gb">${I.back}</span><span class="tt">Set Up Shortcut</span><span></span></div>
   <div class="q">Paste your Prospect link (it's already copied)</div><div class="tf2${n >= 1 ? ' on' : ''}" data-t="fld"><span class="${n >= 3 ? '' : 'ph'}">${n >= 3 ? 'https://hywtg…supabase.co/functions/v1/inbox?p=…' : 'URL'}</span>${n >= 1 ? '<i class="caret"></i>' : ''}</div>
   ${n === 2 ? `<div class="emenu"><span data-t="paste">Paste</span><span>AutoFill</span></div>` : ''}<span class="widebtn${n >= 1 ? ' up' : ''}" data-t="add">Add Shortcut</span>${n >= 1 ? ios.kb() : ''}`, { bg: '#fff' });
+
+// the first time it sends anything, iOS asks whether the shortcut may send to that address
+const iAllow = k => `<div class="sheetbg"></div><div class="ialert"><b>Allow “Prospect messages” to send 1 item to “hywtghpfhhvbygunokca.supabase.co”?</b>
+  <p>Only allow this if you trust the shortcut.</p><span data-t="${k}">Always Allow</span><span>Allow Once</span><span>Don't Allow</span></div>`;
 
 // ---------- Android screens ----------
 const and = {
@@ -169,8 +173,9 @@ function scenes(kind, pos) {
     { w: 'shortcuts', cap: 'Press the <b>space bar</b> once, then tap <b>✓</b>', note: 'Every text has a space, so every text gets checked', enter: 'self', scr: n => iContains(n), acts: [['tap', 'k-space'], ['tap', 'ok']] },
     { w: 'shortcuts', cap: 'Tap <b>Run Immediately</b>, then <b>Next</b>', enter: 'fade', scr: n => iWhen(n, null, 'ri', 'nx'), acts: [['tap', 'ri'], ['tap', 'nx']] },
     { w: 'shortcuts', cap: 'Tap <b>Prospect messages</b>', enter: 'push', scr: () => iDo(), acts: [['tap', 'pm']] },
-    { w: 'shortcuts', cap: 'That\'s it. It runs by itself from now on.', enter: 'back', scr: () => iAutoList(), acts: [['wait', 1.4]] },
-    { w: 'prospect', cap: 'Replies now show up in <b>Prospect</b>', note: 'Prospect shows Connected once the first text arrives', last: 1, enter: 'zoom', scr: () => prospect('ios', 'iphone-messages.png'), acts: [['wait', 1.8]] }];
+    { w: 'shortcuts', cap: 'Check it works: tap <b>Shortcuts</b> at the bottom, then <b>Prospect messages</b>', note: 'It runs by itself from now on. This just checks it once.', enter: 'back', scr: n => n < 1 ? iAutoList('tabS') : iLibrary(null, 'pm'), acts: [['tap', 'tabS'], ['tap', 'pm']] },
+    { w: 'shortcuts', cap: 'If it asks, tap <b>Always Allow</b>', note: 'So it never needs to ask again', enter: 'self', scr: () => iLibrary(null, '', iAllow('aa')), acts: [['tap', 'aa']] },
+    { w: 'prospect', cap: 'Prospect shows <b>Connected</b>. Replies show up there by themselves.', last: 1, enter: 'zoom', scr: () => prospect('ios', 'iphone-connected.png'), acts: [['wait', 2]] }];
   return [
     { w: 'prospect', cap: 'Tap <b>Get Message487</b>', note: 'Your link is copied for you', scr: () => prospect('and', 'android-sheet.png', 'btn', pos.android.btn), acts: [['tap', 'btn']] },
     { w: 'chrome', cap: 'Chrome asks about the download. Tap <b>Download anyway</b>', note: 'It asks this for any app download', enter: 'zoom', scr: () => aChrome(and.dlg(`<h3>File might be harmful</h3><p>Do you want to download message487.apk anyway?</p>`, and.btn('Cancel') + and.btn('Download anyway', 'dl'))), acts: [['tap', 'dl']] },
@@ -250,6 +255,9 @@ const CSS = `
 .q{padding:18px 22px 10px;font-size:17px;font-weight:600}.tf2{margin:0 16px;height:50px;border-radius:12px;background:#f2f2f7;display:flex;align-items:center;padding:0 14px;position:relative;font-size:15px}
 .tf2 span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tf2.on{box-shadow:inset 0 0 0 2px #0a84ff}.tf2 .ph{color:#9a9aa0}.emenu{position:absolute;left:34px;top:116px;display:flex;background:#2c2c2e;border-radius:12px;overflow:hidden;color:#fff;font-size:15px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:5}
 .emenu span{padding:11px 16px;position:relative}.emenu span+span{border-left:1px solid #48484a}
+.ialert{position:absolute;left:46px;right:46px;top:250px;z-index:12;background:rgba(242,242,247,.97);border-radius:30px;text-align:center;overflow:hidden;opacity:var(--e,1);transform:scale(calc(.94 + .06*var(--e,1)))}
+.ialert b{display:block;padding:20px 18px 4px;font-size:16px;line-height:1.3;overflow-wrap:anywhere}.ialert p{margin:0;padding:0 18px 16px;font-size:13px;color:#3c3c43}
+.ialert span{display:block;position:relative;padding:12px;border-top:.6px solid #c6c6c8;color:#0a84ff;font-size:17px}.ialert span:first-of-type{font-weight:600}
 .two{display:flex;flex-direction:column;gap:2px}.two b{font-weight:500}.two em{font-style:normal;color:#8a8a8e;font-size:14px}
 .shot{position:absolute;left:0;width:100%}.hit{position:absolute}
 /* Android */

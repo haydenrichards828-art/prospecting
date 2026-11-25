@@ -13,6 +13,10 @@ for(const [kind,w,h] of [['iphone',393,798],['android',412,875]]){
  const bb=await p.locator('.sheet '+sel+', #ov '+sel+', '+sel).first().boundingBox();
  pos[kind]={w,h,btn:bb};
  await p.screenshot({path:out+kind+'-sheet.png'});
+ // the same sheet once the phone has checked in
+ await p.evaluate(()=>{const o=window.ib15;window.ib15=async(a,b)=>a==='load'?{phone:{kind:'iphone',last:new Date(Date.now()-4000).toISOString(),dropped:0}}:o(a,b);});
+ await p.waitForTimeout(5600); await p.evaluate(()=>{const b=document.getElementById('ph19s');b&&b.scrollIntoView({block:'center'});}); await p.waitForTimeout(200);
+ await p.screenshot({path:out+kind+'-connected.png'});
  // Messages afterwards: replies in Prospect
  await p.evaluate(()=>{closeOv&&closeOv();});await p.waitForTimeout(300);
  await p.evaluate(async()=>{S.ib=null;go('messages')});await p.waitForTimeout(1200);

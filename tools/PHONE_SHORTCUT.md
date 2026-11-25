@@ -15,6 +15,10 @@ Make this once on any iPhone. After that every agent installs it with one tap fr
 Each agent then: Messages tab, I have an iPhone, Add the shortcut (paste, Add Shortcut), then one automation:
 Automation, +, Message, Message Contains one space, Run Immediately, Next, pick Prospect messages. Needs iOS 17 or newer.
 
+Last step, the check: tap **Prospect messages** once in Shortcuts. With no message it sends nothing but tells Prospect
+the phone is set up, and the setup sheet and phone page turn green. If iOS asks to allow sending to the Prospect
+address, tap **Always Allow** so it never asks during a real message. `GET ?p=<key>` returns `{"connected": true}` after that.
+
 What arrives: POST `?p=<their key>` with `{"from": "...", "text": "...", "app": "iphone"}`. The inbox function keeps only
 messages from people in Prospect (a lead, an owner on the call list, or someone they messaged from Prospect).
 

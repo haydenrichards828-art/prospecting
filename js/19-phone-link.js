@@ -30,10 +30,12 @@ window.phoneSetup = async function(kind){
           <li>Add a Text field called <i>from</i>: tap the value, choose <i>Shortcut Input</i>, then tap it again and pick <i>Sender</i>.</li>
           <li>Add a Text field called <i>text</i>: choose <i>Shortcut Input</i> and pick <i>Content</i>.</li>
           <li>Add a Text field called <i>app</i> with the value <i>iphone</i>. Tap <i>Done</i>.</li></ol></details>`;
+  const check = `<p class="hint2 sm19"><b>Last step, check it:</b> in Shortcuts, tap <i>Prospect messages</i> once. If it asks, tap <i>Always Allow</i>. The box below turns green.</p>`;
   const body = kind === 'iphone' ? `
     ${sc ? '' : build}
     ${videoHTML19(sc ? 'iphone' : 'iphone-auto')}
     <div class="ac19">${sc ? `<button class="b2 pri" onclick="phoneGo()">Add the shortcut</button>` : ''}<button class="b2" onclick="phoneCopy()">Copy my link again</button></div>
+    ${check}
     <p class="hint2 sm19">Your link is already copied. Needs iOS 17 or newer. WhatsApp replies can't come through on iPhone (Apple doesn't allow it), so those stay in WhatsApp.</p>`
   : `
     ${videoHTML19('android')}
@@ -50,7 +52,7 @@ window.phoneOff = async () => { if (!(await uiAsk('Stop messages coming in from 
 function phoneWatch(){ clearInterval(window.__ph19); const t0 = Date.now();
   window.__ph19 = setInterval(async () => { const box = document.getElementById('ph19s'); if (!box || Date.now() - t0 > 20 * 60e3){ clearInterval(window.__ph19); return; }
     let d; try { d = await ib15('load'); } catch { return; } const p = d.phone; if (!p || !p.last) return;
-    box.classList.add('on'); box.innerHTML = `${ic2('check', 16)} Connected. Last message ${ago(p.last)}.${p.dropped ? ` ${p.dropped} personal message${p.dropped === 1 ? '' : 's'} ignored, as they should be.` : ''}`; }, 5000); }
+    box.classList.add('on'); box.innerHTML = `${ic2('check', 16)} Connected. Last heard from your phone ${ago(p.last)}.${p.dropped ? ` ${p.dropped} personal message${p.dropped === 1 ? '' : 's'} ignored, as they should be.` : ''}`; }, 5000); }
 
 // Messages tab, not set up yet: connect the phone first, the Mac is the other way
 window.view15 = (function(o){ return async function(...a){ const r = await o.apply(this, a);
@@ -97,7 +99,7 @@ window.viewSettings = (function(o){ return async function(...a){ const r = await
 // media/phone-*.mp4 are drawn to look like her real iPhone or Android screens (made by tools/phone_video, see its README).
 // The step through version shows a still from the video for each step. iphone-auto: the shortcut is already made, start at Automation.
 (function(){
-const VID = { iphone: { n: 13, auto: 16.1, autoIdx: 4 }, android: { n: 22 } }, VER = 2;
+const VID = { iphone: { n: 14, auto: 16.1, autoIdx: 4 }, android: { n: 22 } }, VER = 3;
 const file = kind => kind === 'android' ? 'android' : 'iphone';
 window.videoHTML19 = kind => { const f = file(kind), t = kind === 'iphone-auto' ? ` onloadedmetadata="this.currentTime=${VID.iphone.auto}"` : '';
   return `<div class="vw19" id="vw19"><video class="vd19" src="media/phone-${f}.mp4?v=${VER}"${t} poster="media/phone-${f}.jpg?v=${VER}" autoplay muted playsinline controls preload="auto"

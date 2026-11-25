@@ -7,7 +7,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
-const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type, x-session", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Max-Age": "7200" };
+const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type, x-session", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Max-Age": "7200" };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 const seen = new Map<string, number>();
 const HOOK_EVENTS = ["new-message", "updated-message", "new-server"];
@@ -198,7 +198,8 @@ async function phoneIn(st: St, req: Request) {
 }
 async function phoneKeep(st: St, { app, text, from, type }: { app: string; text: string; from: string; type: string }) {
   const now = new Date().toISOString();
-  if (type === "test") { await setState({ phone_last: now }); return { ok: true, kept: false, why: "test" }; }   // the app's own test: shows as connected
+  // a test: Message487's test button, or the iPhone shortcut tapped once by hand (it has no message then). Shows as connected.
+  if (type === "test" || (!text && !from && /iphone|shortcut/i.test(app))) { await setState({ phone_last: now }); return { ok: true, kept: false, why: "test" }; }
   if (!text || !from) return { ok: true, kept: false, why: "nothing to read" };
   const wa = /whatsapp/i.test(app), sms = type === "sms" || /sms|mms|messag|telephony|iphone|shortcut/i.test(app) || !app;
   if (!wa && !sms) return { ok: true, kept: false, why: "not a messaging app" };
@@ -231,6 +232,7 @@ Deno.serve(async (req) => {
     if (q.get("p") || (pk && !req.headers.get("x-session") && !hook)) {
       const st = await state();
       if (!st.phone_on || !st.phone_key || pk !== st.phone_key) return json({ error: "No" }, 403);
+      if (req.method === "GET") return json({ connected: !!st.phone_last });   // the setup page on her phone asks this to show the tick
       return json(await phoneIn(st, req));
     }
     // ---------- BlueBubbles webhook ----------
