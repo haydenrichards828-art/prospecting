@@ -17,6 +17,7 @@ window.phoneSetup = async function(kind){
     <div class="ph19">
       <button onclick="phoneSetup('iphone')">${ic2('phone', 22)}<b>iPhone</b><span>Texts and iMessages</span></button>
       <button onclick="phoneSetup('android')">${ic2('phone', 22)}<b>Android</b><span>Texts and WhatsApp</span></button></div>
+    <p class="hint2 sm19">Use Prospect on a computer? Still connect your phone: texts arrive on your phone's number, and Prospect shows them on your computer too.</p>
     <p class="hint2 sm19">Only messages from people in Prospect are kept. Messages from family and friends are thrown away the moment they arrive.</p>
     <p class="hint2 sm19"><button class="lnk2" onclick="set15Mac()">Use a Mac instead</button></p>`);
   openSheet2(kind === 'iphone' ? 'Connect your iPhone' : 'Connect your Android', '<p class="hint2">Getting your link ready…</p>');
@@ -58,6 +59,7 @@ window.view15 = (function(o){ return async function(...a){ const r = await o.app
       <div class="ph19 wide">
         <button onclick="phoneSetup('iphone')">${ic2('phone', 22)}<b>I have an iPhone</b><span>Texts and iMessages</span></button>
         <button onclick="phoneSetup('android')">${ic2('phone', 22)}<b>I have an Android</b><span>Texts and WhatsApp</span></button></div>
+      <p class="sm19">On a computer? Connect your phone all the same: texts arrive on your phone's number, and they show up here on your computer too.</p>
       <p class="sm19">Only messages from people in Prospect are kept. Family and friends are never saved.</p>
       <p class="sm19"><button class="lnk2" onclick="set15Mac()">Use a Mac instead</button> · <button class="lnk2" onclick="S.msgOld=1;go('messages')">Scheduled texts</button></p>`; }
   // Started connecting the phone but no message has come in yet: always a way back to the steps
@@ -114,4 +116,43 @@ window.guideHTML19 = kind => { const f = file(kind), v = VID[f], from = kind ===
   G = { kind, f, n: v.n, from, i: from }; setTimeout(draw, 0);
   return `<div class="gd19" id="gd19"><img class="gi19" alt=""><span class="sn19"></span>
     <div class="gc19"><button class="b2 bk19" onclick="guide19.back()">Back</button><button class="b2 pri nx19b" onclick="guide19.next()">Next</button></div></div>`; };
+})();
+
+// ---------- On a computer (26 Nov) ----------
+// Texts live on her phone's number, so the phone stays the thing that sends and receives. On a computer:
+// setting up shows a code to scan, so the steps open on her phone with her link ready; and pressing send on a text
+// shows a code that opens the text on her phone ready to go (Apple and Android cameras both read these).
+(function(){
+window.desk19 = () => !matchMedia('(pointer:coarse)').matches && !/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+const mac = () => /Macintosh/.test(navigator.userAgent);
+let lib = null;
+window.qr19 = async (text, px = 6) => { if (!window.qrcode) lib = lib || new Promise((ok, no) => { const s = document.createElement('script');
+    s.src = 'https://unpkg.com/qrcode-generator@1.4.4/qrcode.js'; s.onload = ok; s.onerror = () => { lib = null; no(new Error("Couldn't load the code maker")); }; document.head.appendChild(s); });
+  await lib; qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+  const q = qrcode(0, 'L'); q.addData(text, 'Byte'); q.make(); return q.createSvgTag({ cellSize: px, margin: 3, scalable: true }); };
+const intl = p => { const d = String(p || '').replace(/[^\d+]/g, ''); return d.startsWith('+') ? d : /^0\d{9}$/.test(d) ? '+61' + d.slice(1) : d; };
+const fill = async (id, text) => { const el = document.getElementById(id); if (!el) return;
+  try { el.innerHTML = await qr19(text); } catch (e) { el.innerHTML = `<span class="qre19">${esc(e.message)}</span>`; } };
+
+// setup: a code that opens the steps on her phone, link included
+const page = (kind, u) => { const b = location.href.split('#')[0].replace(/[^/]*$/, '');
+  const k = (String(u).match(/[?&]p=(\w+)/) || [])[1] || '', h = new URLSearchParams({ t: kind, k }); if (kind === 'iphone' && window.PHONE_SHORTCUT) h.set('s', window.PHONE_SHORTCUT); return b + 'phone.html#' + h; };
+window.phoneSetup = (function(o){ return async function(kind){ const r = await o.apply(this, arguments);
+  if (!kind || !desk19() || !S.phLink || !document.getElementById('ph19s')) return r;
+  const sh = document.querySelector('#sheet .sh2'); if (!sh || document.getElementById('qrs19')) return r;
+  sh.insertAdjacentHTML('afterend', `<div class="qr19"><div class="qrb19" id="qrs19"></div><div><b>Easiest: do it on your phone</b>
+    <p>Point your phone's camera at this code and tap the link that appears. The steps open on your phone with your link ready, so there's nothing to copy across.</p>
+    <p class="sm19">Or follow the video below on your phone yourself.</p></div></div>`);
+  fill('qrs19', page(kind, S.phLink)); return r; }; })(window.phoneSetup);
+
+// sending a text from a computer
+const O = window.openUrl; window.openUrlRaw19 = O;
+window.openUrl = u => { if (/^sms:/i.test(String(u)) && desk19()) return textQR19(String(u)); return O(u); };
+window.textQR19 = u => { const m = u.match(/^sms:([^?&]*)(?:[?&]+body=(.*))?$/i) || [], ph = decodeURIComponent(m[1] || ''), body = m[2] ? decodeURIComponent(m[2]) : '';
+  const who = (window.whoByPhone6 && whoByPhone6(ph)) || {}; S.qrBody19 = body; S.qrSms19 = u;
+  openSheet2('Send it from your phone', `<div class="qr19 big"><div class="qrb19" id="qrt19"></div><div>
+      <b>Point your phone's camera at this code</b><p>Tap the link that appears and your text to ${esc(who.name || fmtOne2(ph) || 'them')} opens, ready to send. Then press send on your phone.</p>
+      <div class="ac19 left">${mac() ? `<button class="b2" onclick="openUrlRaw19(S.qrSms19)">Open Messages on this Mac</button>` : ''}<button class="b2" onclick="copy(S.qrBody19).then(()=>toast('Text copied'))">Copy the text</button><button class="b2 pri" onclick="closeOv()">Done</button></div>
+      ${body.length > 600 ? '<p class="sm19">This one is long, so the code is dense. Hold your phone a little closer if it doesn\'t pick it up.</p>' : ''}</div></div>`);
+  fill('qrt19', `SMSTO:${intl(ph)}:${body}`); };
 })();

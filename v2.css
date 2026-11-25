@@ -1990,3 +1990,9 @@ body.h-ltab.h-lsheet .ltab3.l15 .lt3>:nth-child(2){display:none!important}
 /* card drop map: the browser isn't using the graphics chip (25 Nov) */
 .gpu20{position:absolute;left:12px;bottom:12px;z-index:900;max-width:360px;display:grid;gap:4px;padding:12px 14px;border-radius:10px;background:var(--panel);border:1px solid var(--hair);box-shadow:0 8px 24px rgba(0,0,0,.35);color:var(--t1);font-size:13px;line-height:1.4}
 .gpu20 b{font-size:14px}.gpu20 span{color:var(--t2)}.gpu20 i{font-style:normal;color:var(--t1)}.gpu20 .b2{justify-self:start;margin-top:6px;height:32px;padding:0 14px!important}
+/* codes to scan on a computer (26 Nov) */
+.qr19{display:flex;gap:16px;align-items:center;margin:4px 0 16px;padding:14px;border:1px solid var(--hair);border-radius:12px;background:var(--card)}
+.qr19 b{display:block;font-size:15px;margin-bottom:4px}.qr19 p{margin:0 0 6px;color:var(--t2);font-size:14px;line-height:1.45}
+.qrb19{flex:none;width:176px;height:176px;background:#fff;border-radius:8px;padding:4px;display:flex;align-items:center;justify-content:center}.qrb19 svg{width:100%;height:100%;display:block}
+.qr19.big{flex-direction:column;align-items:stretch;border:0;padding:0;background:none}.qr19.big .qrb19{width:260px;height:260px;align-self:center}
+.qre19{color:#111;font-size:12px;text-align:center}.ac19.left{justify-content:flex-start;margin-top:10px}

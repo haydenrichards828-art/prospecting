@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex"><meta name="theme-color" content="#0a0c0f"><title>Connect your phone to Prospect</title>
+<!-- Opened by scanning the code Prospect shows on a computer. The link to send messages to is in the address after #, so it
+     never reaches any server and nothing here needs signing in. -->
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}
+body{margin:0;background:#0a0c0f;color:#f2f4f7;font:16px/1.45 Inter,system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:520px;margin:0 auto;padding:max(28px,env(safe-area-inset-top)) 20px 48px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;margin-bottom:26px}.brand svg{width:30px;height:30px}
+h1{font-size:28px;line-height:1.2;margin:0 0 8px;letter-spacing:-.3px}.lead{color:#a3acb9;margin:0 0 24px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;border:0;border-radius:12px;background:#3b82f6;color:#fff;font:600 17px Inter,system-ui,sans-serif;margin:0 0 12px;cursor:pointer;text-decoration:none}
+.btn.two{background:#1a1f26;color:#f2f4f7;border:1px solid #2a303a}.done{color:#7ee2a8;font-weight:600;min-height:24px;margin:0 0 10px}
+ol{padding-left:22px;margin:8px 0 22px}li{margin:0 0 10px}i{font-style:normal;color:#93c0ff}
+.box{background:#12161c;border:1px solid #232933;border-radius:12px;padding:16px;margin:18px 0}
+.box b{display:block;margin-bottom:4px}.sm{color:#a3acb9;font-size:14px}
+video{display:block;width:100%;max-width:300px;margin:8px auto 0;border-radius:12px;border:1px solid #232933;background:#000}
+.bad{color:#fca5a5}
+</style></head><body><main id="m"></main>
+<script>
+(function(){
+  const h = new URLSearchParams(location.hash.slice(1)), kind = h.get('t') === 'android' ? 'android' : 'iphone', key = h.get('k') || '', sc = h.get('s') || '';
+  const link = /^\w{16,64}$/.test(key) ? 'https://hywtghpfhhvbygunokca.supabase.co/functions/v1/inbox?p=' + key : '';
+  const APK = 'https://github.com/andre487/AndroidMessage487/releases/latest/download/message487.apk';
+  const m = document.getElementById('m'), esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const logo = '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="5.5" fill="#0d1117"/><g transform="translate(2.4 2.4) scale(.8)"><rect x="2" y="2.2" width="20" height="15.6" rx="4.2" fill="#3b82f6"/><path d="M5.2 16.8 4.4 22.4 10.6 17.4z" fill="#3b82f6"/><path d="M6.9 9.4 12 5.4l5.1 4v6.3H6.9z" fill="#fff"/><path d="M10.5 15.7v-4h3v4z" fill="#3b82f6"/></g></svg>';
+  if (!/^https:\/\/[^\s]+\/functions\/v1\/inbox\?p=\w+$/.test(link)){ m.innerHTML = `<div class="brand">${logo}Prospect</div><h1>This code didn't come through</h1><p class="lead bad">Open Messages in Prospect on your computer and scan the code again.</p>`; return; }
+  // copying needs a tap on the phone, so every button copies the link first
+  async function copy(){ try { await navigator.clipboard.writeText(link); } catch { const t = document.createElement('textarea'); t.value = link; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+      document.body.appendChild(t); t.select(); t.setSelectionRange(0, link.length); try { document.execCommand('copy'); } catch {} t.remove(); }
+    const d = document.getElementById('done'); if (d) d.textContent = 'Your link is copied.'; }
+  window.go1 = async () => { await copy(); location.href = kind === 'android' ? APK : sc; };
+  window.cp = copy;
+  const iphone = `<h1>Connect your iPhone</h1><p class="lead">Replies to your texts will show up in Prospect by themselves. About two minutes, once.</p>
+    ${sc ? `<button class="btn" onclick="go1()">Add the shortcut</button><p class="done" id="done"></p>
+      <ol><li>Shortcuts opens. Tap <i>Set Up Shortcut</i>, tap the box, then <i>Paste</i> and <i>Add Shortcut</i>.</li>
+      <li>Tap <i>Automation</i>, then <i>New Automation</i> (or <i>+</i>).</li><li>Scroll down, tap <i>Message</i>. Tap <i>Message Contains</i>, press the space bar once, tap ✓.</li>
+      <li>Tap <i>Run Immediately</i>, then <i>Next</i>, then <i>Prospect messages</i>. Done.</li></ol>`
+    : `<button class="btn" onclick="cp()">Copy my link</button><p class="done" id="done"></p>
+      <div class="box"><b>1. Make the shortcut (once, about 3 minutes)</b><ol>
+      <li>Open Shortcuts, tap <i>+</i>, name it <i>Prospect messages</i>.</li><li>Add the action <i>Get Contents of URL</i> and paste your link as the URL.</li>
+      <li>Tap the arrow on that action. Set <i>Method</i> to <i>POST</i> and <i>Request Body</i> to <i>JSON</i>.</li>
+      <li>Add a Text field called <i>from</i>: tap the value, choose <i>Shortcut Input</i>, then tap it again and pick <i>Sender</i>.</li>
+      <li>Add a Text field called <i>text</i>: choose <i>Shortcut Input</i> and pick <i>Content</i>.</li><li>Add a Text field called <i>app</i> with the value <i>iphone</i>. Tap <i>Done</i>.</li></ol></div>
+      <div class="box"><b>2. Make it run by itself</b><ol><li>Tap <i>Automation</i>, then <i>New Automation</i> (or <i>+</i>).</li>
+      <li>Scroll down, tap <i>Message</i>. Tap <i>Message Contains</i>, press the space bar once, tap ✓.</li><li>Tap <i>Run Immediately</i>, then <i>Next</i>, then <i>Prospect messages</i>. Done.</li></ol></div>`}
+    <p class="sm">Needs iOS 17 or newer. Your computer shows Connected once the first text arrives.</p>
+    <div class="box"><b>Watch how</b><video src="media/phone-iphone.mp4?v=2" poster="media/phone-iphone.jpg?v=2" controls playsinline preload="metadata"${sc ? '' : ' onloadedmetadata="this.currentTime=16.1"'}></video></div>`;
+  const android = `<h1>Connect your Android</h1><p class="lead">Replies to your texts and WhatsApp will show up in Prospect by themselves. About three minutes, once.</p>
+    <button class="btn" onclick="go1()">Get Message487</button><button class="btn two" onclick="cp()">Copy my link again</button><p class="done" id="done"></p>
+    <ol><li>Install Message487. If Chrome or Android asks, allow it (the video shows every screen).</li>
+      <li>In Message487 tap <i>Connection</i>. Paste your link into <i>Webhook URL</i>, type <i>prospect</i> as the token, tap <i>Save and send test event</i>.</li>
+      <li>Tap <i>Sources</i>, then <i>Notification access settings</i>. If Android says it's restricted, open Message487's App info, tap ⋮, <i>Allow restricted settings</i>, and try again.</li>
+      <li>Turn on <i>Notifications</i>, tick <i>WhatsApp</i> and <i>Messages</i>, turn on <i>Incoming SMS</i> and tap <i>Allow</i>.</li></ol>
+    <p class="sm">Your computer shows Connected as soon as the test arrives.</p>
+    <div class="box"><b>Watch how</b><video src="media/phone-android.mp4?v=2" poster="media/phone-android.jpg?v=2" controls playsinline preload="metadata"></video></div>`;
+  m.innerHTML = `<div class="brand">${logo}Prospect</div>` + (kind === 'android' ? android : iphone);
+})();
+</script></body></html>
