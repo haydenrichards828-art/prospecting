@@ -228,21 +228,28 @@ window.demoApi=(function(orig){ return function(action,body){ const D=window.__d
 // ---------- Street View: a photo of the front of the house, from Google, through our server so the key stays private ----------
 const SV_URL=API.replace(/\/api$/,'/streetview'); S.sv=S.sv||{};
 async function svGet(pid,size){ const k=pid+':'+size; if(S.sv[k]) return S.sv[k]; if(S.svOff||DEMO) return null;
-  S.sv[k]=(async()=>{ try{ const r=await fetch(`${SV_URL}?pid=${pid}&size=${size}&v=2`,{headers:{'x-session':S.token||''}});
+  S.sv[k]=(async()=>{ try{ const r=await fetch(`${SV_URL}?pid=${pid}&size=${size}&v=3`,{headers:{'x-session':S.token||''}});
       if(r.status===503||r.status===429||r.status===401){ S.svOff=true; return null; } if(!r.ok) return null;
-      return {url:URL.createObjectURL(await r.blob()),date:r.headers.get('X-Pano-Date')||''}; }catch{ S.sv[k]=null; return null; } })();
+      const url=URL.createObjectURL(await r.blob()), im=new Image(); im.src=url; await im.decode().catch(()=>{});   // decoded ahead, so it shows whole and at once
+      return {url,date:r.headers.get('X-Pano-Date')||''}; }catch{ S.sv[k]=null; return null; } })();
   return S.sv[k]; }
+// The street photo sits on top of the aerial (which is built from map tiles), so switching between them is instant
 function svFill(el,pid,size){ if(!el||el.dataset.sv) return; el.dataset.sv='1';
-  svGet(pid,size).then(p=>{ if(!p||!el.isConnected) return; const aer=el.querySelector('img'), au=aer?aer.src:null;
-    let im=aer; if(!im){ el.querySelectorAll(':scope>span:not(.credit)').forEach(s=>s.remove()); im=document.createElement('img'); im.alt=''; el.prepend(im); } im.src=p.url; el.classList.add('svon'); el.querySelector('.pinm')?.remove();
-    if(size==='big'){ el.querySelector('.credit')?.remove(); el.insertAdjacentHTML('beforeend',`<span class="credit" data-s="Google${p.date?' · '+esc(p.date):''}">Google${p.date?' · '+esc(p.date.replace(/^(\d{4})-(\d{2})$/,(m,y,mo)=>MONS[+mo-1]+' '+y)):''}</span>${au?`<button class="svt" onclick="event.stopPropagation();svToggle(this)" data-a="${esc(au)}" data-s="${esc(p.url)}">Aerial</button>`:''}`); } }); }
-function svToggle(b){ const el=b.closest('.photo2'), im=el.querySelector('img'), cr=el.querySelector('.credit'), toA=b.textContent==='Aerial'; im.src=toA?b.dataset.a:b.dataset.s; b.textContent=toA?'Street':'Aerial'; el.classList.toggle('svon',!toA);
+  svGet(pid,size).then(p=>{ if(!p||!el.isConnected) return;
+    const hasA=!!el.querySelector(':scope>img:not(.sv16),:scope>.am16');
+    if(!hasA) el.querySelectorAll(':scope>span:not(.credit)').forEach(s=>s.remove());
+    el.querySelector(':scope>img.sv16')?.remove();
+    const im=document.createElement('img'); im.className='sv16'; im.alt=''; im.src=p.url; el.append(im);
+    el.classList.add('svon'); el.querySelector('.pinm')?.remove();
+    if(size==='big'){ el.querySelector('.credit')?.remove(); el.querySelector('.svt')?.remove();
+      el.insertAdjacentHTML('beforeend',`<span class="credit" data-s="Google${p.date?' · '+esc(p.date):''}">Google${p.date?' · '+esc(p.date.replace(/^(\d{4})-(\d{2})$/,(m,y,mo)=>MONS[+mo-1]+' '+y)):''}</span>${hasA?`<button class="svt" onclick="event.stopPropagation();svToggle(this)">Aerial</button>`:''}`); } }); }
+function svToggle(b){ const el=b.closest('.photo2'), cr=el.querySelector('.credit'), toA=el.classList.contains('svon'); b.textContent=toA?'Street':'Aerial'; el.classList.toggle('svon',!toA);
   if(cr){ if(!cr.dataset.g) cr.dataset.g=cr.textContent; cr.textContent=toA?'Imagery © NSW Spatial Services':cr.dataset.g; } }
 // Call screen: fills the house photos with Street View when there is no aerial
 window.drawCall2=(function(orig){ return function(){ orig(); const r=curCall(); if(!r) return;
   const big=document.querySelector('#main .prop2 .photo2'), small=document.querySelector('#main .pidr2 .photo2');
   if(big&&big.offsetParent) svFill(big,r.property_id,'big'); if(small&&small.offsetParent) svFill(small,r.property_id,'small');
-  const nx=callQ().find(x=>x.property_id!==r.property_id&&!x.today_outcome&&!S.skipped.has(x.property_id)); if(nx) svGet(nx.property_id,big&&big.offsetParent?'big':'small'); }; })(window.drawCall2);
+  callQ().filter(x=>x.property_id!==r.property_id&&!x.today_outcome&&!S.skipped.has(x.property_id)).slice(0,3).forEach(x=>svGet(x.property_id,big&&big.offsetParent?'big':'small')); }; })(window.drawCall2);
 
 // Small street photos on list and pipeline rows, loaded only as they scroll into view
 // Rows keep the free aerial; a paid street photo loads only for the person you open

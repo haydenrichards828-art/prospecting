@@ -2000,3 +2000,8 @@ body.h-ltab.h-lsheet .ltab3.l15 .lt3>:nth-child(2){display:none!important}
 .dc6 .rt2 b{white-space:normal;font-size:15px}
 .dc6 .rt2 em{font-style:normal;font-size:13px;line-height:18px;color:var(--t2)}
 .dc6{align-items:flex-start}
+/* Street photo laid over the aerial: whole when it appears, and Aerial switches back without reloading */
+.photo2 img.sv16{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;transition:opacity .16s ease-out}
+.photo2:not(.svon) img.sv16{opacity:0}
+.photo2 .credit,.photo2 .svt,.photo2 .sv{z-index:2}
+@media (prefers-reduced-motion:reduce){.photo2 img.sv16{transition:none}}
